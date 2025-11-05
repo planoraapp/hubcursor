@@ -209,9 +209,13 @@ const TamagotchiCompact = () => {
                   src={getPetImage()}
                   alt={currentPetData.name}
                   className="w-full h-full object-contain"
-                  onError={() => {
-                    console.log('❌ [Tamagotchi] Erro ao carregar sprite:', getPetImage());
-                    setImageError(true);
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    // Evita loop infinito - se já tentou fallback, não tenta mais
+                    if (!target.hasAttribute('data-error-attempted')) {
+                      target.setAttribute('data-error-attempted', 'true');
+                      setImageError(true);
+                    }
                   }}
                   onLoad={() => {
                                     }}
@@ -345,9 +349,13 @@ const TamagotchiCompact = () => {
                       src={getPetImage()}
                       alt={currentPetData.name}
                       className="w-full h-full object-contain"
-                      onError={() => {
-                        console.log('❌ [Tamagotchi] Erro ao carregar sprite no modal:', getPetImage());
-                        setImageError(true);
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        // Evita loop infinito - se já tentou fallback, não tenta mais
+                        if (!target.hasAttribute('data-error-attempted')) {
+                          target.setAttribute('data-error-attempted', 'true');
+                          setImageError(true);
+                        }
                       }}
                       onLoad={() => {
                                               }}

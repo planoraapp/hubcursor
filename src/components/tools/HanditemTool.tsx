@@ -16,6 +16,7 @@ import { handitemDiscovery, DiscoveredHanditem } from '@/utils/handitemDiscovery
 import { avatarPreview, AvatarOptions } from '@/utils/avatarPreview';
 import { UnifiedCatalog } from './UnifiedCatalog';
 import { HabboHanditem, HabboFurni } from '@/services/HabboAPIService';
+import * as handitemImages from './handitemImages';
 // Trax removido deste contexto
 
 interface HanditemData {
@@ -2260,7 +2261,12 @@ const HanditemToolFixed: React.FC = () => {
 
   const resolveMobiHanditemImage = useCallback((handitemId: number) => {
     // Usar mapeamento centralizado de imagens
-    return getHanditemImageById(handitemId);
+    try {
+      return handitemImages.getHanditemImageById(handitemId);
+    } catch {
+      // Fallback se falhar
+      return `/handitems/images/${handitemId}.png`;
+    }
   }, []);
 
   // ===== Correção de IDs de Handitems a partir do catálogo local =====

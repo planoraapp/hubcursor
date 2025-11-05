@@ -82,17 +82,33 @@ export function CollapsibleAppSidebar() {
             }}
             onError={(e) => {
               const target = e.currentTarget as HTMLImageElement;
-              const current = target.getAttribute('src') || '';
-              if (current.includes('/assets/buttons/')) {
-                target.src = '/assets/homebutton.png';
+              const current = target.src || '';
+              
+              // Evita loop infinito - se já tentou fallback, não tenta mais
+              if (target.hasAttribute('data-fallback-attempted')) {
+                return;
+              }
+              
+              // Fallbacks específicos baseados no caminho original
+              let fallback = '';
+              if (current.includes('/assets/buttons/homebutton.png')) {
+                fallback = '/assets/homebutton.png';
               } else if (current.includes('/assets/console/consoleoff.gif')) {
-                target.src = '/assets/consoleoff.gif';
+                fallback = '/assets/consoleoff.gif';
               } else if (current.includes('/assets/journal/news.png')) {
-                target.src = '/assets/news.png';
+                fallback = '/assets/news.png';
               } else if (current.includes('/assets/Tools/ferramentas.png')) {
-                target.src = '/assets/ferramentas.png';
+                fallback = '/assets/ferramentas.png';
+              } else if (current.includes('/assets/1044__-IT.png')) {
+                fallback = '/placeholder.svg';
+              }
+              
+              if (fallback) {
+                target.setAttribute('data-fallback-attempted', 'true');
+                target.src = fallback;
               } else {
-                target.src = '/placeholder.svg';
+                // Se não há fallback específico, apenas marca como tentado
+                target.setAttribute('data-fallback-attempted', 'true');
               }
             }}
           />

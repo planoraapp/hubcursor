@@ -21,6 +21,10 @@ const REAL_IMAGES: { [key: number]: string } = {
   17: 'https://i.imgur.com/1BGBH0d.png',
   18: 'https://i.imgur.com/Cfa2xdt.png',
   19: 'https://i.imgur.com/sMTSwiG.png',
+  20: 'https://i.imgur.com/KKovhHi.png', // Câmera
+  21: 'https://i.imgur.com/Uwby52g.png', // Hambúrguer
+  22: 'https://i.imgur.com/iW9Ub5D.png', // Habbo Soda de Limão
+  23: 'https://i.imgur.com/OdYeZ21.png', // Habbo Soda de Beterraba
   24: 'https://i.imgur.com/3JtoDrn.png',
   25: 'https://i.imgur.com/VTfFXla.png',
   26: 'https://i.imgur.com/SyjIrTP.png',
@@ -245,7 +249,12 @@ const REAL_IMAGES: { [key: number]: string } = {
 };
 
 export const getHanditemImageById = (id: number): string => {
-  return REAL_IMAGES[id] || '/assets/handitem_placeholder.png';
+  // Primeiro tenta usar o mapeamento de imagens externas
+  if (REAL_IMAGES[id]) {
+    return REAL_IMAGES[id];
+  }
+  // Depois tenta local
+  return `/handitems/images/${id}.png`;
 };
 
 
