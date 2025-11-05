@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Copy, Search, Package, Utensils, Coffee, Candy, Wrench, Smartphone, Gamepad2, RefreshCw, Download, Filter, Eye, Zap, AlertCircle } from 'lucide-react';
 import { HanditemImage } from './HanditemImage';
@@ -2258,10 +2258,9 @@ const HanditemToolFixed: React.FC = () => {
     );
   }, [defaultHabboName, selectedHanditem]);
 
-  const resolveMobiHanditemImage = useCallback((handitem: HanditemData) => {
-    if (handitem.iconUrl && handitem.iconUrl.trim().length > 0) return handitem.iconUrl;
-    // tentativa por id local (se disponível no projeto)
-    return `/handitems/images/${handitem.inGameId}.png`;
+  const resolveMobiHanditemImage = useCallback((handitemId: number) => {
+    // Usar mapeamento centralizado de imagens
+    return getHanditemImageById(handitemId);
   }, []);
 
   // ===== Correção de IDs de Handitems a partir do catálogo local =====
@@ -2426,7 +2425,7 @@ const HanditemToolFixed: React.FC = () => {
                         <div className="flex flex-wrap gap-1">
                           {mobi.handitems.slice(0, 4).map((item, idx) => {
                             const corrected = getCorrectedHanditem(item);
-                            const imgSrc = `/handitems/images/${corrected.id}.png`;
+                            const imgSrc = resolveMobiHanditemImage(corrected.id);
                             return (
                               <img
                                 key={idx}
@@ -2434,8 +2433,12 @@ const HanditemToolFixed: React.FC = () => {
                                 alt={corrected.name}
                                 title={corrected.name}
                                 className="w-4 h-4 border border-border rounded"
+                                loading="lazy"
                                 onError={(e) => {
-                                  e.currentTarget.src = '/handitems/handitem_placeholder.png';
+                                  const target = e.currentTarget;
+                                  if (target.src !== '/assets/handitem_placeholder.png') {
+                                    target.src = '/assets/handitem_placeholder.png';
+                                  }
                                 }}
                               />
                             );
@@ -2487,6 +2490,9 @@ const HanditemToolFixed: React.FC = () => {
             <DialogTitle className="volter-font text-xl">
               {selectedMobi?.name} - {selectedMobi?.function}
             </DialogTitle>
+            <DialogDescription>
+              Visualize os handitems entregues por este mobi e teste no avatar
+            </DialogDescription>
           </DialogHeader>
           
           {selectedMobi && (
@@ -2513,9 +2519,16 @@ const HanditemToolFixed: React.FC = () => {
                   {selectedHanditem && (
                     <div className="flex items-center justify-center gap-2">
                       <img
-                        src={selectedHanditem.iconUrl}
+                        src={resolveMobiHanditemImage(selectedHanditem.inGameId)}
                         alt={selectedHanditem.name}
                         className="w-6 h-6"
+                        loading="lazy"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (target.src !== '/assets/handitem_placeholder.png') {
+                            target.src = '/assets/handitem_placeholder.png';
+                          }
+                        }}
                       />
                       <span className="text-sm volter-font">{selectedHanditem.name}</span>
                     </div>
@@ -2542,11 +2555,15 @@ const HanditemToolFixed: React.FC = () => {
                         >
                           <div className="flex items-center gap-3">
                              <img
-                              src={`/handitems/images/${corrected.id}.png`}
+                              src={resolveMobiHanditemImage(corrected.id)}
                               alt={corrected.name}
                               className="w-8 h-8 border border-border rounded"
+                              loading="lazy"
                               onError={(e) => {
-                                e.currentTarget.src = '/handitems/handitem_placeholder.png';
+                                const target = e.currentTarget;
+                                if (target.src !== '/assets/handitem_placeholder.png') {
+                                  target.src = '/assets/handitem_placeholder.png';
+                                }
                               }}
                             />
                             <div className="flex-1">
@@ -2605,6 +2622,9 @@ const HanditemToolFixed: React.FC = () => {
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Preview de Avatar com Handitem</DialogTitle>
+            <DialogDescription>
+              Teste diferentes handitems no avatar para visualizar como ficará
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-6">

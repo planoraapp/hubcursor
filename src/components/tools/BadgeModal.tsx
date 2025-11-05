@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,8 @@ interface BadgeItem {
   rarity?: string;
   source?: string;
   scrapedAt?: string;
+  hotel?: string;
+  isNew?: boolean;
 }
 
 interface BadgeModalProps {
@@ -35,8 +37,9 @@ const BADGE_HOTELS = [
   { code: 'de', name: 'Alemanha', flag: '/flags/flagdeus.png' },
   { code: 'it', name: 'Itália', flag: '/flags/flagitaly.png' },
   { code: 'nl', name: 'Holanda', flag: '/flags/flagnetl.png' },
-  { code: 'tr', name: 'Turquia', flag: '/flags/flagtrky.png' },
-  { code: 'fi', name: 'Finlândia', flag: '/flags/flafinland.png' }
+  { code: 'com.tr', name: 'Turquia', flag: '/flags/flagtrky.png' },
+  { code: 'fi', name: 'Finlândia', flag: '/flags/flafinland.png' },
+  { code: 'sandbox', name: 'Sandbox', flag: null }
 ];
 
 const BADGE_CATEGORIES = [
@@ -52,26 +55,54 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
   const [selectedHotel, setSelectedHotel] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showFilters, setShowFilters] = useState(true);
-  const [showAllGrid, setShowAllGrid] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [allBadges, setAllBadges] = useState<BadgeItem[]>([]);
+  const pageSize = 100;
   
-  // Usar o hook da API do Habbo
-  const { data: badgesData, isLoading, refetch } = useHabboApiBadges({
-    limit: showAllGrid ? 5000 : 200,
+  // Usar o hook da API do Habbo com paginação
+  const { data: badgesData, isLoading, refetch, isFetchingNextPage } = useHabboApiBadges({
     search: searchTerm,
     category: selectedCategory !== 'all' ? selectedCategory : undefined,
-    enabled: open
+    enabled: open,
+    page: currentPage,
+    pageSize
   });
 
-  const badges = badgesData?.badges || [];
+  const currentBadges = badgesData?.badges || [];
+  const hasMore = badgesData?.metadata?.hasMore || false;
   
+  // Acumular badges para scroll infinito
+  useEffect(() => {
+    if (currentBadges.length > 0) {
+      if (currentPage === 1) {
+        // Primeira página - substituir tudo
+        setAllBadges(currentBadges);
+      } else {
+        // Páginas seguintes - adicionar aos existentes
+        setAllBadges(prev => [...prev, ...currentBadges]);
+      }
+    }
+  }, [currentBadges, currentPage]);
+
+  // Reset quando mudar filtros ou busca
+  useEffect(() => {
+    setCurrentPage(1);
+    setAllBadges([]);
+  }, [searchTerm, selectedCategory, selectedHotel]);
+
   // Filtrar por hotel
   const filteredBadges = useMemo(() => {
-    let result = [...badges];
+    let result = [...allBadges];
     
     if (selectedHotel !== 'all') {
       result = result.filter(badge => {
+        // Usar campo hotel se disponível
+        if (badge.hotel) {
+          return badge.hotel === selectedHotel;
+        }
+        
+        // Fallback: inferir hotel pelo código
         const code = badge.code.toUpperCase();
-        // Inferir hotel pelo código
         if (selectedHotel === 'com.br' && (code.startsWith('BR') || code.startsWith('PT'))) return true;
         if (selectedHotel === 'com' && code.startsWith('US')) return true;
         if (selectedHotel === 'es' && code.startsWith('ES')) return true;
@@ -79,19 +110,22 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
         if (selectedHotel === 'de' && code.startsWith('DE')) return true;
         if (selectedHotel === 'it' && code.startsWith('IT')) return true;
         if (selectedHotel === 'nl' && code.startsWith('NL')) return true;
-        if (selectedHotel === 'tr' && code.startsWith('TR')) return true;
+        if (selectedHotel === 'com.tr' && code.startsWith('TR')) return true;
         if (selectedHotel === 'fi' && code.startsWith('FI')) return true;
         
-        // Badges sem código de país específico
-        return true;
+        return false;
       });
     }
     
     return result;
-  }, [badges, selectedHotel]);
-  
-  const recentBadges = useMemo(() => filteredBadges.slice(0, 100), [filteredBadges]);
-  const classicBadges = useMemo(() => filteredBadges.slice(-100), [filteredBadges]);
+  }, [allBadges, selectedHotel]);
+
+  // Carregar mais badges (scroll infinito)
+  const loadMore = useCallback(() => {
+    if (hasMore && !isLoading && !isFetchingNextPage) {
+      setCurrentPage(prev => prev + 1);
+    }
+  }, [hasMore, isLoading, isFetchingNextPage]);
 
   const handleBadgeClick = (badge: BadgeItem) => {
     navigator.clipboard.writeText(badge.code);
@@ -205,101 +239,72 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
           )}
         </div>
 
-        {/* Conteúdo */}
-        <div className="flex-1 overflow-y-auto">
-          {!showAllGrid ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Recentes */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 volter-font">
-                  🆕 Últimos Emblemas ({recentBadges.length})
-                </h3>
-                <div className="grid grid-cols-8 gap-2 p-2 max-h-[50vh] overflow-y-auto">
-                  {recentBadges.map((badge) => (
-                    <BadgeTooltip
-                      key={`recent-${badge.code}`}
-                      code={badge.code}
-                      name={badge.name}
-                      description={badge.description}
-                    >
-                      <div
-                        className="cursor-pointer p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                        onClick={() => handleBadgeClick(badge)}
-                      >
-                        <SimpleBadgeImage code={badge.code} name={badge.name} size="md" />
-                      </div>
-                    </BadgeTooltip>
-                  ))}
-                </div>
-              </div>
-
-              {/* Clássicos */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 volter-font">
-                  🏛️ Mais Antigos ({classicBadges.length})
-                </h3>
-                <div className="grid grid-cols-8 gap-2 p-2 max-h-[50vh] overflow-y-auto">
-                  {classicBadges.map((badge) => (
-                    <BadgeTooltip
-                      key={`classic-${badge.code}`}
-                      code={badge.code}
-                      name={badge.name}
-                      description={badge.description}
-                    >
-                      <div
-                        className="cursor-pointer p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                        onClick={() => handleBadgeClick(badge)}
-                      >
-                        <SimpleBadgeImage code={badge.code} name={badge.name} size="md" />
-                      </div>
-                    </BadgeTooltip>
-                  ))}
-                </div>
-              </div>
+        {/* Conteúdo com Scroll Infinito */}
+        <div 
+          className="flex-1 overflow-y-auto"
+          onScroll={(e) => {
+            const target = e.target as HTMLElement;
+            const scrollBottom = target.scrollHeight - target.scrollTop - target.clientHeight;
+            // Carregar mais quando estiver a 200px do final
+            if (scrollBottom < 200 && hasMore && !isLoading && !isFetchingNextPage) {
+              loadMore();
+            }
+          }}
+        >
+          {isLoading && filteredBadges.length === 0 ? (
+            <div className="flex items-center justify-center h-32">
+              <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
             </div>
           ) : (
-            <div>
-              <div className="grid grid-cols-12 gap-2 p-2">
-                {filteredBadges.map((badge) => (
-                  <BadgeTooltip
-                    key={`all-${badge.code}`}
-                    code={badge.code}
-                    name={badge.name}
-                    description={badge.description}
+            <div className="grid grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2 p-2">
+              {filteredBadges.map((badge) => (
+                <BadgeTooltip
+                  key={`badge-${badge.code}-${badge.id}`}
+                  code={badge.code}
+                  name={badge.name}
+                  description={badge.description}
+                >
+                  <div
+                    className="relative cursor-pointer p-2 rounded-lg hover:bg-gray-100 transition-colors group"
+                    onClick={() => handleBadgeClick(badge)}
                   >
-                    <div
-                      className="cursor-pointer p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                      onClick={() => handleBadgeClick(badge)}
-                    >
-                      <SimpleBadgeImage code={badge.code} name={badge.name} size="md" />
-                    </div>
-                  </BadgeTooltip>
-                ))}
-              </div>
+                    {/* Tag NEW para badges novos */}
+                    {badge.isNew && (
+                      <div className="absolute -top-1 -right-1 bg-green-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full z-10 shadow-md">
+                        NEW
+                      </div>
+                    )}
+                    <SimpleBadgeImage code={badge.code} name={badge.name} size="md" />
+                  </div>
+                </BadgeTooltip>
+              ))}
+              
+              {/* Loading indicator para próxima página */}
+              {isFetchingNextPage && (
+                <div className="col-span-full flex items-center justify-center py-4">
+                  <RefreshCw className="w-6 h-6 animate-spin text-blue-500" />
+                </div>
+              )}
+              
+              {/* Mensagem quando não há mais badges */}
+              {!hasMore && filteredBadges.length > 0 && (
+                <div className="col-span-full text-center py-4 text-sm text-gray-500 volter-font">
+                  Todos os emblemas foram carregados ({filteredBadges.length} total)
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        {/* Botão Ver Todos */}
-        {!showAllGrid && (
-          <div className="flex justify-center pt-4 border-t mt-4">
-            <Button
-              onClick={() => setShowAllGrid(true)}
-              className="habbo-button-blue sidebar-font-option-4 px-8 py-2"
-            >
-              📋 Ver Todos os Emblemas ({badgesData?.metadata?.totalAvailable || filteredBadges.length})
-            </Button>
-          </div>
-        )}
 
         {/* Footer */}
         <div className="border-t pt-4 mt-4">
           <div className="flex justify-between items-center text-sm text-gray-600 volter-font">
             <span>
-              {showAllGrid
-                ? `Mostrando ${filteredBadges.length} emblemas`
-                : `Últimos: ${recentBadges.length} | Antigos: ${classicBadges.length}`
-              }
+              Mostrando {filteredBadges.length} de {badgesData?.metadata?.totalAvailable || 0} emblemas
+              {badgesData?.metadata?.totalAvailable && filteredBadges.length < badgesData.metadata.totalAvailable && (
+                <span className="ml-2 text-blue-600">(Scroll para carregar mais)</span>
+              )}
             </span>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 
 interface SimpleBadgeImageProps {
   code: string;
@@ -13,6 +13,7 @@ const SimpleBadgeImage = ({
   className = '', 
   size = 'md' 
 }: SimpleBadgeImageProps) => {
+  const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -22,19 +23,42 @@ const SimpleBadgeImage = ({
     lg: 'w-13 h-13'   // Reduzido de 16 para 13 (19% menor)
   };
 
-  // URLs reais para badges do Habbo
-  const getBadgeUrl = useCallback((badgeCode: string) => {
+  // URLs reais para badges do Habbo com múltiplos fallbacks
+  const getBadgeUrls = useCallback((badgeCode: string) => {
     // Formato correto: os códigos de badges Habbo são sempre maiúsculos
     const upperCode = badgeCode.toUpperCase();
     
-    // Prioridade de URLs (da mais confiável para fallback)
-    return `https://images.habbo.com/c_images/album1584/${upperCode}.gif`;
+    return [
+      // URL principal - images.habbo.com (mais confiável e sem CORS)
+      `https://images.habbo.com/c_images/album1584/${upperCode}.gif`,
+      `https://images.habbo.com/c_images/album1584/${upperCode}.png`,
+      
+      // URLs alternativas (podem retornar 403, mas tentamos mesmo assim)
+      `https://www.habbo.com.br/habbo-imaging/badge/${upperCode}`,
+      `https://www.habbo.com/habbo-imaging/badge/${upperCode}`,
+    ];
   }, []);
 
+  const badgeUrls = getBadgeUrls(code);
+
+  // Reset quando o código mudar
+  useEffect(() => {
+    setCurrentUrlIndex(0);
+    setHasError(false);
+    setIsLoading(true);
+  }, [code]);
+
   const handleImageError = useCallback(() => {
-    setHasError(true);
-    setIsLoading(false);
-  }, []);
+    if (currentUrlIndex < badgeUrls.length - 1) {
+      // Tenta próxima URL
+      setIsLoading(true);
+      setCurrentUrlIndex(prev => prev + 1);
+    } else {
+      // Todas as URLs falharam
+      setHasError(true);
+      setIsLoading(false);
+    }
+  }, [currentUrlIndex, badgeUrls.length]);
 
   const handleImageLoad = useCallback(() => {
     setIsLoading(false);
@@ -56,12 +80,14 @@ const SimpleBadgeImage = ({
         </div>
       )}
       <img
-        src={getBadgeUrl(code)}
+        src={badgeUrls[currentUrlIndex]}
         alt={name || `Emblema ${code}`}
         className={`w-full h-full object-contain ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
         style={{ imageRendering: 'pixelated' }}
         onError={handleImageError}
         onLoad={handleImageLoad}
+        key={currentUrlIndex}
+        loading="lazy"
       />
     </div>
   );
