@@ -62,7 +62,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ habboUser, avatarU
                   />
                 ) : (
                   <img 
-                    src="/assets/site/offline_icon.png" 
+                    src="/assets/offline_icon.png" 
                     alt="Offline"
                     height="16"
                     style={{ imageRendering: 'pixelated' }}

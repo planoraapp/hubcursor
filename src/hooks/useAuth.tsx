@@ -21,6 +21,7 @@ interface AuthContextType {
   habboAccount: HabboAccount | null;
   isLoggedIn: boolean;
   loading: boolean;
+  isAdmin: () => boolean;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   refreshAccount: () => Promise<void>;
@@ -35,6 +36,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useI18n();
 
   const isLoggedIn = !!habboAccount;
+
+  // Função para verificar se o usuário é admin - apenas habbohub tem acesso
+  const isAdmin = (): boolean => {
+    return habboAccount?.habbo_name?.toLowerCase() === 'habbohub' && habboAccount?.is_admin === true;
+  };
 
   // Verificar sessão existente
   useEffect(() => {
@@ -179,6 +185,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       habboAccount,
       isLoggedIn,
       loading,
+      isAdmin,
       login,
       logout,
       refreshAccount

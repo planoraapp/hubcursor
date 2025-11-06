@@ -50,7 +50,7 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({ habboUser, stats }) 
               <Badge className="bg-green-500">Online</Badge>
             ) : (
               <img 
-                src="/assets/site/offline_icon.png" 
+                src="/assets/offline_icon.png" 
                 alt="Offline"
                 height="16"
                 style={{ imageRendering: 'pixelated' }}

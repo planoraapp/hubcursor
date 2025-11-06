@@ -279,7 +279,7 @@ export const FunctionalConsole: React.FC = () => {
               </div>
               {/* Status centralizado abaixo do avatar */}
               <img 
-                src={user?.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : '/assets/site/offline_icon.png'}
+                src={user?.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : '/assets/offline_icon.png'}
                 alt={user?.online ? 'Online' : 'Offline'}
                 height="16"
                 style={{ imageRendering: 'pixelated' }}

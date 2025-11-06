@@ -114,7 +114,7 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({
                         <p className="font-medium text-sm truncate text-white">{friend.name}</p>
                         <div className="flex flex-col items-end gap-1">
                           <img 
-                            src={friend.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : '/assets/site/offline_icon.png'}
+                            src={friend.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : '/assets/offline_icon.png'}
                             alt={friend.online ? 'Online' : 'Offline'}
                             height="16"
                             style={{ imageRendering: 'pixelated' }}
