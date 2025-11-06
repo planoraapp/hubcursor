@@ -42,7 +42,7 @@ export const PhotoModal: React.FC<PhotoModalProps> = ({ isOpen, onClose, photo }
           {/* Hub.gif logo - canto inferior esquerdo */}
           <div className="absolute bottom-4 left-4">
             <img
-              src="/hub.gif"
+              src="/assets/hub.gif"
               alt="Hub"
               className="w-8 h-8 opacity-80"
               onError={(e) => {

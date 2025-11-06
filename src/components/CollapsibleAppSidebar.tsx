@@ -171,7 +171,7 @@ export function CollapsibleAppSidebar() {
           <div className="w-full flex justify-center items-center">
             {isCollapsed ? (
               <img 
-                src="/assets/site/hub.gif" 
+                src="/assets/hub.gif" 
                 alt="Hub" 
                 className="w-auto h-auto max-w-full max-h-16"
                 style={{ 
@@ -185,7 +185,7 @@ export function CollapsibleAppSidebar() {
               />
             ) : (
               <img 
-                src="/assets/site/hubbeta.gif" 
+                src="/assets/hubbeta.gif" 
                 alt="Habbo Hub" 
                 className="w-auto h-auto max-w-full max-h-16"
                 style={{ 

@@ -247,13 +247,17 @@ export const Login: React.FC = () => {
               {/* Logo do HabboHub */}
               <div className="text-center mb-8">
                 <img 
-                  src="/assets/site/hubbeta.gif" 
+                  src="/assets/hubbeta.gif" 
                   alt="HabboHub" 
                   className="mx-auto mb-8"
                   style={{ 
                     imageRendering: 'pixelated',
                     maxWidth: '200px',
                     height: 'auto'
+                  }}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/assets/hubbeta.png";
                   }}
                 />
               </div>

@@ -109,7 +109,7 @@ export function NewAppSidebar() {
           <div className="w-full flex justify-center">
             {isCollapsed ? (
               <img 
-                src="/assets/site/hub.gif" 
+                src="/assets/hub.gif" 
                 alt="Hub" 
                 className="w-12 h-12"
                 onError={(e) => {
@@ -119,7 +119,7 @@ export function NewAppSidebar() {
               />
             ) : (
               <img 
-                src="/assets/site/hubbeta.gif" 
+                src="/assets/hubbeta.gif" 
                 alt="Habbo Hub" 
                 className="w-full h-auto max-w-[200px]"
                 onError={(e) => {
