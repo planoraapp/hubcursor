@@ -27,8 +27,8 @@ export function CollapsibleAppSidebar() {
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
-  // Verificar se o usuário é admin usando o campo is_admin do banco
-  const isAdmin = habboAccount?.is_admin === true;
+  // Verificar se o usuário é admin - apenas habbohub tem acesso
+  const isAdmin = habboAccount?.habbo_name?.toLowerCase() === 'habbohub' && habboAccount?.is_admin === true;
 
   // Debug temporário para verificar status de admin// Função para remover acentos para compatibilidade com fonte Volter
   const removeAccents = (text: string) => {

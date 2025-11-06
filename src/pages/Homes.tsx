@@ -471,7 +471,7 @@ const Homes: React.FC = () => {
 
                 {/* Campo de Busca */}
                 <div className="flex-1">
-                  <Card className="hover:shadow-lg transition-shadow bg-white/95 backdrop-blur-sm border-2 border-black h-full">
+                  <Card className="hover:shadow-lg transition-shadow bg-white/95 backdrop-blur-sm border-2 border-black">
                 <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-b-2 border-black">
                   <CardTitle className="flex items-center gap-2 sidebar-font-option-4 text-white"
                     style={{
@@ -483,42 +483,40 @@ const Homes: React.FC = () => {
                     {t('pages.homes.searchButton')}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-6 h-full flex flex-col justify-between">
-                  <div>
-                    <div className="flex gap-4">
-                      <div className="relative flex-1">
-                        <Input
-                          type="text"
-                          placeholder={t('pages.homes.searchPlaceholder')}
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                          className="border-2 border-gray-300 focus:border-purple-500 volter-body-text pr-10"
-                        />
-                        {loading && (
-                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-500 border-t-transparent"></div>
-                          </div>
-                        )}
-                      </div>
-                      <Button 
-                        onClick={handleSearch}
-                        disabled={loading}
-                        className="habbo-button-purple sidebar-font-option-4"
-                        style={{
-                          fontSize: '16px',
-                          fontWeight: 'bold',
-                          letterSpacing: '0.3px'
-                        }}
-                      >
-                        <Search className="w-4 h-4 mr-2" />
-                        {loading ? t('buttons.searching') : t('buttons.search')}
-                      </Button>
+                <CardContent className="p-6">
+                  <div className="flex gap-4">
+                    <div className="relative flex-1">
+                      <Input
+                        type="text"
+                        placeholder={t('pages.homes.searchPlaceholder')}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                        className="border-2 border-gray-300 focus:border-purple-500 volter-body-text pr-10"
+                      />
+                      {loading && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-500 border-t-transparent"></div>
+                        </div>
+                      )}
                     </div>
-                    <p className="text-gray-600 mt-2 volter-body-text">
-                      <AccentFixedText>{t('messages.searchTip')}</AccentFixedText>
-                    </p>
+                    <Button 
+                      onClick={handleSearch}
+                      disabled={loading}
+                      className="habbo-button-purple sidebar-font-option-4"
+                      style={{
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        letterSpacing: '0.3px'
+                      }}
+                    >
+                      <Search className="w-4 h-4 mr-2" />
+                      {loading ? t('buttons.searching') : t('buttons.search')}
+                    </Button>
                   </div>
+                  <p className="text-gray-600 mt-2 volter-body-text">
+                    <AccentFixedText>{t('messages.searchTip')}</AccentFixedText>
+                  </p>
                 </CardContent>
               </Card>
                 </div>
@@ -566,13 +564,15 @@ const Homes: React.FC = () => {
               )}
 
               {/* Grids de Homes */}
-              <HomesGrid
-                title="🎨 Últimas Modificadas"
-                homes={latestHomes || []}
-                isLoading={loadingLatest}
-                error={null}
-                onHomeClick={handleHomeClick}
-              />
+              <div className="mt-8">
+                <HomesGrid
+                  title="🎨 Últimas Modificadas"
+                  homes={latestHomes || []}
+                  isLoading={loadingLatest}
+                  error={null}
+                  onHomeClick={handleHomeClick}
+                />
+              </div>
 
               <HomesGrid
                 title="⭐ Maiores Avaliações"
