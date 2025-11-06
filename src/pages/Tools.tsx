@@ -12,6 +12,7 @@ import PageBanner from '@/components/ui/PageBanner';
 import Room7x7Modal from '@/components/tools/Room7x7Modal';
 import { AccentFixedText } from '@/components/AccentFixedText';
 import { getBannerImageBySeed } from '@/utils/bannerUtils';
+import { Footer } from '@/components/Footer';
 
 const Tools = () => {
   const navigate = useNavigate();
@@ -141,6 +142,9 @@ const Tools = () => {
 
 
             </div>
+            
+            {/* Footer Disclaimer */}
+            <Footer />
           </main>
         </SidebarInset>
       </div>

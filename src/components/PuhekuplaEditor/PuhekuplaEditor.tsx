@@ -9,6 +9,7 @@ import { Palette, Sparkles, Download, Share } from 'lucide-react';
 import { toast } from 'sonner';
 import HabboEmotionClothingGrid from './HabboEmotionClothingGrid';
 import { UnifiedClothingItem } from '@/hooks/useUnifiedClothingAPI';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface PuhekuplaEditorProps {
   
@@ -52,8 +53,10 @@ export const PuhekuplaEditor: React.FC<PuhekuplaEditorProps> = () => {
     setAvatarFigure(figureParts.join('.'));
   };
 
+  const { t } = useI18n();
+  
   const handleDownload = () => {
-    toast.success('Download iniciado!');
+    toast.success(t('toast.downloadStarted'));
   };
 
   const handleShare = () => {

@@ -9,6 +9,7 @@ import { BadgeDetailsModal } from '../BadgeDetailsModal';
 import { useHybridUnifiedBadges, usePopulateInitialBadges } from '../../hooks/useHybridUnifiedBadges';
 import ValidatedBadgeImage from '../ValidatedBadgeImage';
 import { toast } from 'sonner';
+import { useI18n } from '@/contexts/I18nContext';
 
 const CATEGORIES = [
   { value: 'all', label: 'Todos', icon: '🌟' },
@@ -74,10 +75,12 @@ export const UnifiedBadgeGrid: React.FC<UnifiedBadgeGridProps> = ({
     setSelectedBadge(badge);
   }, []);
 
+  const { t } = useI18n();
+  
   const handleRefresh = useCallback(() => {
-    toast.info('Atualizando badges...');
+    toast.info(t('toast.updatingBadges'));
     refetch();
-  }, [refetch]);
+  }, [refetch, t]);
 
   const handlePopulateInitial = useCallback(() => {
     if (enablePopulate) {

@@ -3,9 +3,11 @@ import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useI18n } from '@/contexts/I18nContext';
 
 export const usePhotoComments = (photoId: string) => {
   const { habboAccount } = useAuth();
+  const { t } = useI18n();
   const queryClient = useQueryClient();
 
   // Get comments for a photo
@@ -50,10 +52,10 @@ export const usePhotoComments = (photoId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['photo-comments', photoId] });
-      toast.success('Comentário adicionado!');
+      toast.success(t('toast.commentAdded'));
     },
     onError: (error: any) => {
-            toast.error('Erro ao adicionar comentário');
+            toast.error(t('toast.commentAddError'));
     }
   });
 
@@ -69,10 +71,10 @@ export const usePhotoComments = (photoId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['photo-comments', photoId] });
-      toast.success('Comentário excluído!');
+      toast.success(t('toast.commentDeleted'));
     },
     onError: (error: any) => {
-            toast.error('Erro ao excluir comentário');
+            toast.error(t('toast.commentDeleteError'));
     }
   });
 
@@ -85,10 +87,10 @@ export const usePhotoComments = (photoId: string) => {
 
       // For now, just log the report (can be enhanced later with comment_reports table)
             // Future: Insert into comment_reports table
-      toast.success('Comentário denunciado! Nossa equipe irá analisar.');
+      toast.success(t('toast.commentReported'));
     },
     onError: (error: any) => {
-            toast.error('Erro ao denunciar comentário');
+            toast.error(t('toast.commentReportError'));
     }
   });
 

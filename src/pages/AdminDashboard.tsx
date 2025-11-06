@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Users, 
   Home, 
-  Shield, 
   Activity, 
   Settings, 
   Database,
@@ -523,14 +522,6 @@ export const AdminDashboard: React.FC = () => {
               >
                 <AnimationGeneratorModal />
               </DraggableModal>
-
-              {/* Badge de sistema */}
-              <div className="flex justify-center">
-                <Badge variant="secondary" className="px-4 py-2 bg-white/90 backdrop-blur-sm border-2 border-black">
-                  <Shield className="w-4 h-4 mr-2" />
-                  Sistema HabboHub v2.0
-                </Badge>
-              </div>
             </div>
           </main>
         </SidebarInset>

@@ -4,9 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { PhotoLike } from '@/types/habbo';
+import { useI18n } from '@/contexts/I18nContext';
 
 export const usePhotoLikes = (photoId: string) => {
   const { habboAccount } = useAuth();
+  const { t } = useI18n();
   const queryClient = useQueryClient();
 
   // Get likes for a photo
@@ -68,7 +70,7 @@ export const usePhotoLikes = (photoId: string) => {
       console.error('Erro ao curtir foto:', error);
       // Não mostrar toast de erro para duplicação
       if (!error.message?.includes('duplicate') && error.code !== '23505') {
-        toast.error('Erro ao curtir foto');
+        toast.error(t('toast.likeError'));
       }
     }
   });
@@ -90,10 +92,10 @@ export const usePhotoLikes = (photoId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['photo-likes', photoId] });
-      toast.success('Curtida removida');
+      toast.success(t('toast.likeRemoved'));
     },
     onError: (error: any) => {
-            toast.error('Erro ao remover curtida');
+            toast.error(t('toast.unlikeError'));
     }
   });
 

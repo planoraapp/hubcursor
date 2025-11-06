@@ -65,7 +65,7 @@ export const ProfileModal = ({ open, setOpen, habboName }: { open: boolean, setO
             <p>Usuário não encontrado.</p>
           </div>
         )}
-        <Button onClick={() => setOpen(false)} className="w-full mt-4">Fechar</Button>
+        <Button onClick={() => setOpen(false)} className="w-full mt-4">{t('buttons.close')}</Button>
       </DialogContent>
     </Dialog>
   );

@@ -2,6 +2,7 @@ import React from 'react';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import AvatarEditorOfficial from '@/components/tools/AvatarEditorOfficial';
+import { Footer } from '@/components/Footer';
 
 const AvatarEditor = () => {
   return (
@@ -16,6 +17,9 @@ const AvatarEditor = () => {
             <div className="max-w-7xl mx-auto">
               <AvatarEditorOfficial />
             </div>
+            
+            {/* Footer Disclaimer */}
+            <Footer />
           </main>
         </SidebarInset>
       </div>

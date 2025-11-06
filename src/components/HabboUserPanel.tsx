@@ -89,14 +89,55 @@ export const HabboUserPanel = () => {
   const handleLanguageChange = (newLanguage: 'pt' | 'en' | 'es') => {
     if (newLanguage !== language) {
       setLanguage(newLanguage);
-      const languageNames: Record<string, string> = {
-        'pt': 'Português',
-        'en': 'English',
-        'es': 'Español'
+      
+      // Nomes dos idiomas traduzidos em cada idioma
+      const languageNames: Record<string, Record<string, string>> = {
+        'pt': {
+          'pt': 'Português',
+          'en': 'Inglês',
+          'es': 'Espanhol'
+        },
+        'en': {
+          'pt': 'Portuguese',
+          'en': 'English',
+          'es': 'Spanish'
+        },
+        'es': {
+          'pt': 'Portugués',
+          'en': 'Inglés',
+          'es': 'Español'
+        }
       };
+      
+      // Usar o novo idioma para a tradução
+      const tempT = (key: string, params?: Record<string, string | number>) => {
+        const translations: Record<string, Record<string, string>> = {
+          'pt': {
+            'toast.languageChanged': 'Idioma alterado',
+            'toast.languageChangedTo': 'O idioma foi alterado para {language}'
+          },
+          'en': {
+            'toast.languageChanged': 'Language changed',
+            'toast.languageChangedTo': 'Language has been changed to {language}'
+          },
+          'es': {
+            'toast.languageChanged': 'Idioma cambiado',
+            'toast.languageChangedTo': 'El idioma ha sido cambiado a {language}'
+          }
+        };
+        
+        let text = translations[newLanguage]?.[key] || key;
+        if (params) {
+          Object.entries(params).forEach(([paramKey, paramValue]) => {
+            text = text.replace(`{${paramKey}}`, String(paramValue));
+          });
+        }
+        return text;
+      };
+      
       toast({
-        title: "✅ Idioma alterado",
-        description: `O idioma foi alterado para ${languageNames[newLanguage]}`,
+        title: `✅ ${tempT('toast.languageChanged')}`,
+        description: tempT('toast.languageChangedTo', { language: languageNames[newLanguage][newLanguage] }),
       });
     }
   };

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import PageBanner from '@/components/ui/PageBanner';
+import { Footer } from '@/components/Footer';
 
 const Profile: React.FC = () => {
   const { username } = useParams<{ username: string }>();
@@ -40,6 +41,9 @@ const Profile: React.FC = () => {
                 </CardContent>
               </Card>
             </div>
+            
+            {/* Footer Disclaimer */}
+            <Footer />
           </main>
         </SidebarInset>
       </div>

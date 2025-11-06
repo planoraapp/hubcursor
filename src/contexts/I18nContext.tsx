@@ -15,7 +15,7 @@ const I18nContext = createContext<I18nContextType | undefined>(undefined);
 const translations = {
   pt: {
     // Navegação
-    'nav.home': 'Início',
+    'nav.home': 'Inicio',
     'nav.console': 'Console',
     'nav.homes': 'Homes',
     'nav.journal': 'Jornal',
@@ -51,10 +51,10 @@ const translations = {
     'pages.home.title': 'Bem-vindo ao Habbo Hub',
     'pages.home.subtitle': 'A plataforma definitiva para a comunidade Habbo. Conecte-se, explore e compartilhe sua paixão pelo Habbo Hotel.',
     'pages.home.console.title': 'Console Social',
-    'pages.home.console.description': 'Acesse o console social para ver fotos de amigos, buscar usuários e interagir com a comunidade.',
+    'pages.home.console.description': 'Acesse o console para ver fotos de amigos, curtir, comentar, buscar usuários e interagir com a comunidade do mundo inteiro!',
     'pages.home.console.button': 'Acessar Console',
     'pages.home.homes.title': 'Habbo Homes',
-    'pages.home.homes.description': 'Explore os homes dos usuários e veja suas decorações e móveis favoritos.',
+    'pages.home.homes.description': 'Crie e Explore as homes dos habbos e edite sua página como quiser',
     'pages.home.homes.button': 'Ver Homes',
     'pages.home.tools.title': 'Ferramentas',
     'pages.home.tools.description': 'Acesse ferramentas exclusivas para personalizar seu Habbo e facilitar sua experiência.',
@@ -83,7 +83,7 @@ const translations = {
     'pages.console.searchUser': 'Digite o nome do usuário...',
     'pages.console.feedTitle': '📸 Feed de Fotos dos Amigos',
     'pages.console.addComment': 'Adicione um comentário...',
-    'pages.console.selectCountry': 'Selecionar país',
+    'pages.console.selectCountry': 'Selecionar pais',
     'pages.console.likes': 'curtida',
     'pages.console.likesPlural': 'curtidas',
     'pages.console.myInfo': 'Perfil',
@@ -107,7 +107,7 @@ const translations = {
     'pages.console.loadingFriends': 'Carregando amigos...',
     'pages.console.searchUsers': '🔍 Buscar Usuários',
     'pages.console.friendsCount': '{count} amigos',
-    'pages.console.noFriends': 'Você ainda não tem amigos adicionados ou seus amigos não estão visíveis.',
+    'pages.console.noFriends': 'Voce ainda nao tem amigos adicionados ou seus amigos nao estao visiveis.',
     'pages.console.photos': 'Fotos',
            'pages.console.photosWithCount': 'Fotos ({count})',
            'pages.console.followers': 'Seguidores',
@@ -131,10 +131,18 @@ const translations = {
            'pages.console.noPhotoSelected': 'Nenhuma foto selecionada',
            'pages.console.userHasNoPhotos': 'O usuário não tem fotos :(',
            'pages.console.noCommunityPhotos': 'Ainda não há fotos da comunidade',
-           'pages.console.noPhotoAvailable': 'Nenhuma foto disponível',
+           'pages.console.noPhotoAvailable': 'Nenhuma foto disponivel',
            'pages.console.noLikesYet': 'Ainda não há curtidas nesta foto',
     'pages.tools.title': 'Ferramentas',
     'pages.tools.subtitle': 'Ferramentas úteis para o Habbo',
+    
+    // Modal de Agradecimentos
+    'pages.home.credits.title': '🏆 Agradecimentos',
+    'pages.home.credits.intro': 'O HabboHub foi criado com a intencao de unir toda a comunidade de jogadores, com algumas funcoes extras. Ele foi criado por um unico usuario, sem experiencia em programacao. So que esse projeto nunca seria possivel se uma grande e incrivel comunidade nao tivesse ja feito um grande trabalho, e que me ensinou como construir esse pedaco do Habbo, fora do Habbo.',
+    'pages.home.credits.learned': 'Eu posso ter esquecido muitos, mas aprendi diversas ferramentas sociais investigando grandes fã-sites como Puhekupla, HabboEmotion, HabboAssets, Habborator, uma grande coleção (basicamente tudo) de imagens veio graças aos arquivos de ViaJovem, e entendi um pouco mais de visuais com a Habbo Templarios.',
+    'pages.home.credits.eonu': '(E obrigado à eonu pelas fontes Volter)',
+    'pages.home.credits.conclusion': 'Sem o trabalho desses e tantos outros, o HabboHub era só uma imaginação.',
+    'pages.home.credits.final': 'Espero que se divirtam com o site, e me perdoem por todos os bugs que ainda restam ^^',
     
     // Botões e ações
     'buttons.save': 'Salvar',
@@ -154,6 +162,9 @@ const translations = {
     'buttons.viewHomes': 'Ver Homes',
     'buttons.viewDetails': 'Ver Detalhes',
     'buttons.openPopup': 'Abrir em Nova Janela',
+    'buttons.openConsolePopup': 'Abrir Console em Pop-up',
+    'buttons.openConsole': 'Abrir Console',
+    'buttons.focusConsole': 'Focar Console',
     
     // Mensagens
     'messages.loading': 'Carregando...',
@@ -170,6 +181,30 @@ const translations = {
     'messages.loginRequired': 'Você precisa estar logado para acessar esta página',
     'messages.popupBlocked': 'Popup bloqueado! Por favor, permita popups para este site.',
     'messages.searchTip': '💡 Dica: Digite pelo menos 2 caracteres para buscar automaticamente. A busca mostra homes cadastradas e perfis descobertos.',
+    
+    // Toast Notifications
+    'toast.loginRequired': 'Voce precisa estar logado para comentar',
+    'toast.commentingTooFast': 'Voce esta comentando muito rapido',
+    'toast.invalidComment': 'Comentario invalido',
+    'toast.commentSent': 'Comentario enviado!',
+    'toast.commentError': 'Erro ao enviar comentario',
+    'toast.commentAdded': 'Comentario adicionado!',
+    'toast.commentAddError': 'Erro ao adicionar comentario',
+    'toast.commentDeleted': 'Comentario excluido!',
+    'toast.commentDeleteError': 'Erro ao excluir comentario',
+    'toast.commentReported': 'Comentario denunciado! Nossa equipe ira analisar.',
+    'toast.commentReportError': 'Erro ao denunciar comentario',
+    'toast.likeError': 'Erro ao curtir foto',
+    'toast.likeRemoved': 'Curtida removida',
+    'toast.unlikeError': 'Erro ao remover curtida',
+    'toast.followError': 'Erro ao seguir usuario',
+    'toast.unfollowError': 'Erro ao deixar de seguir usuario',
+    'toast.updatingBadges': 'Atualizando badges...',
+    'toast.downloadStarted': 'Download iniciado!',
+    'toast.nowFollowing': 'Agora voce esta seguindo {username}!',
+    'toast.stoppedFollowing': 'Voce parou de seguir {username}',
+    'toast.languageChanged': 'Idioma alterado',
+    'toast.languageChangedTo': 'O idioma foi alterado para {language}',
     
     // Mensagens de erro de autenticação
     'auth.loginError': 'Erro no login',
@@ -199,7 +234,7 @@ const translations = {
     'validation.required': 'Este campo é obrigatório',
     'validation.email': 'E-mail inválido',
     'validation.passwordMatch': 'As senhas não coincidem',
-    'validation.minLength': 'Mínimo de {min} caracteres',
+    'validation.minLength': 'Minimo de {min} caracteres',
     'validation.maxLength': 'Máximo de {max} caracteres',
     
     // Status
@@ -216,6 +251,9 @@ const translations = {
     'time.weeksAgo': '{weeks} semanas atrás',
     'time.monthsAgo': '{months} meses atrás',
     'time.yearsAgo': '{years} anos atrás',
+    
+    // Footer Disclaimer
+    'footer.disclaimer': 'Habbo Hub nao esta afiliada a, respaldada, promocionada ou aprovada especificamente por Sulake Oy ou seus Afiliados. De acordo com a Politica de webs fans de Habbo, Habbo Hub pode utilizar as marcas comerciais e outras propriedades intelectuais de Habbo.',
   },
   en: {
     // Navigation
@@ -255,10 +293,10 @@ const translations = {
     'pages.home.title': 'Welcome to Habbo Hub',
     'pages.home.subtitle': 'The ultimate platform for the Habbo community. Connect, explore and share your passion for Habbo Hotel.',
     'pages.home.console.title': 'Social Console',
-    'pages.home.console.description': 'Access the social console to see friends photos, search users and interact with the community.',
+    'pages.home.console.description': 'Access the console to see friends photos, like, comment, search users and interact with the community from around the world!',
     'pages.home.console.button': 'Access Console',
     'pages.home.homes.title': 'Habbo Homes',
-    'pages.home.homes.description': 'Explore user homes and see their favorite decorations and furniture.',
+    'pages.home.homes.description': 'Create and Explore habbo homes and edit your page however you want',
     'pages.home.homes.button': 'View Homes',
     'pages.home.tools.title': 'Tools',
     'pages.home.tools.description': 'Access exclusive tools to customize your Habbo and enhance your experience.',
@@ -340,6 +378,14 @@ const translations = {
            'pages.tools.title': 'Tools',
     'pages.tools.subtitle': 'Useful Habbo tools',
     
+    // Credits Modal
+    'pages.home.credits.title': '🏆 Credits',
+    'pages.home.credits.intro': 'HabboHub was created with the intention of uniting the entire community of players, with some extra features. It was created by a single user, with no programming experience. But this project would never be possible if a great and incredible community had not already done great work, and taught me how to build this piece of Habbo, outside of Habbo.',
+    'pages.home.credits.learned': 'I may have forgotten many, but I learned various social tools by investigating great fan sites like Puhekupla, HabboEmotion, HabboAssets, Habborator, a large collection (basically everything) of images came thanks to ViaJovem files, and I understood a bit more about visuals with Habbo Templarios.',
+    'pages.home.credits.eonu': '(And thanks to eonu for the Volter fonts)',
+    'pages.home.credits.conclusion': 'Without the work of these and so many others, HabboHub was just an imagination.',
+    'pages.home.credits.final': 'I hope you enjoy the site, and forgive me for all the bugs that still remain ^^',
+    
     // Buttons and actions
     'buttons.save': 'Save',
     'buttons.cancel': 'Cancel',
@@ -358,6 +404,9 @@ const translations = {
     'buttons.viewHomes': 'View Homes',
     'buttons.viewDetails': 'View Details',
     'buttons.openPopup': 'Open in New Window',
+    'buttons.openConsolePopup': 'Open Console in Pop-up',
+    'buttons.openConsole': 'Open Console',
+    'buttons.focusConsole': 'Focus Console',
     
     // Messages
     'messages.loading': 'Loading...',
@@ -374,6 +423,30 @@ const translations = {
     'messages.loginRequired': 'You need to be logged in to access this page',
     'messages.popupBlocked': 'Popup blocked! Please allow popups for this site.',
     'messages.searchTip': '💡 Tip: Type at least 2 characters to search automatically. The search shows registered homes and discovered profiles.',
+    
+    // Toast Notifications
+    'toast.loginRequired': 'You need to be logged in to comment',
+    'toast.commentingTooFast': 'You are commenting too fast',
+    'toast.invalidComment': 'Invalid comment',
+    'toast.commentSent': 'Comment sent!',
+    'toast.commentError': 'Error sending comment',
+    'toast.commentAdded': 'Comment added!',
+    'toast.commentAddError': 'Error adding comment',
+    'toast.commentDeleted': 'Comment deleted!',
+    'toast.commentDeleteError': 'Error deleting comment',
+    'toast.commentReported': 'Comment reported! Our team will review it.',
+    'toast.commentReportError': 'Error reporting comment',
+    'toast.likeError': 'Error liking photo',
+    'toast.likeRemoved': 'Like removed',
+    'toast.unlikeError': 'Error removing like',
+    'toast.followError': 'Error following user',
+    'toast.unfollowError': 'Error unfollowing user',
+    'toast.updatingBadges': 'Updating badges...',
+    'toast.downloadStarted': 'Download started!',
+    'toast.nowFollowing': 'You are now following {username}!',
+    'toast.stoppedFollowing': 'You stopped following {username}',
+    'toast.languageChanged': 'Language changed',
+    'toast.languageChangedTo': 'Language has been changed to {language}',
     
     // Authentication error messages
     'auth.loginError': 'Login Error',
@@ -420,6 +493,9 @@ const translations = {
     'time.weeksAgo': '{weeks} weeks ago',
     'time.monthsAgo': '{months} months ago',
     'time.yearsAgo': '{years} years ago',
+    
+    // Footer Disclaimer
+    'footer.disclaimer': 'Habbo Hub is not affiliated with, endorsed, promoted or specifically approved by Sulake Oy or its Affiliates. According to Habbo\'s Fan Site Policy, Habbo Hub may use Habbo\'s trademarks and other intellectual properties.',
   },
   es: {
     // Navegación
@@ -446,7 +522,7 @@ const translations = {
     'sidebar.userPanel.status': 'Estado del Sitio',
     'sidebar.userPanel.notifications': 'Notificaciones',
     'sidebar.userPanel.language': 'Idioma',
-    'sidebar.userPanel.online': 'En Línea',
+    'sidebar.userPanel.online': 'En Linea',
     'sidebar.userPanel.offline': 'Desconectado',
     'sidebar.userPanel.portuguese': 'Portugués',
     'sidebar.userPanel.english': 'Inglés',
@@ -459,16 +535,16 @@ const translations = {
     'pages.home.title': 'Bienvenido a Habbo Hub',
     'pages.home.subtitle': 'La plataforma definitiva para la comunidad Habbo. Conéctate, explora y comparte tu pasión por Habbo Hotel.',
     'pages.home.console.title': 'Consola Social',
-    'pages.home.console.description': 'Accede a la consola social para ver fotos de amigos, buscar usuarios e interactuar con la comunidad.',
+    'pages.home.console.description': 'Accede a la consola para ver fotos de amigos, dar me gusta, comentar, buscar usuarios e interactuar con la comunidad de todo el mundo!',
     'pages.home.console.button': 'Acceder a Consola',
     'pages.home.homes.title': 'Habbo Homes',
-    'pages.home.homes.description': 'Explora los homes de los usuarios y ve sus decoraciones y muebles favoritos.',
+    'pages.home.homes.description': 'Crea y Explora las homes de los habbos y edita tu página como quieras',
     'pages.home.homes.button': 'Ver Homes',
     'pages.home.tools.title': 'Herramientas',
     'pages.home.tools.description': 'Accede a herramientas exclusivas para personalizar tu Habbo y mejorar tu experiencia.',
     'pages.home.tools.button': 'Ver Herramientas',
     'pages.marketplace.title': 'Marketplace',
-    'pages.marketplace.subtitle': 'Compra y vende artículos de Habbo',
+    'pages.marketplace.subtitle': 'Compra y vende articulos de Habbo',
     'pages.photos.title': 'Fotos',
     'pages.photos.subtitle': 'Ver fotos de usuarios',
     'pages.friends.title': 'Amigos',
@@ -483,7 +559,7 @@ const translations = {
     'pages.homes.subtitle': 'Explora homes de usuarios',
     'pages.homes.searchPlaceholder': 'Buscar usuarios...',
     'pages.homes.searchButton': 'Buscar Usuarios con Homes',
-    'pages.homes.onlineUsers': 'Usuarios En Línea Ahora',
+    'pages.homes.onlineUsers': 'Usuarios En Linea Ahora',
     'pages.homes.popularHomes': 'Homes Populares',
     'pages.homes.recentHomes': 'Homes Recientes',
     'pages.console.title': 'Consola Social',
@@ -491,7 +567,7 @@ const translations = {
     'pages.console.searchUser': 'Escribe el nombre del usuario...',
     'pages.console.feedTitle': '📸 Feed de Fotos de Amigos',
     'pages.console.addComment': 'Añade un comentario...',
-    'pages.console.selectCountry': 'Seleccionar país',
+    'pages.console.selectCountry': 'Seleccionar pais',
     'pages.console.likes': 'me gusta',
     'pages.console.likesPlural': 'me gusta',
     'pages.console.myInfo': 'Perfil',
@@ -544,6 +620,14 @@ const translations = {
            'pages.tools.title': 'Herramientas',
     'pages.tools.subtitle': 'Herramientas útiles de Habbo',
     
+    // Modal de Agradecimientos
+    'pages.home.credits.title': '🏆 Agradecimientos',
+    'pages.home.credits.intro': 'HabboHub fue creado con la intencion de unir a toda la comunidad de jugadores, con algunas funciones extra. Fue creado por un unico usuario, sin experiencia en programacion. Pero este proyecto nunca seria posible si una gran e increible comunidad no hubiera ya hecho un gran trabajo, y me enseno como construir esta pieza de Habbo, fuera de Habbo.',
+    'pages.home.credits.learned': 'Puedo haber olvidado muchos, pero aprendi diversas herramientas sociales investigando grandes fan sites como Puhekupla, HabboEmotion, HabboAssets, Habborator, una gran coleccion (basicamente todo) de imagenes vino gracias a los archivos de ViaJovem, y entendi un poco mas sobre visuales con Habbo Templarios.',
+    'pages.home.credits.eonu': '(Y gracias a eonu por las fuentes Volter)',
+    'pages.home.credits.conclusion': 'Sin el trabajo de estos y tantos otros, HabboHub era solo una imaginación.',
+    'pages.home.credits.final': 'Espero que disfruten el sitio, y me perdonen por todos los bugs que aún quedan ^^',
+    
     // Botones y acciones
     'buttons.save': 'Guardar',
     'buttons.cancel': 'Cancelar',
@@ -558,6 +642,9 @@ const translations = {
     'buttons.search': 'Buscar',
     'buttons.filter': 'Filtrar',
     'buttons.sort': 'Ordenar',
+    'buttons.openConsolePopup': 'Abrir Consola en Pop-up',
+    'buttons.openConsole': 'Abrir Consola',
+    'buttons.focusConsole': 'Enfocar Consola',
     
     // Mensajes
     'messages.loading': 'Cargando...',
@@ -566,6 +653,30 @@ const translations = {
     'messages.noData': 'No se encontraron datos',
     'messages.confirmDelete': '¿Estás seguro de que quieres eliminar?',
     'messages.loginRequired': 'Necesitas estar conectado para acceder a esta página',
+    
+    // Toast Notifications
+    'toast.loginRequired': 'Necesitas estar conectado para comentar',
+    'toast.commentingTooFast': 'Estas comentando muy rapido',
+    'toast.invalidComment': 'Comentario invalido',
+    'toast.commentSent': 'Comentario enviado!',
+    'toast.commentError': 'Error al enviar comentario',
+    'toast.commentAdded': 'Comentario agregado!',
+    'toast.commentAddError': 'Error al agregar comentario',
+    'toast.commentDeleted': 'Comentario eliminado!',
+    'toast.commentDeleteError': 'Error al eliminar comentario',
+    'toast.commentReported': 'Comentario denunciado! Nuestro equipo lo revisara.',
+    'toast.commentReportError': 'Error al denunciar comentario',
+    'toast.likeError': 'Error al dar me gusta a la foto',
+    'toast.likeRemoved': 'Me gusta removido',
+    'toast.unlikeError': 'Error al remover me gusta',
+    'toast.followError': 'Error al seguir usuario',
+    'toast.unfollowError': 'Error al dejar de seguir usuario',
+    'toast.updatingBadges': 'Actualizando badges...',
+    'toast.downloadStarted': 'Descarga iniciada!',
+    'toast.nowFollowing': 'Ahora estas siguiendo a {username}!',
+    'toast.stoppedFollowing': 'Dejaste de seguir a {username}',
+    'toast.languageChanged': 'Idioma cambiado',
+    'toast.languageChangedTo': 'El idioma ha sido cambiado a {language}',
     
     // Mensajes de error de autenticación
     'auth.loginError': 'Error en el login',
@@ -595,11 +706,11 @@ const translations = {
     'validation.required': 'Este campo es obligatorio',
     'validation.email': 'Correo electrónico inválido',
     'validation.passwordMatch': 'Las contraseñas no coinciden',
-    'validation.minLength': 'Mínimo {min} caracteres',
+    'validation.minLength': 'Minimo {min} caracteres',
     'validation.maxLength': 'Máximo {max} caracteres',
     
     // Estado
-    'status.online': 'En Línea',
+    'status.online': 'En Linea',
     'status.offline': 'Desconectado',
     'status.busy': 'Ocupado',
     'status.away': 'Ausente',
@@ -608,10 +719,13 @@ const translations = {
     'time.now': 'Ahora',
     'time.minutesAgo': 'Hace {minutes} minutos',
     'time.hoursAgo': 'Hace {hours} horas',
-    'time.daysAgo': 'Hace {days} días',
+    'time.daysAgo': 'Hace {days} dias',
     'time.weeksAgo': 'Hace {weeks} semanas',
     'time.monthsAgo': 'Hace {months} meses',
     'time.yearsAgo': 'Hace {years} años',
+    
+    // Footer Disclaimer
+    'footer.disclaimer': 'Habbo Hub no esta afiliada a, respaldada, promocionada o aprobada especificamente por Sulake Oy o sus Afiliados. De acuerdo a la Politica de webs fans de Habbo, Habbo Hub puede utilizar las marcas comerciales y otras propiedades intelectuales de Habbo.',
   }
 };
 

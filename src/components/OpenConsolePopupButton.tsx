@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Monitor, ExternalLink } from 'lucide-react';
+import { useI18n } from '@/contexts/I18nContext';
 
 export const OpenConsolePopupButton: React.FC = () => {
+  const { t } = useI18n();
   const [popupWindow, setPopupWindow] = useState<Window | null>(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
 
@@ -75,7 +77,7 @@ export const OpenConsolePopupButton: React.FC = () => {
       size="lg"
     >
       <Monitor className="w-5 h-5 mr-2" />
-      {isPopupOpen ? 'Focar Console' : 'Abrir Console'}
+      {isPopupOpen ? t('buttons.focusConsole') : t('buttons.openConsole')}
       <ExternalLink className="w-4 h-4 ml-2" />
     </Button>
   );

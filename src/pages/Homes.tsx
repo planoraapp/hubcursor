@@ -23,6 +23,7 @@ import PageBanner from '@/components/ui/PageBanner';
 import { HotelTag } from '@/components/HotelTag';
 import { AccentFixedText } from '@/components/AccentFixedText';
 import { getBannerImageBySeed } from '@/utils/bannerUtils';
+import { Footer } from '@/components/Footer';
 
 import type { HabboUser } from '@/types/habbo';
 
@@ -591,6 +592,9 @@ const Homes: React.FC = () => {
                 onHomeClick={handleHomeClick}
               />
             </div>
+            
+            {/* Footer Disclaimer */}
+            <Footer />
             </main>
           </SidebarInset>
         </div>

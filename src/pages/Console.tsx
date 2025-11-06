@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 import PageBanner from '@/components/ui/PageBanner';
 import { getBannerImageBySeed } from '@/utils/bannerUtils';
+import { Footer } from '@/components/Footer';
 
 const Console: React.FC = () => {
   const { isLoggedIn, habboAccount } = useAuth();
@@ -103,11 +104,14 @@ const Console: React.FC = () => {
                         fontSize: '14px'
                       }}
                     >
-                      Abrir Console em Pop-up
+                      {t('buttons.openConsolePopup')}
                     </button>
                   </div>
                 </div>
               </div>
+              
+              {/* Footer Disclaimer */}
+              <Footer />
             </main>
           </SidebarInset>
         </div>

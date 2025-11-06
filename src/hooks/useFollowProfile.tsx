@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface UseFollowProfileProps {
   targetHabboId?: string;
@@ -11,6 +12,7 @@ interface UseFollowProfileProps {
 
 export const useFollowProfile = ({ targetHabboId, targetHabboName }: UseFollowProfileProps = {}) => {
   const { user } = useAuth();
+  const { t } = useI18n();
   const queryClient = useQueryClient();
 
   // Check if current user is following target user
@@ -108,10 +110,10 @@ export const useFollowProfile = ({ targetHabboId, targetHabboName }: UseFollowPr
       queryClient.invalidateQueries({ queryKey: ['isFollowing'] });
       queryClient.invalidateQueries({ queryKey: ['followersCount'] });
       queryClient.invalidateQueries({ queryKey: ['followingCount'] });
-      toast.success(`Agora você está seguindo ${targetHabboName}!`);
+      toast.success(t('toast.nowFollowing', { username: targetHabboName }));
     },
     onError: (error) => {
-            toast.error('Erro ao seguir usuário');
+            toast.error(t('toast.followError'));
     }
   });
 
@@ -134,10 +136,10 @@ export const useFollowProfile = ({ targetHabboId, targetHabboName }: UseFollowPr
       queryClient.invalidateQueries({ queryKey: ['isFollowing'] });
       queryClient.invalidateQueries({ queryKey: ['followersCount'] });
       queryClient.invalidateQueries({ queryKey: ['followingCount'] });
-      toast.success(`Você parou de seguir ${targetHabboName}`);
+      toast.success(t('toast.stoppedFollowing', { username: targetHabboName }));
     },
     onError: (error) => {
-            toast.error('Erro ao deixar de seguir usuário');
+            toast.error(t('toast.unfollowError'));
     }
   });
 

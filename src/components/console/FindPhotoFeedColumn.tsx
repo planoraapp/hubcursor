@@ -111,21 +111,21 @@ export const FindPhotoFeedColumn: React.FC = () => {
    */
   const handleSubmitComment = async (photoId: string) => {
     if (!habboAccount) {
-      toast.error('Você precisa estar logado para comentar');
+      toast.error(t('toast.loginRequired'));
       return;
     }
     
     // Verificar rate limit
     const rateLimitStatus = checkCanComment(photoId);
     if (!rateLimitStatus.canComment) {
-      toast.error(rateLimitStatus.error || 'Você está comentando muito rápido');
+      toast.error(rateLimitStatus.error || t('toast.commentingTooFast'));
       return;
     }
 
     // Validar comentário
     const validation = validateComment(commentText);
     if (!validation.isValid) {
-      toast.error(validation.error || 'Comentário inválido');
+      toast.error(validation.error || t('toast.invalidComment'));
       return;
     }
 
@@ -142,11 +142,11 @@ export const FindPhotoFeedColumn: React.FC = () => {
       
       // Limpar campo
       setCommentText('');
-      toast.success('Comentário enviado!');
+      toast.success(t('toast.commentSent'));
       
     } catch (error: any) {
       console.error('Erro ao enviar comentário:', error);
-      toast.error('Erro ao enviar comentário');
+      toast.error(t('toast.commentError'));
     } finally {
       setIsSubmitting(false);
     }

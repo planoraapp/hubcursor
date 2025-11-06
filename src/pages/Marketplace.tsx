@@ -3,6 +3,7 @@ import React from 'react';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Card } from '@/components/ui/card';
+import { Footer } from '@/components/Footer';
 
 const Marketplace = () => {
   return (
@@ -27,6 +28,9 @@ const Marketplace = () => {
               </p>
             </Card>
           </div>
+          
+          {/* Footer Disclaimer */}
+          <Footer />
         </main>
         </SidebarInset>
       </div>

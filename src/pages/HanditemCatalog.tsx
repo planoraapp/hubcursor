@@ -2,6 +2,7 @@ import React from 'react';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { HanditemTool } from '@/components/tools/HanditemTool';
+import { Footer } from '@/components/Footer';
 
 const HanditemCatalog = () => {
   return (
@@ -19,6 +20,9 @@ const HanditemCatalog = () => {
             <div className="max-w-7xl mx-auto">
               <HanditemTool />
             </div>
+            
+            {/* Footer Disclaimer */}
+            <Footer />
           </main>
         </SidebarInset>
       </div>
