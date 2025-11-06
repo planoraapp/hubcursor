@@ -26,10 +26,12 @@ import { createHabbohubAccountDirect } from '@/utils/createHabbohubAccountDirect
 import { initializeAllMissingHomes } from '@/utils/initializeUserHome';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { AnimationGenerator } from '@/components/AnimationGenerator';
+import { DraggableModal } from '@/components/DraggableModal';
+import { AnimationGeneratorModal } from '@/components/AnimationGeneratorModal';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import HabboFontsDemo from '@/components/HabboFontsDemo';
+import { useToast } from '@/hooks/use-toast';
 
 interface AdminStats {
   totalUsers: number;
@@ -47,6 +49,7 @@ interface AdminStats {
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { habboAccount } = useAuth();
+  const { toast } = useToast();
   
   // Verificar se é o admin (apenas habbohub)
   useEffect(() => {
@@ -70,7 +73,7 @@ export const AdminDashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [showAnimationGenerator, setShowAnimationGenerator] = useState(false);
+  const [showAnimationGeneratorModal, setShowAnimationGeneratorModal] = useState(false);
 
   useEffect(() => {
     loadStats();
@@ -468,29 +471,58 @@ export const AdminDashboard: React.FC = () => {
                   </CardHeader>
                   <CardContent className="space-y-2">
                     <Button
-                      onClick={() => setShowAnimationGenerator(!showAnimationGenerator)}
+                      onClick={() => setShowAnimationGeneratorModal(true)}
                       variant="outline"
                       className="w-full volter-font"
                     >
                       🎬 Gerador de Animações
                     </Button>
+                    <Button
+                      onClick={() => {
+                        // Testar diferentes tipos de notificações
+                        toast({
+                          title: "✅ Sucesso!",
+                          description: "Esta é uma notificação de sucesso",
+                        });
+                        setTimeout(() => {
+                          toast({
+                            title: "⚠️ Aviso",
+                            description: "Esta é uma notificação de aviso",
+                          });
+                        }, 600);
+                        setTimeout(() => {
+                          toast({
+                            title: "❌ Erro",
+                            description: "Esta é uma notificação de erro",
+                            variant: "destructive",
+                          });
+                        }, 1200);
+                        setTimeout(() => {
+                          toast({
+                            title: "ℹ️ Informação",
+                            description: "Esta é uma notificação informativa",
+                          });
+                        }, 1800);
+                      }}
+                      variant="outline"
+                      className="w-full volter-font"
+                    >
+                      🧪 Testar Notificações
+                    </Button>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Gerador de Animações */}
-              {showAnimationGenerator && (
-                <div className="mt-8">
-                  <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
-                    <CardHeader>
-                      <CardTitle className="volter-font">🎬 Gerador de Animações</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <AnimationGenerator />
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
+              {/* Modal do Gerador de Animações */}
+              <DraggableModal
+                isOpen={showAnimationGeneratorModal}
+                onClose={() => setShowAnimationGeneratorModal(false)}
+                title="🎬 Gerador de Animações Habbo"
+                initialPosition={{ x: 100, y: 100 }}
+                initialSize={{ width: 600, height: 700 }}
+              >
+                <AnimationGeneratorModal />
+              </DraggableModal>
 
               {/* Badge de sistema */}
               <div className="flex justify-center">

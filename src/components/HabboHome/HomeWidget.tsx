@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { RatingWidget } from './widgets/RatingWidget';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { useToast } from '@/hooks/use-toast';
 import type { 
   Widget, 
   HabboData, 
@@ -67,7 +69,10 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
   const [dragStart, setDragStart] = React.useState({ x: 0, y: 0, elementX: widget.x, elementY: widget.y });
   const [newMessage, setNewMessage] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+  const [entryToDelete, setEntryToDelete] = React.useState<string | null>(null);
   const isMobile = useIsMobile();
+  const { toast } = useToast();
 
   const handleGuestbookSubmit = useCallback(async () => {
     console.log('🔍 [HomeWidget] handleGuestbookSubmit chamado:', {
@@ -95,16 +100,24 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
 
   const handleGuestbookDelete = useCallback(async (entryId: string) => {
         if (!onGuestbookDelete) {
-            alert('Erro: Função de exclusão não disponível');
+            toast({
+              title: "❌ Erro",
+              description: "Função de exclusão não disponível",
+              variant: "destructive"
+            });
       return;
     }
     
     try {
             const result = await onGuestbookDelete(entryId);
-          } catch (error) {
-            alert(`Erro ao deletar mensagem: ${error.message || error}`);
+          } catch (error: any) {
+            toast({
+              title: "❌ Erro ao deletar",
+              description: `Erro ao deletar mensagem: ${error.message || error}`,
+              variant: "destructive"
+            });
     }
-  }, [onGuestbookDelete, currentUser, isOwner]);
+  }, [onGuestbookDelete, currentUser, isOwner, toast]);
 
   const canDeleteEntry = useCallback((entry: GuestbookEntry) => {
     if (!currentUser) {
@@ -350,13 +363,13 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
                             {/* Avatar */}
                             <div className="flex-shrink-0">
                               <img
-                                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=2&gesture=sml&size=l&headonly=1`}
+                                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=2&gesture=sml&size=m&headonly=1`}
                                 alt={entry.author_habbo_name}
                                 className="w-16 h-16 object-contain"
                                 style={{ imageRendering: 'pixelated' }}
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
-                                  target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=2&gesture=sml&size=l`;
+                                  target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=2&gesture=sml&size=m&headonly=1`;
                                 }}
                               />
                             </div>
@@ -384,9 +397,8 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        if (window.confirm('Tem certeza que deseja excluir este recado?')) {
-                                          handleGuestbookDelete(entry.id);
-                                        }
+                                        setEntryToDelete(entry.id);
+                                        setDeleteConfirmOpen(true);
                                       }}
                                       className="group relative w-5 h-5 flex items-center justify-center"
                                       title="Excluir comentário"
@@ -562,6 +574,23 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       {isDragging && (
         <div className="absolute inset-0 border-2 border-dashed border-blue-400 rounded pointer-events-none" />
       )}
+
+      {/* Modal de Confirmação para Deletar Comentário */}
+      <ConfirmationDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="⚠️ Confirmar Exclusão"
+        description="Tem certeza que deseja excluir este recado? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        variant="destructive"
+        onConfirm={() => {
+          if (entryToDelete) {
+            handleGuestbookDelete(entryToDelete);
+            setEntryToDelete(null);
+          }
+        }}
+      />
     </div>
   );
 };

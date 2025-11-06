@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { useToast } from '@/hooks/use-toast';
 import type { HabboData, GuestbookEntry, Background, Sticker, Widget } from '@/types/habbo';
 
 export const useHabboHome = (username: string, hotel: string = 'br') => {
@@ -21,6 +22,7 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
   
   const { habboAccount } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const pendingChangesRef = useRef<{
     widgets?: Widget[];
     stickers?: Sticker[];
@@ -363,12 +365,26 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
       queryClient.invalidateQueries({ queryKey: ['latest-homes'] });
 
       console.log('✅ Todas as mudanças salvas!');
+      
+      // Notificação de sucesso
+      const totalChanges = (changes.widgets?.length || 0) + (changes.stickers?.length || 0) + (changes.background ? 1 : 0);
+      if (totalChanges > 0) {
+        toast({
+          title: "✅ Alterações salvas",
+          description: `Suas modificações na home foram salvas com sucesso!`,
+        });
+      }
     } catch (error) {
       console.error('❌ Erro ao salvar:', error);
+      toast({
+        title: "❌ Erro ao salvar",
+        description: "Não foi possível salvar as alterações. Tente novamente.",
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
     }
-  }, [isOwner, habboData, supabase, queryClient]);
+  }, [isOwner, habboData, supabase, queryClient, toast]);
 
   const scheduleSave = useCallback(() => {
     if (saveTimeoutRef.current) {
@@ -437,9 +453,20 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
 
       setWidgets(prev => [...prev, data as Widget]);
       console.log(`✅ Widget ${widgetType} criado`);
+      
+      toast({
+        title: "✅ Widget adicionado",
+        description: `O widget foi adicionado à sua home com sucesso!`,
+      });
+      
       return true;
     } catch (error) {
       console.error('❌ Erro ao adicionar widget:', error);
+      toast({
+        title: "❌ Erro ao adicionar widget",
+        description: "Não foi possível adicionar o widget. Tente novamente.",
+        variant: "destructive",
+      });
       return false;
     }
   };
@@ -463,13 +490,28 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
 
       if (error) {
         console.error('❌ Erro ao remover widget:', error);
+        toast({
+          title: "❌ Erro ao remover widget",
+          description: "Não foi possível remover o widget. Tente novamente.",
+          variant: "destructive",
+        });
         return;
       }
 
       setWidgets(prev => prev.filter(w => w.id !== widgetId));
       console.log(`✅ Widget ${widgetId} removido`);
+      
+      toast({
+        title: "✅ Widget removido",
+        description: `O widget foi removido da sua home.`,
+      });
     } catch (error) {
       console.error('❌ Erro ao remover widget:', error);
+      toast({
+        title: "❌ Erro ao remover widget",
+        description: "Não foi possível remover o widget. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -518,9 +560,20 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
 
       setStickers(prev => [...prev, data as Sticker]);
       console.log(`✅ Sticker ${stickerId} adicionado`);
+      
+      toast({
+        title: "✅ Sticker adicionado",
+        description: `O sticker foi adicionado à sua home com sucesso!`,
+      });
+      
       return true;
     } catch (error) {
       console.error('❌ Erro ao adicionar sticker:', error);
+      toast({
+        title: "❌ Erro ao adicionar sticker",
+        description: "Não foi possível adicionar o sticker. Tente novamente.",
+        variant: "destructive",
+      });
       return false;
     }
   };
@@ -543,6 +596,11 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
 
       if (error) {
         console.error('❌ Erro ao remover sticker:', error);
+        toast({
+          title: "❌ Erro ao remover sticker",
+          description: "Não foi possível remover o sticker. Tente novamente.",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -554,8 +612,18 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
       queryClient.invalidateQueries({ queryKey: ['latest-homes'] });
       
       console.log(`✅ Sticker ${stickerId} removido do estado local`);
+      
+      toast({
+        title: "✅ Sticker removido",
+        description: `O sticker foi removido da sua home.`,
+      });
     } catch (error) {
       console.error('❌ Erro ao remover sticker:', error);
+      toast({
+        title: "❌ Erro ao remover sticker",
+        description: "Não foi possível remover o sticker. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 

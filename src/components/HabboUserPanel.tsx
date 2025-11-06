@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp, ChevronLeft, Award, Globe, Bell, Wifi } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 interface HabboUserProfile {
   habbo_name: string;
@@ -25,6 +26,7 @@ interface HabboUserProfile {
 export const HabboUserPanel = () => {
   const { habboAccount, isLoggedIn, logout } = useAuth();
   const { language, setLanguage, t } = useI18n();
+  const { toast } = useToast();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [userProfile, setUserProfile] = useState<HabboUserProfile | null>(null);
@@ -82,6 +84,43 @@ export const HabboUserPanel = () => {
       'tr': 'habbo.com.tr'
     };
     return hotelNames[hotel] || 'habbo.com';
+  };
+
+  const handleLanguageChange = (newLanguage: 'pt' | 'en' | 'es') => {
+    if (newLanguage !== language) {
+      setLanguage(newLanguage);
+      const languageNames: Record<string, string> = {
+        'pt': 'Português',
+        'en': 'English',
+        'es': 'Español'
+      };
+      toast({
+        title: "✅ Idioma alterado",
+        description: `O idioma foi alterado para ${languageNames[newLanguage]}`,
+      });
+    }
+  };
+
+  const handleStatusToggle = () => {
+    const newStatus = !isOnline;
+    setIsOnline(newStatus);
+    toast({
+      title: newStatus ? "✅ Status alterado" : "⚠️ Status alterado",
+      description: newStatus 
+        ? "Você está agora visível no console do site" 
+        : "Você está agora oculto no console do site",
+    });
+  };
+
+  const handleNotificationsToggle = () => {
+    const newStatus = !notificationsEnabled;
+    setNotificationsEnabled(newStatus);
+    toast({
+      title: newStatus ? "✅ Notificações ativadas" : "⚠️ Notificações desativadas",
+      description: newStatus 
+        ? "Você receberá alertas do site" 
+        : "Você não receberá mais alertas do site",
+    });
   };
 
   if (!isLoggedIn || !userProfile) return null;
@@ -235,7 +274,7 @@ export const HabboUserPanel = () => {
                 >
                   {removeAccents(t('sidebar.userPanel.monthlyXP'))}: 16
                 </span>
-              <div className="w-6 h-6 bg-red-600 rounded flex items-center justify-center">
+              <div className="w-6 h-6 bg-red-600 rounded flex items-center justify-center flex-shrink-0">
                 <Award className="w-4 h-4 text-white" />
               </div>
             </div>
@@ -253,12 +292,14 @@ export const HabboUserPanel = () => {
                 >
                   {removeAccents(t('sidebar.userPanel.hubHome'))}
                 </span>
-                <img 
-                  src="/assets/buttons/homebutton.png" 
-                  alt="Home" 
-                  className="w-4 h-4 object-contain"
-                  style={{ imageRendering: 'pixelated' }}
-                />
+                <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
+                  <img 
+                    src="/assets/homebutton.png" 
+                    alt="Profile" 
+                    className="w-4 h-4 object-contain"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                </div>
               </button>
             </Link>
             
@@ -277,11 +318,11 @@ export const HabboUserPanel = () => {
                 >
                   {removeAccents(t('sidebar.userPanel.settings'))}
                 </span>
-              <div className="w-6 h-6 bg-orange-500 rounded flex items-center justify-center">
+              <div className="w-6 h-6 bg-orange-500 rounded flex items-center justify-center flex-shrink-0">
                 <img 
                   src="/assets/settings.gif" 
                   alt="⚙️" 
-                  className="w-4 h-4" 
+                  className="w-4 h-4 object-contain" 
                   style={{ imageRendering: 'pixelated' }} 
                 />
               </div>
@@ -366,7 +407,7 @@ export const HabboUserPanel = () => {
                 </div>
                 <div className="flex justify-center mb-2">
                   <button
-                    onClick={() => setIsOnline(!isOnline)}
+                    onClick={handleStatusToggle}
                     className="transition-all hover:opacity-80"
                     title={isOnline ? "Ocultar do Console" : "Mostrar no Console"}
                   >
@@ -401,7 +442,7 @@ export const HabboUserPanel = () => {
                 </div>
                 <div className="flex justify-center mb-2">
                   <button
-                    onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+                    onClick={handleNotificationsToggle}
                     className="transition-all hover:opacity-80"
                     title={notificationsEnabled ? "Desativar Notificações" : "Ativar Notificações"}
                   >
@@ -436,7 +477,7 @@ export const HabboUserPanel = () => {
                 </div>
                 <div className="flex gap-2 justify-center items-center">
                   <button
-                    onClick={() => setLanguage('pt')}
+                    onClick={() => handleLanguageChange('pt')}
                     className={`rounded transition-all ${
                       language === 'pt' 
                         ? 'ring-2 ring-blue-500 ring-offset-1' 
@@ -452,7 +493,7 @@ export const HabboUserPanel = () => {
                     />
                   </button>
                   <button
-                    onClick={() => setLanguage('en')}
+                    onClick={() => handleLanguageChange('en')}
                     className={`rounded transition-all ${
                       language === 'en' 
                         ? 'ring-2 ring-blue-500 ring-offset-1' 
@@ -468,7 +509,7 @@ export const HabboUserPanel = () => {
                     />
                   </button>
                   <button
-                    onClick={() => setLanguage('es')}
+                    onClick={() => handleLanguageChange('es')}
                     className={`rounded transition-all ${
                       language === 'es' 
                         ? 'ring-2 ring-blue-500 ring-offset-1' 

@@ -962,3 +962,39 @@
   border-right: 1px solid #DBEAFE;
   border-bottom: 1px solid #DBEAFE;
 }
+
+/* Estilos para Habbo Toast Notifications */
+.toast-item {
+  transition: all 0.5s ease;
+  overflow: visible;
+}
+
+.toast-item.success {
+  --clr: #03a65a;
+  --bg: #005e38;
+}
+
+.toast-item.error {
+  --clr: #db3056;
+  --bg: #851d41;
+}
+
+.toast-item.warning {
+  --clr: #fc8621;
+  --bg: #c24914;
+}
+
+.toast-item.info {
+  --clr: #0070e0;
+  --bg: #05478a;
+}
+
+.toast {
+  position: relative;
+  box-shadow: 0 0 1.5rem 0 rgba(26, 31, 67, 0.15);
+}
+
+.toast .close:hover {
+  background-color: var(--clr);
+  color: white;
+}

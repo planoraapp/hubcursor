@@ -2,7 +2,7 @@ import React, { lazy, Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Toaster } from '@/components/ui/toaster'
+import { HabboToaster } from '@/components/ui/habbo-toaster'
 import { AuthProvider } from '@/hooks/useAuth'
 import { I18nProvider } from '@/contexts/I18nContext'
 import { NotificationProvider, useNotification } from '@/hooks/useNotification'
@@ -178,7 +178,7 @@ const AppWithNotifications = () => {
         notifications={notifications}
         onClose={removeNotification}
       />
-      <Toaster />
+      <HabboToaster />
     </>
   );
 };
