@@ -1,14 +1,15 @@
 
 import React from 'react';
-import { NewAppSidebar } from '@/components/NewAppSidebar';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Card } from '@/components/ui/card';
 
 const Marketplace = () => {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-green-50 to-emerald-100">
-        <NewAppSidebar />
+      <div className="min-h-screen flex w-full">
+        <CollapsibleAppSidebar />
+        <SidebarInset className="flex-1 bg-gradient-to-br from-green-50 to-emerald-100">
         <main className="flex-1 p-8">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-8">
@@ -27,6 +28,7 @@ const Marketplace = () => {
             </Card>
           </div>
         </main>
+        </SidebarInset>
       </div>
     </SidebarProvider>
   );

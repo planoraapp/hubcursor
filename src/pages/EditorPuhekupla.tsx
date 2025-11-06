@@ -1,20 +1,22 @@
 
 import React from 'react';
-import { NewAppSidebar } from '@/components/NewAppSidebar';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import PuhekuplaEditor from '../components/PuhekuplaEditor/PuhekuplaEditor';
 
 const EditorPuhekupla = () => {
   return (
     <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <CollapsibleAppSidebar />
+        <SidebarInset className="flex-1">
       <div 
-        className="min-h-screen flex w-full"
+        className="min-h-screen"
         style={{ 
           backgroundImage: 'url(/assets/site/bghabbohub.png)',
           backgroundRepeat: 'repeat'
         }}
       >
-        <NewAppSidebar />
         <main className="flex-1 p-4 md:p-8 overflow-y-auto scrollbar-hide">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8">
@@ -27,6 +29,8 @@ const EditorPuhekupla = () => {
             </div>
           </div>
         </main>
+      </div>
+        </SidebarInset>
       </div>
     </SidebarProvider>
   );
