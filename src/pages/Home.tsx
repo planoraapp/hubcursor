@@ -131,13 +131,13 @@ export const Home: React.FC = () => {
         <CollapsibleAppSidebar />
         <SidebarInset className="flex-1">
           <main 
-            className="flex-1 p-8 min-h-screen"
+            className="flex-1 px-4 py-6 pb-28 md:px-8 md:py-8 min-h-screen"
             style={{ 
               backgroundImage: 'url(/assets/site/bghabbohub.png)',
               backgroundRepeat: 'repeat'
             }}
           >
-            <div className="max-w-7xl mx-auto">
+            <div className="mx-auto w-full max-w-7xl">
               {/* Banner padrão com fundo de nuvens */}
               <PageBanner 
                 title="🏠 HabboHub"
@@ -146,7 +146,7 @@ export const Home: React.FC = () => {
               />
 
               {/* Features Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+              <div className="grid grid-cols-1 gap-6 mb-12 md:grid-cols-2 lg:grid-cols-3">
                 <Card className="hover:shadow-lg transition-shadow bg-white/95 backdrop-blur-sm border-2 border-black overflow-hidden flex flex-col">
                   <CardHeader className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-b-2 border-black">
                     <CardTitle className="flex items-center gap-2 sidebar-font-option-4 text-white"
@@ -332,11 +332,21 @@ export const Home: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-6 flex flex-col flex-1">
-                    <p className="text-gray-600 mb-4 volter-body-text">
+                    <p className="text-gray-600 mb-4 volter-body-text text-center">
                       <AccentFixedText>{t('pages.home.tools.description')}</AccentFixedText>
                     </p>
+                    <div
+                      className="flex justify-center items-center mb-4 h-[220px] md:h-[240px]"
+                    >
+                      <img
+                        src="/assets/tools1.png"
+                        alt="Ferramentas HabboHub"
+                        className="object-contain"
+                        style={{ imageRendering: 'pixelated', maxHeight: '100%', width: 'auto' }}
+                      />
+                    </div>
                     <div className="mt-auto flex justify-center">
-                      <Link to="/emblemas">
+                      <Link to="/tools">
                         <Button className="habbo-button-yellow sidebar-font-option-4"
                           style={{
                             fontSize: '16px',
@@ -351,38 +361,41 @@ export const Home: React.FC = () => {
                 </Card>
               </div>
             </div>
-            
+
+            {/* Troféu de Agradecimentos */}
+            <div className="mt-12 flex justify-center">
+              <button
+                onClick={() => setShowCreditsDialog(true)}
+                className="bg-transparent p-0"
+                title="Agradecimentos"
+              >
+                <img
+                  src="/assets/trophy.png"
+                  alt="Troféu de Ouro"
+                  className="h-32 w-auto object-contain"
+                  style={{ imageRendering: 'pixelated' }}
+                />
+              </button>
+            </div>
+
             {/* Footer Disclaimer */}
             <Footer />
           </main>
         </SidebarInset>
       </div>
-      
-      {/* Troféu Flutuante - Agradecimentos */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <button
-          onClick={() => setShowCreditsDialog(true)}
-          className="cursor-pointer hover:scale-110 transition-transform drop-shadow-lg bg-transparent border-none p-0"
-          title="Agradecimentos"
-        >
-          <img 
-            src="/assets/trophy.png"
-            alt="Troféu de Ouro"
-            className="w-32 h-32 object-contain"
-            style={{ imageRendering: 'pixelated', backgroundColor: 'transparent' }}
-          />
-        </button>
-      </div>
 
       {/* Dialog de Agradecimentos */}
       <Dialog open={showCreditsDialog} onOpenChange={setShowCreditsDialog}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent
+          className="max-w-2xl max-h-[80vh] overflow-y-auto"
+          aria-describedby="home-credits-description"
+        >
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-center volter-font">
               {t('pages.home.credits.title')}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 mt-4">
+          <div className="space-y-4 mt-4" id="home-credits-description">
             <div className="volter-body-text text-gray-700 space-y-3">
               <p>
                 {t('pages.home.credits.intro')}
@@ -396,6 +409,7 @@ export const Home: React.FC = () => {
                   .replace(/Habborator/g, '<a href="https://habborator.org" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-semibold">Habborator</a>')
                   .replace(/ViaJovem/g, '<a href="https://viajovem.blogspot.com" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-semibold">ViaJovem</a>')
                   .replace(/Habbo Templarios/g, '<a href="https://habbotemplarios.com" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-semibold">Habbo Templarios</a>')
+                  .replace(/Habbonews/g, '<a href="https://habbonews.net" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-semibold">Habbonews</a>')
               }} />
               
               <p dangerouslySetInnerHTML={{

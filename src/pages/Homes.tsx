@@ -353,24 +353,25 @@ const Homes: React.FC = () => {
           <CollapsibleAppSidebar />
           <SidebarInset className="flex-1">
             
-            <main className="flex-1 p-8 min-h-screen" style={{ 
+            <main className="flex-1 px-4 py-6 pb-28 md:px-8 md:py-8 min-h-screen" style={{ 
               backgroundImage: 'url(/assets/site/bghabbohub.png)',
               backgroundRepeat: 'repeat'
             }}>
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-7xl mx-auto w-full space-y-6">
               <PageBanner 
                 title="Habbo Home"
                 subtitle="Explore as homes dos usuários do HabboHub"
                 backgroundImage={getBannerImageBySeed('homes')}
+                className="w-full"
               />
               
               {/* Busca e Minha Home */}
-              <div className="flex gap-6 mb-8 items-stretch">
+              <div className="flex flex-col gap-6 mb-8 md:flex-row md:items-stretch">
                 {/* Minicard Minha Home ou Login */}
                 {isLoggedIn && habboAccount ? (
-                  <div className="flex-shrink-0">
+                  <div className="w-full md:w-auto">
                     <Card 
-                      className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer w-64 h-full relative overflow-hidden"
+                      className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer w-full md:w-64 h-full relative overflow-hidden"
                       onClick={() => {
                         const domainUsername = generateUniqueUsername(habboAccount.habbo_name, habboAccount.hotel);
                         navigate(`/home/${domainUsername}`);
@@ -429,9 +430,9 @@ const Homes: React.FC = () => {
                     </Card>
                   </div>
                 ) : (
-                  <div className="flex-shrink-0">
+                  <div className="w-full md:w-auto">
                     <Card 
-                      className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer w-64 h-full relative overflow-hidden"
+                      className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer w-full md:w-64 h-full relative overflow-hidden"
                       onClick={() => navigate('/login')}
                     >
                       {/* Background padrão para não logado */}
@@ -471,7 +472,7 @@ const Homes: React.FC = () => {
                 )}
 
                 {/* Campo de Busca */}
-                <div className="flex-1">
+                <div className="flex-1 w-full">
                   <Card className="hover:shadow-lg transition-shadow bg-white/95 backdrop-blur-sm border-2 border-black">
                 <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-b-2 border-black">
                   <CardTitle className="flex items-center gap-2 sidebar-font-option-4 text-white"
@@ -484,8 +485,8 @@ const Homes: React.FC = () => {
                     {t('pages.homes.searchButton')}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-6">
-                  <div className="flex gap-4">
+                <CardContent className="p-6 space-y-3">
+                  <div className="flex flex-col gap-3 sm:flex-row">
                     <div className="relative flex-1">
                       <Input
                         type="text"
@@ -504,7 +505,7 @@ const Homes: React.FC = () => {
                     <Button 
                       onClick={handleSearch}
                       disabled={loading}
-                      className="habbo-button-purple sidebar-font-option-4"
+                      className="habbo-button-purple sidebar-font-option-4 w-full sm:w-auto"
                       style={{
                         fontSize: '16px',
                         fontWeight: 'bold',
@@ -515,7 +516,7 @@ const Homes: React.FC = () => {
                       {loading ? t('buttons.searching') : t('buttons.search')}
                     </Button>
                   </div>
-                  <p className="text-gray-600 mt-2 volter-body-text">
+                  <p className="text-gray-600 volter-body-text">
                     <AccentFixedText>{t('messages.searchTip')}</AccentFixedText>
                   </p>
                 </CardContent>

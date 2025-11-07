@@ -80,7 +80,7 @@ export const HomesGrid: React.FC<HomesGridProps> = ({
 
   return (
     <div className="mb-8">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <h2 className="text-xl font-bold text-white volter-goldfish-font" 
             style={{ textShadow: '2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000, 0px 2px 0px #000, 0px -2px 0px #000, 2px 0px 0px #000, -2px 0px 0px #000' }}>
           {title}
@@ -90,17 +90,17 @@ export const HomesGrid: React.FC<HomesGridProps> = ({
         <div className="flex gap-2">
           <Button
             variant="outline"
-            size="sm"
+            size="icon"
             onClick={() => scroll('left')}
-            className="bg-black/20 border-white/40 text-white hover:bg-black/40 hover:border-white/60 shadow-lg"
+            className="h-9 w-9 bg-black/20 border-white/40 text-white hover:bg-black/40 hover:border-white/60 shadow-lg"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
           <Button
             variant="outline"
-            size="sm"
+            size="icon"
             onClick={() => scroll('right')}
-            className="bg-black/20 border-white/40 text-white hover:bg-black/40 hover:border-white/60 shadow-lg"
+            className="h-9 w-9 bg-black/20 border-white/40 text-white hover:bg-black/40 hover:border-white/60 shadow-lg"
           >
             <ChevronRight className="w-4 h-4" />
           </Button>

@@ -87,17 +87,17 @@ const Console: React.FC = () => {
                   backgroundImage={getBannerImageBySeed('console')}
                 />
                 
-                {/* Console e botão lado a lado */}
-                <div className="flex justify-center mt-8 gap-6">
+                {/* Console e botão (responsivo) */}
+                <div className="mt-8 flex flex-col items-center gap-6 md:flex-row md:items-start md:justify-center">
                   <div className="w-full max-w-[375px]">
                     <FunctionalConsole />
                   </div>
                   
-                  {/* Popup button positioned to the right of console */}
-                  <div className="flex items-start pt-4">
+                  {/* Botão abre popup */}
+                  <div className="w-full max-w-[375px] flex justify-center md:justify-start md:pt-4">
                     <button
                       onClick={openPopupConsole}
-                      className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold volter-font px-6 py-3 rounded-lg border-2 border-black shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 whitespace-nowrap"
+                      className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold volter-font px-6 py-3 rounded-lg border-2 border-black shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
                       style={{
                         textShadow: '1px 1px 0px rgba(255,255,255,0.5)',
                         boxShadow: '4px 4px 0px rgba(0,0,0,0.3)',

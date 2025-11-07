@@ -15,22 +15,48 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/contexts/I18nContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronLeft, ChevronRight, LogOut, User } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { CountryFlags } from '@/components/marketplace/CountryFlags';
+import { ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { HabboUserPanel } from '@/components/HabboUserPanel';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export function CollapsibleAppSidebar() {
   const location = useLocation();
-  const { habboAccount, isLoggedIn, logout } = useAuth();
+  const { habboAccount, isLoggedIn } = useAuth();
   const { t } = useI18n();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
+  const isMobileViewport = useIsMobile();
+  const [isHeaderHidden, setIsHeaderHidden] = React.useState(false);
+  const lastScrollY = React.useRef(0);
 
-  // Verificar se o usuário é admin - apenas habbohub tem acesso
+  React.useEffect(() => {
+    if (!isMobileViewport) {
+      setIsHeaderHidden(false);
+      return;
+    }
+
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      const delta = currentY - lastScrollY.current;
+
+      if (currentY <= 24) {
+        setIsHeaderHidden(false);
+      } else if (delta > 4) {
+        setIsHeaderHidden(true);
+      } else if (delta < -6) {
+        setIsHeaderHidden(false);
+      }
+
+      lastScrollY.current = currentY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isMobileViewport]);
+
   const isAdmin = habboAccount?.habbo_name?.toLowerCase() === 'habbohub' && habboAccount?.is_admin === true;
 
-  // Debug temporário para verificar status de admin// Função para remover acentos para compatibilidade com fonte Volter
   const removeAccents = (text: string) => {
     return text
       .replace(/[áàâã]/g, 'a')
@@ -55,67 +81,224 @@ export function CollapsibleAppSidebar() {
     { nameKey: 'nav.tools', path: '/ferramentas', icon: '/assets/Tools/ferramentas.png' },
   ];
 
-  // Adicionar menu de admin se o usuário for admin
   if (isAdmin) {
-    menuItems.push({ 
-      nameKey: 'nav.admin', 
-      path: '/admin', 
-      icon: '/assets/1044__-IT.png' 
+    menuItems.push({
+      nameKey: 'nav.admin',
+      path: '/admin',
+      icon: '/assets/1044__-IT.png',
     });
   }
+
+  const dockItems = menuItems.slice(0, 5);
+
+  const handleIconError = React.useCallback((event: React.SyntheticEvent<HTMLImageElement>) => {
+    const target = event.currentTarget;
+    const current = target.src || '';
+
+    if (target.hasAttribute('data-fallback-attempted')) {
+      return;
+    }
+
+    let fallback = '';
+    if (current.includes('/assets/buttons/homebutton.png')) {
+      fallback = '/assets/homebutton.png';
+    } else if (current.includes('/assets/console/consoleoff.gif')) {
+      fallback = '/assets/consoleoff.gif';
+    } else if (current.includes('/assets/journal/news.png')) {
+      fallback = '/assets/news.png';
+    } else if (current.includes('/assets/Tools/ferramentas.png')) {
+      fallback = '/assets/ferramentas.png';
+    } else if (current.includes('/assets/1044__-IT.png')) {
+      fallback = '/placeholder.svg';
+    }
+
+    target.setAttribute('data-fallback-attempted', 'true');
+
+    if (fallback) {
+      target.src = fallback;
+    }
+  }, []);
+
+  const getIsActive = React.useCallback(
+    (path: string) => {
+      if (path === '/') {
+        return location.pathname === '/';
+      }
+      return location.pathname.startsWith(path);
+    },
+    [location.pathname]
+  );
+
+  const userHeadSrc = React.useMemo(() => {
+    if (!habboAccount?.habbo_name) {
+      return '';
+    }
+
+    const username = encodeURIComponent(habboAccount.habbo_name);
+    return `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${username}&size=l&direction=2&head_direction=3&headonly=1`;
+  }, [habboAccount?.habbo_name]);
+
+  const userFullFigureSrc = React.useMemo(() => {
+    if (!habboAccount?.habbo_name) {
+      return '';
+    }
+
+    const username = encodeURIComponent(habboAccount.habbo_name);
+    return `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${username}&size=m&direction=4&head_direction=4&gesture=sml`;
+  }, [habboAccount?.habbo_name]);
+
+  const MobileHeader = () => (
+    <header
+      className={`fixed inset-x-0 top-0 z-50 md:hidden border-b-2 border-black bg-[#f5f5dc] overflow-hidden transition-transform duration-200 ease-out ${isHeaderHidden ? '-translate-y-full' : 'translate-y-0'}`}
+      style={{
+        paddingTop: 'max(env(safe-area-inset-top), 0px)',
+      }}
+    >
+      <div className="relative flex items-center justify-between px-4 py-1.5">
+        <Link to="/" className="flex items-center">
+          <img
+            src="/assets/hubbeta.gif"
+            alt="Habbo Hub"
+            className="h-12 w-auto"
+            style={{
+              imageRendering: 'pixelated',
+              objectFit: 'contain',
+            }}
+            onError={(event) => {
+              const target = event.currentTarget as HTMLImageElement;
+              target.src = '/assets/hubbeta.gif';
+            }}
+          />
+        </Link>
+
+        <div className="h-11 w-11" aria-hidden="true" />
+
+        {isLoggedIn && habboAccount ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="absolute right-4 bottom-[-6px] flex h-20 w-16 items-end justify-center overflow-hidden bg-transparent p-0 transition-transform hover:scale-105"
+                aria-label={removeAccents(t('sidebar.userPanel.settings'))}
+              >
+                <img
+                  src={userFullFigureSrc}
+                  alt={habboAccount.habbo_name}
+                  className="object-contain"
+                  style={{
+                    imageRendering: 'pixelated',
+                    width: 'auto',
+                    height: 'auto',
+                    transform: 'translateY(12px)',
+                  }}
+                  onError={(event) => {
+                    const target = event.currentTarget as HTMLImageElement;
+                    target.src = userHeadSrc || '/assets/habbouserhead.png';
+                  }}
+                />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              sideOffset={0}
+              className="w-[min(20rem,calc(100vw-1.5rem))] max-h-[80vh] overflow-y-auto border-2 border-black border-t-0 bg-[#f5f5dc] p-2 shadow-xl"
+            >
+              <HabboUserPanel />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Link to="/login" className="inline-flex">
+            <button
+              className="flex items-center gap-2 rounded border-2 border-black bg-blue-600 px-3 py-2 text-white transition-colors hover:bg-blue-700"
+              style={{
+                fontFamily: 'Volter',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                letterSpacing: '0.3px',
+              }}
+            >
+              <User className="h-4 w-4" />
+              {removeAccents(t('nav.login'))}
+            </button>
+          </Link>
+        )}
+      </div>
+    </header>
+  );
+
+  const MobileDock = () => (
+    <nav
+      className="fixed inset-x-0 bottom-0 z-50 md:hidden border-t-2 border-black bg-[#f5f5dc]"
+      style={{
+        paddingBottom: 'max(env(safe-area-inset-bottom), 0px)',
+      }}
+    >
+      <div className="flex items-stretch justify-between">
+        {dockItems.map((item) => {
+          const translatedName = removeAccents(t(item.nameKey));
+          const isActive = getIsActive(item.path);
+
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex flex-1 flex-col items-center justify-center px-1 py-1 transition-colors ${
+                isActive ? 'bg-yellow-300/70' : 'hover:bg-yellow-200/60'
+              }`}
+            >
+              <div className="flex h-12 w-12 items-center justify-center">
+                <img
+                  src={item.icon}
+                  alt={translatedName}
+                  className="object-contain"
+                  style={{
+                    imageRendering: 'pixelated',
+                    width: 'auto',
+                    height: 'auto',
+                    maxWidth: '48px',
+                    maxHeight: '48px',
+                  }}
+                  onError={handleIconError}
+                />
+              </div>
+              <span
+                className="mt-1 text-center text-xs font-bold text-black leading-none"
+                style={{
+                  fontFamily: 'Volter',
+                  letterSpacing: '0.3px',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {translatedName}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
 
   const MenuItem = ({ item }: { item: typeof menuItems[0] }) => {
     const translatedName = t(item.nameKey);
     const content = (
-      <Link to={item.path} className="flex items-center gap-2 w-full min-h-[48px]">
-        <div className="flex-shrink-0 flex items-center justify-center w-12">
-          <img 
-            src={item.icon} 
+      <Link to={item.path} className="flex w-full min-h-[48px] items-center gap-2">
+        <div className="flex w-12 flex-shrink-0 items-center justify-center">
+          <img
+            src={item.icon}
             alt={translatedName}
             className="object-contain"
-            style={{ 
+            style={{
               imageRendering: 'pixelated',
               width: 'auto',
               height: 'auto',
               maxWidth: '48px',
-              maxHeight: '48px'
+              maxHeight: '48px',
             }}
-            onError={(e) => {
-              const target = e.currentTarget as HTMLImageElement;
-              const current = target.src || '';
-              
-              // Evita loop infinito - se já tentou fallback, não tenta mais
-              if (target.hasAttribute('data-fallback-attempted')) {
-                return;
-              }
-              
-              // Fallbacks específicos baseados no caminho original
-              let fallback = '';
-              if (current.includes('/assets/buttons/homebutton.png')) {
-                fallback = '/assets/homebutton.png';
-              } else if (current.includes('/assets/console/consoleoff.gif')) {
-                fallback = '/assets/consoleoff.gif';
-              } else if (current.includes('/assets/journal/news.png')) {
-                fallback = '/assets/news.png';
-              } else if (current.includes('/assets/Tools/ferramentas.png')) {
-                fallback = '/assets/ferramentas.png';
-              } else if (current.includes('/assets/1044__-IT.png')) {
-                fallback = '/placeholder.svg';
-              }
-              
-              if (fallback) {
-                target.setAttribute('data-fallback-attempted', 'true');
-                target.src = fallback;
-              } else {
-                // Se não há fallback específico, apenas marca como tentado
-                target.setAttribute('data-fallback-attempted', 'true');
-              }
-            }}
+            onError={handleIconError}
           />
         </div>
         {!isCollapsed && (
-          <span 
-            className="text-white flex-1 flex items-center"
+          <span
+            className="flex flex-1 items-center text-white"
             style={{
               fontFamily: 'Volter',
               fontSize: '16px',
@@ -123,7 +306,7 @@ export function CollapsibleAppSidebar() {
               letterSpacing: '0.3px',
               textShadow: '-1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black',
               lineHeight: '1.2',
-              paddingLeft: '2px'
+              paddingLeft: '2px',
             }}
           >
             {removeAccents(translatedName)}
@@ -137,10 +320,10 @@ export function CollapsibleAppSidebar() {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <SidebarMenuButton 
+              <SidebarMenuButton
                 asChild
                 isActive={location.pathname === item.path}
-                className="w-full justify-center px-2 py-3 hover:bg-yellow-200/50 data-[active=true]:bg-yellow-300/70 transition-colors min-h-[48px]"
+                className="w-full justify-center px-2 py-3 transition-colors hover:bg-yellow-200/50 data-[active=true]:bg-yellow-300/70 min-h-[48px]"
               >
                 {content}
               </SidebarMenuButton>
@@ -154,47 +337,57 @@ export function CollapsibleAppSidebar() {
     }
 
     return (
-      <SidebarMenuButton 
+      <SidebarMenuButton
         asChild
         isActive={location.pathname === item.path}
-        className="w-full justify-start px-3 py-3 hover:bg-yellow-200/50 data-[active=true]:bg-yellow-300/70 transition-colors min-h-[48px]"
+        className="w-full justify-start px-3 py-3 transition-colors hover:bg-yellow-200/50 data-[active=true]:bg-yellow-300/70 min-h-[48px]"
       >
         {content}
       </SidebarMenuButton>
     );
   };
 
+  if (isMobileViewport) {
+    return (
+      <>
+        <MobileHeader />
+        <MobileDock />
+      </>
+    );
+  }
+
   return (
     <div className="relative">
       <Sidebar className="bg-[#f5f5dc] border-r-2 border-black" collapsible="icon">
-        <SidebarHeader className="pt-6 pb-2 px-2">
-          <div className="w-full flex justify-center items-center">
+        <SidebarHeader className="px-2 pt-6 pb-2">
+          <div className="flex w-full items-center justify-center">
             {isCollapsed ? (
-              <img 
-                src="/assets/hub.gif" 
-                alt="Hub" 
-                className="w-auto h-auto max-w-full max-h-16"
-                style={{ 
+              <img
+                src="/assets/hub.gif"
+                alt="Hub"
+                className="h-auto max-h-16 w-auto max-w-full"
+                style={{
                   imageRendering: 'pixelated',
-                  objectFit: 'contain'
+                  objectFit: 'contain',
                 }}
-                onError={(e) => {
-                  const target = e.currentTarget as HTMLImageElement;
-                  target.src = "/assets/hub.gif";
+                onError={(event) => {
+                  const target = event.currentTarget as HTMLImageElement;
+                  target.src = '/assets/hub.gif';
                 }}
               />
             ) : (
-              <img 
-                src="/assets/hubbeta.gif" 
-                alt="Habbo Hub" 
-                className="w-auto h-auto max-w-full max-h-16"
-                style={{ 
+              <img
+                src="/assets/hubbeta.gif"
+                alt="Habbo Hub"
+                className="h-auto w-auto"
+                style={{
                   imageRendering: 'pixelated',
-                  objectFit: 'contain'
+                  objectFit: 'contain',
+                  maxHeight: '3.6rem',
                 }}
-                onError={(e) => {
-                  const target = e.currentTarget as HTMLImageElement;
-                  target.src = "/assets/hubbeta.gif";
+                onError={(event) => {
+                  const target = event.currentTarget as HTMLImageElement;
+                  target.src = '/assets/hubbeta.gif';
                 }}
               />
             )}
@@ -223,17 +416,17 @@ export function CollapsibleAppSidebar() {
               <div className="space-y-2">
                 {!isCollapsed ? (
                   <Link to="/login" className="block">
-                    <button 
-                      className="bg-blue-600 hover:bg-blue-700 w-full px-3 py-2 text-white rounded transition-colors flex items-center justify-center gap-2"
+                    <button
+                      className="flex w-full items-center justify-center gap-2 rounded bg-blue-600 px-3 py-2 text-white transition-colors hover:bg-blue-700"
                       style={{
                         fontFamily: 'Volter',
                         fontSize: '16px',
                         fontWeight: 'bold',
                         letterSpacing: '0.3px',
-                        textShadow: '-1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black'
+                        textShadow: '-1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black',
                       }}
                     >
-                      <User className="w-3 h-3" />
+                      <User className="h-3 w-3" />
                       {removeAccents(t('nav.login'))}
                     </button>
                   </Link>
@@ -242,14 +435,15 @@ export function CollapsibleAppSidebar() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Link to="/login">
-                          <button className="bg-blue-600 hover:bg-blue-700 w-full p-3 text-white rounded transition-colors flex items-center justify-center"
+                          <button
+                            className="flex w-full items-center justify-center rounded bg-blue-600 p-3 text-white transition-colors hover:bg-blue-700"
                             style={{
                               fontFamily: 'Volter',
                               fontWeight: 'bold',
-                              textShadow: '-1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black'
+                              textShadow: '-1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black',
                             }}
                           >
-                            <User className="w-4 h-4" />
+                            <User className="h-4 w-4" />
                           </button>
                         </Link>
                       </TooltipTrigger>
@@ -267,13 +461,13 @@ export function CollapsibleAppSidebar() {
 
       <button
         onClick={toggleSidebar}
-        className="absolute top-24 -right-3 z-50 w-6 h-8 bg-[#f5f5dc] border-r-2 border-black border-l-0 rounded-r-md hover:bg-yellow-200/70 transition-colors flex items-center justify-center"
+        className="absolute -right-3 top-24 z-50 flex h-8 w-6 items-center justify-center rounded-r-md border-l-0 border-r-2 border-black bg-[#f5f5dc] transition-colors hover:bg-yellow-200/70"
         style={{ boxShadow: '2px 0 4px rgba(0,0,0,0.1)' }}
       >
         {isCollapsed ? (
-          <ChevronRight className="w-3 h-3 text-[#8B4513]" />
+          <ChevronRight className="h-3 w-3 text-[#8B4513]" />
         ) : (
-          <ChevronLeft className="w-3 h-3 text-[#8B4513]" />
+          <ChevronLeft className="h-3 w-3 text-[#8B4513]" />
         )}
       </button>
     </div>
