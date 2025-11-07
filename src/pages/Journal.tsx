@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AccentFixedText } from '@/components/AccentFixedText';
 import { Newspaper, Send, Users, Calendar, ExternalLink, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 interface NewsArticle {
   id: string;
@@ -15,12 +21,81 @@ interface NewsArticle {
   author: string;
   authorAvatar: string;
   fansite: string;
-  fansiteLogo: string;
   image: string;
   category: string;
   date: string;
   isMain: boolean;
 }
+
+type ArticleOrigin = 'seed' | 'user';
+
+interface JournalSubmission {
+  id: string;
+  title: string;
+  summary: string;
+  content: string;
+  author: string;
+  authorAvatar: string;
+  hotel: string;
+  fansite?: string;
+  image: string;
+  category: string;
+  submittedAt: string;
+  date: string;
+  contact?: string;
+  origin: ArticleOrigin;
+  status: 'pending';
+}
+
+const JOURNAL_CATEGORIES = [
+  'Destaque',
+  'Notícia',
+  'Evento',
+  'Entrevista',
+  'Opinião',
+  'Análise',
+  'Classificados'
+] as const;
+
+const HOTEL_OPTIONS = [
+  { value: 'com.br', label: 'Habbo.com.br (Brasil/Portugal)' },
+  { value: 'com', label: 'Habbo.com (Global)' },
+  { value: 'es', label: 'Habbo.es (Espanha)' },
+  { value: 'fr', label: 'Habbo.fr (França)' },
+  { value: 'de', label: 'Habbo.de (Alemanha)' },
+  { value: 'it', label: 'Habbo.it (Itália)' },
+  { value: 'nl', label: 'Habbo.nl (Holanda)' },
+  { value: 'com.tr', label: 'Habbo.com.tr (Turquia)' },
+  { value: 'fi', label: 'Habbo.fi (Finlândia)' }
+];
+
+const INITIAL_FORM_STATE = {
+  title: '',
+  summary: '',
+  content: '',
+  category: JOURNAL_CATEGORIES[0],
+  imageUrl: '',
+  fansite: '',
+  contact: '',
+  authorName: '',
+  hotel: 'com.br'
+};
+
+const MAX_TITLE_LENGTH = 90;
+const MAX_SUMMARY_LENGTH = 480;
+const MAX_CONTACT_LENGTH = 280;
+const MAX_CONTENT_LENGTH = 4000;
+const MAX_SUBMISSIONS_PER_HOUR = 3;
+const SUBMISSION_WINDOW_MS = 1000 * 60 * 60; // 1 hour
+const SUBMISSION_HISTORY_KEY = 'journal_submission_history';
+const IMAGE_URL_PATTERN = /^https:\/\/[\w\-./?=&%]+\.(png|gif|jpg|jpeg)$/i;
+const MALICIOUS_PATTERNS = [
+  /<script/gi,
+  /onerror\s*=/gi,
+  /onload\s*=/gi,
+  /javascript:/gi,
+  /data:text\/html/gi
+];
 
 interface ClassifiedAd {
   id: string;
@@ -32,10 +107,122 @@ interface ClassifiedAd {
 }
 
 const Journal = () => {
+  const { habboAccount } = useAuth();
+  const { toast } = useToast();
+  const [isSubmissionFormOpen, setIsSubmissionFormOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAd, setSelectedAd] = useState<ClassifiedAd | null>(null);
   const [submissionMessage, setSubmissionMessage] = useState('');
   const [showSubmissionModal, setShowSubmissionModal] = useState(false);
+  const [formData, setFormData] = useState(INITIAL_FORM_STATE);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rateLimitMessage, setRateLimitMessage] = useState<string | null>(null);
+
+  const isPrimaryAdmin = Boolean(
+    habboAccount?.habbo_name?.toLowerCase() === 'habbohub' &&
+    ['br', 'com.br'].includes((habboAccount?.hotel || '').toLowerCase()) &&
+    habboAccount?.is_admin
+  );
+
+  const isLoggedIn = Boolean(habboAccount);
+
+  const sanitizeText = (input: string, maxLength: number) => {
+    const trimmed = input.trim().slice(0, maxLength);
+    let sanitized = trimmed;
+    MALICIOUS_PATTERNS.forEach((pattern) => {
+      sanitized = sanitized.replace(pattern, '');
+    });
+    sanitized = sanitized.replace(/</g, '').replace(/>/g, '');
+    return sanitized;
+  };
+
+  const hasMaliciousContent = (input: string) =>
+    MALICIOUS_PATTERNS.some((pattern) => {
+      const flags = pattern.flags.replace('g', '');
+      const tester = new RegExp(pattern.source, flags);
+      return tester.test(input);
+    });
+
+  const validateImageUrl = (url: string) => IMAGE_URL_PATTERN.test(url.trim());
+
+  const getSubmissionHistory = () => {
+    if (typeof window === 'undefined') return [] as number[];
+    try {
+      const raw = localStorage.getItem(SUBMISSION_HISTORY_KEY);
+      if (!raw) return [] as number[];
+      const parsed = JSON.parse(raw) as number[];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.error('Erro ao carregar histórico de submissões:', error);
+      return [] as number[];
+    }
+  };
+
+  const updateSubmissionHistory = (timestamps: number[]) => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(SUBMISSION_HISTORY_KEY, JSON.stringify(timestamps));
+  };
+
+  const getAuthorHotelDomain = (hotel: string) => {
+    if (!hotel) return 'com.br';
+    const normalized = hotel.toLowerCase();
+    if (normalized === 'br') return 'com.br';
+    return normalized;
+  };
+
+  const resetForm = () => {
+    setFormData({
+      ...INITIAL_FORM_STATE,
+      authorName: habboAccount?.habbo_name || '',
+      hotel: getAuthorHotelDomain(habboAccount?.hotel || 'com.br')
+    });
+    setFormError(null);
+  };
+
+  const handleOpenSubmissionModal = () => {
+    resetForm();
+    setIsSubmissionFormOpen(true);
+  };
+
+  const handleFormChange = (field: keyof typeof INITIAL_FORM_STATE, value: string) => {
+    if (!isLoggedIn) return;
+    let nextValue = value;
+    switch (field) {
+      case 'title':
+        nextValue = value.slice(0, MAX_TITLE_LENGTH);
+        break;
+      case 'summary':
+        nextValue = value.slice(0, MAX_SUMMARY_LENGTH);
+        break;
+      case 'contact':
+        nextValue = value.slice(0, MAX_CONTACT_LENGTH);
+        break;
+      case 'content':
+        nextValue = value.slice(0, MAX_CONTENT_LENGTH);
+        break;
+      default:
+        break;
+    }
+    setFormData((prev) => ({
+      ...prev,
+      [field]: nextValue
+    }));
+  };
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      authorName: habboAccount?.habbo_name || '',
+      hotel: getAuthorHotelDomain(habboAccount?.hotel || 'com.br')
+    }));
+  }, [habboAccount]);
+
+  const authorAvatarPreview = useMemo(() => {
+    const hotelDomain = getAuthorHotelDomain(habboAccount?.hotel || formData.hotel || 'com.br');
+    const authorName = habboAccount?.habbo_name || formData.authorName || 'Habbo';
+    return `https://www.habbo.${hotelDomain}/habbo-imaging/avatarimage?user=${encodeURIComponent(authorName)}&size=l&direction=2&head_direction=2&gesture=sml&action=std`;
+  }, [habboAccount, formData.authorName, formData.hotel]);
 
   // Mock data for the journal
   const newsArticles: NewsArticle[] = [
@@ -46,7 +233,6 @@ const Journal = () => {
       author: 'Beebop',
       authorAvatar: 'https://www.habbo.com.br/habbo-imaging/avatar/hr-155-45.hd-208-10.ch-3538-67.lg-275-82.sh-295-92.fa-1206-90%2Cs-0.g-1.d-2.h-2.a-0%2C41cb5bfd4dcecf4bf5de00b7ea872714.png',
       fansite: 'HabboHub',
-      fansiteLogo: '/assets/site/bghabbohub.png',
       image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjDhGLvOEcU_FGqcBTve1JyAoNt4ddcqAqfBMrvY4SF2YhRPDTBZOjReNooP8907PJAViP3-0XmR-_hdbwhRvBt-8h6UCYEnERTxbJgQaqWhGECue1XiP2EsQXuO-s0GN6_8XthY9OmNNM/s1600/ts_fire.gif',
       category: 'Destaque',
       date: '2024-01-15',
@@ -59,7 +245,6 @@ const Journal = () => {
       author: 'AnalistaPixel',
       authorAvatar: 'https://www.habbo.com.br/habbo-imaging/avatar/hr-155-45.hd-208-1.ch-255-84.lg-275-1408.sh-295-64%2Cs-0.g-1.d-2.h-2.a-0%2C3565e22f0ecd66108595e64551d13483.png',
       fansite: 'Habblindados',
-      fansiteLogo: '/assets/habblindados.png',
       image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh1ZQwexYD0dHL62sDM9haQACJeCZED1qCMXRVzABKDEhi9X5lUeQCaqerPziBsggI2JI1RRNqLffWln3xPZaoEijGkebyJQ7AdK0PYuaLdAT8pC_tUisNMgFJE99YP8fS54F5hg24s0g/s1600/BR_ts_elections_anarchist.gif',
       category: 'Análise',
       date: '2024-01-12',
@@ -108,8 +293,119 @@ const Journal = () => {
 
   const handleSubmission = (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmissionMessage('Sua coluna foi enviada com sucesso para análise! Agradecemos sua contribuição!');
-    setShowSubmissionModal(true);
+    setFormError(null);
+    setRateLimitMessage(null);
+
+    if (!habboAccount) {
+      setFormError('Você precisa estar logado para enviar uma coluna.');
+      return;
+    }
+
+    if (isSubmitting) {
+      return;
+    }
+
+    const now = Date.now();
+    const history = getSubmissionHistory().filter((timestamp) => now - timestamp < SUBMISSION_WINDOW_MS);
+
+    if (history.length >= MAX_SUBMISSIONS_PER_HOUR) {
+      const timeUntilReset = SUBMISSION_WINDOW_MS - (now - history[0]);
+      const minutes = Math.ceil(timeUntilReset / 60000);
+      const message = `Limite de envios atingido. Tente novamente em aproximadamente ${minutes} minuto(s).`;
+      setRateLimitMessage(message);
+      setFormError(message);
+      return;
+    }
+
+    const requiredFields: Array<keyof typeof INITIAL_FORM_STATE> = ['title', 'summary', 'content', 'imageUrl'];
+    const missingField = requiredFields.find((field) => !formData[field].trim());
+
+    if (missingField) {
+      setFormError('Preencha todos os campos obrigatórios marcados com *.');
+      return;
+    }
+
+    const authorName = (habboAccount?.habbo_name || formData.authorName || '').trim();
+
+    if (!authorName) {
+      setFormError('Informe seu nick Habbo para enviarmos sua coluna.');
+      return;
+    }
+
+    if (hasMaliciousContent(formData.title) || hasMaliciousContent(formData.summary) || hasMaliciousContent(formData.content) || hasMaliciousContent(formData.contact)) {
+      setFormError('Detectamos conteúdo potencialmente malicioso. Revise seu texto antes de enviar.');
+      return;
+    }
+
+    if (!validateImageUrl(formData.imageUrl)) {
+      setFormError('Informe uma URL de imagem HTTPS válida (extensões aceitas: PNG, GIF, JPG).');
+      return;
+    }
+
+    const sanitizedTitle = sanitizeText(formData.title, MAX_TITLE_LENGTH);
+    const sanitizedSummary = sanitizeText(formData.summary, MAX_SUMMARY_LENGTH);
+    const sanitizedContent = sanitizeText(formData.content, MAX_CONTENT_LENGTH);
+    const sanitizedContact = sanitizeText(formData.contact, MAX_CONTACT_LENGTH);
+    const sanitizedFansite = sanitizeText(formData.fansite, 80);
+
+    if (!sanitizedTitle || !sanitizedSummary || !sanitizedContent) {
+      setFormError('Seus campos ficaram vazios após saneamento. Revise o conteúdo e tente novamente.');
+      return;
+    }
+
+    const normalizedHotel = getAuthorHotelDomain(habboAccount?.hotel || formData.hotel || 'com.br');
+
+    const submissionId = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `submission-${Date.now()}`;
+
+    const timestamp = new Date().toISOString();
+
+    const newSubmission: JournalSubmission = {
+      id: submissionId,
+      title: sanitizedTitle,
+      summary: sanitizedSummary,
+      content: sanitizedContent,
+      category: formData.category,
+      image: formData.imageUrl.trim(),
+      fansite: sanitizedFansite || undefined,
+      contact: sanitizedContact || undefined,
+      author: authorName,
+      hotel: normalizedHotel,
+      authorAvatar: `https://www.habbo.${normalizedHotel}/habbo-imaging/avatarimage?user=${encodeURIComponent(authorName)}&size=l&direction=2&head_direction=2&gesture=sml&action=std`,
+      submittedAt: timestamp,
+      date: timestamp,
+      origin: 'user',
+      status: 'pending'
+    };
+
+    try {
+      setIsSubmitting(true);
+      const existingRaw = typeof window !== 'undefined' ? localStorage.getItem('journal_submissions') : null;
+      const existingSubmissions: JournalSubmission[] = existingRaw ? JSON.parse(existingRaw) : [];
+
+      const updatedSubmissions = [newSubmission, ...existingSubmissions];
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('journal_submissions', JSON.stringify(updatedSubmissions));
+        history.push(now);
+        updateSubmissionHistory(history);
+      }
+
+      setSubmissionMessage('Sua coluna foi enviada para análise! Assim que aprovada, ela aparecerá no Journal Hub.');
+      setShowSubmissionModal(true);
+      setIsSubmissionFormOpen(false);
+      resetForm();
+      toast({
+        title: 'Coluna enviada!',
+        description: 'Obrigado pela contribuição. Nossa equipe irá revisar e aprovar pelo Painel de Administração.'
+      });
+    } catch (error) {
+      console.error('Erro ao armazenar submissão:', error);
+      setFormError('Não foi possível enviar sua coluna agora. Tente novamente em instantes.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
 
@@ -152,28 +448,12 @@ const Journal = () => {
                 {/* Header */}
                 <header className="text-center mb-8 pb-4 border-b-2 border-black relative" style={{ zIndex: 5 }}>
                   <div className="flex items-center justify-center">
-                    {/* Logo no canto esquerdo */}
-                    <img 
-                      src="/assets/site/bghabbohub.png" 
-                      alt="Logo" 
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 object-contain hidden sm:block"
-                      style={{ imageRendering: 'pixelated' }}
-                    />
-
                     <h1 className="text-4xl sm:text-5xl lg:text-6xl text-black mb-2 font-bold" style={{ 
                       fontFamily: 'Press Start 2P, cursive',
                       textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
                     }}>
                       JOURNAL HUB
                     </h1>
-
-                    {/* Logo no canto direito */}
-                    <img 
-                      src="/assets/site/bghabbohub.png" 
-                      alt="Logo" 
-                      className="absolute right-0 top-1/2 -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 object-contain hidden sm:block"
-                      style={{ imageRendering: 'pixelated' }}
-                    />
                   </div>
                   <AccentFixedText className="text-lg sm:text-xl text-gray-700">
                     As últimas notícias direto do Hotel, pelos próprios Habbos!
@@ -274,25 +554,7 @@ const Journal = () => {
                                 }}
                               />
                             </div>
-                            {/* Fansite Logo Overlay */}
-                            <div className="absolute bottom-0 right-0" style={{ 
-                              width: '180px',
-                              height: '180px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              pointerEvents: 'none'
-                            }}>
-                              <img 
-                                src={newsArticles[0].fansiteLogo}
-                                alt={newsArticles[0].fansite}
-                                className="max-w-full max-h-full object-contain"
-                                style={{ 
-                                  filter: 'drop-shadow(1px 1px 0px rgba(0, 0, 0, 0.3))',
-                                  imageRendering: 'pixelated'
-                                }}
-                              />
-                            </div>
+                            
                           </div>
                           <AccentFixedText className="text-sm sm:text-base mb-4 leading-relaxed">
                             {newsArticles[0].content}
@@ -343,25 +605,7 @@ const Journal = () => {
                                 }}
                               />
                             </div>
-                            {/* Fansite Logo Overlay */}
-                            <div className="absolute bottom-0 right-0" style={{ 
-                              width: '180px',
-                              height: '180px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              pointerEvents: 'none'
-                            }}>
-                              <img 
-                                src={newsArticles[1].fansiteLogo}
-                                alt={newsArticles[1].fansite}
-                                className="max-w-full max-h-full object-contain"
-                                style={{ 
-                                  filter: 'drop-shadow(1px 1px 0px rgba(0, 0, 0, 0.3))',
-                                  imageRendering: 'pixelated'
-                                }}
-                              />
-                            </div>
+                            
                           </div>
                           <AccentFixedText className="text-sm sm:text-base mb-4 leading-relaxed">
                             {newsArticles[1].content}
@@ -449,7 +693,7 @@ const Journal = () => {
                             Quer ver sua coluna publicada?
                           </p>
                           <Button 
-                            onClick={() => scrollToSection('submit-column')}
+                            onClick={handleOpenSubmissionModal}
                             className="w-full bg-green-600 hover:bg-green-700 text-white rounded-none border-2 border-black text-sm py-1"
                             style={{ 
                               boxShadow: '2px 2px 0px 0px #1f2937',
@@ -1135,6 +1379,7 @@ const Journal = () => {
                 <footer className="text-center mt-6 pt-6 border-t-2 border-black text-gray-700 text-sm relative" style={{ fontFamily: 'Volter', zIndex: 5 }}>
                   <p>&copy; 2025 Journal Hub. Todos os direitos reservados. Feito com pixel art.</p>
                   <p className="mt-2">Contato: jornal@habbohub.com | Siga-nos nas redes sociais do Habbo!</p>
+                  {isPrimaryAdmin && (
                   <div className="mt-4">
                     <Button 
                       variant="outline" 
@@ -1146,6 +1391,7 @@ const Journal = () => {
                       Painel de Administração
                     </Button>
                   </div>
+                  )}
                 </footer>
               </div>
             </div>
@@ -1153,7 +1399,326 @@ const Journal = () => {
         </SidebarInset>
       </div>
 
-      {/* Submission Modal */}
+      {/* Submission Form Modal */}
+      <Dialog open={isSubmissionFormOpen} onOpenChange={(open) => {
+        setIsSubmissionFormOpen(open);
+        if (!open) {
+          resetForm();
+        }
+      }}>
+        <DialogContent className="max-w-5xl w-full p-0 border-4 border-black bg-gray-100 overflow-hidden">
+          <div className="bg-gray-200 border-b-2 border-black px-6 py-5">
+            <DialogHeader className="p-0">
+              <DialogTitle className="text-2xl sm:text-3xl font-bold" style={{ fontFamily: 'Press Start 2P, cursive', textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)' }}>
+                Escreva artigos para nosso jornal, exiba suas histórias, opiniões discussões, seja criativo e respeitoso!
+              </DialogTitle>
+            </DialogHeader>
+            <p className="mt-2 text-sm sm:text-base text-gray-700" style={{ fontFamily: 'Volter' }}>
+              A equipe Habbo Hub selecionará artigos para a próxima edição do jornal, aguarde!
+            </p>
+          </div>
+          <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr]">
+            <aside className="hidden md:flex flex-col gap-4 border-r-2 border-black bg-gray-50 px-5 py-6" style={{ minHeight: '100%' }}>
+              <div className="flex flex-col items-center text-center">
+                <div className="relative w-32 h-32 border-2 border-black bg-white flex items-center justify-center overflow-hidden" style={{ boxShadow: '4px 4px 0px 0px #1f2937' }}>
+                  <img
+                    src={authorAvatarPreview}
+                    alt={habboAccount?.habbo_name || 'Avatar exemplo'}
+                    className="w-full h-full object-cover"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                </div>
+                <div className="mt-4">
+                  <p className="text-xs uppercase text-gray-600 tracking-wide" style={{ fontFamily: 'Press Start 2P, cursive' }}>
+                    Autor vinculado
+                  </p>
+                  <button
+                    type="button"
+                    className="mt-2 text-sm text-blue-700 hover:underline"
+                    style={{ fontFamily: 'Volter' }}
+                    onClick={() => {
+                      if (habboAccount) {
+                        window.open(`/profile/${habboAccount.habbo_name}`, '_blank');
+                      } else {
+                        window.open('/login', '_self');
+                      }
+                    }}
+                  >
+                    {habboAccount ? habboAccount.habbo_name : 'Faça login para vincular' }
+                  </button>
+                  <p className="text-xs text-gray-500 mt-1" style={{ fontFamily: 'Volter' }}>
+                    Envio disponível apenas para usuários logados.
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-2 border-black bg-white p-4 space-y-3" style={{ boxShadow: '3px 3px 0px 0px #1f2937' }}>
+                <h3 className="text-sm font-bold text-black" style={{ fontFamily: 'Press Start 2P, cursive' }}>
+                  Dicas para o envio
+                </h3>
+                <ul className="space-y-2 text-xs text-gray-700" style={{ fontFamily: 'Volter' }}>
+                  <li>• Use imagens hospedadas em sites confiáveis (PNG/GIF).</li>
+                  <li>• Resumo curto na esquerda, história completa na direita.</li>
+                  <li>• Revise ortografia e credite os envolvidos.</li>
+                  <li>• O time aprova no Painel antes de publicar.</li>
+                </ul>
+              </div>
+
+              <div className="border-2 border-black bg-white p-4 space-y-2" style={{ boxShadow: '3px 3px 0px 0px #1f2937' }}>
+                <h4 className="text-sm font-bold text-black" style={{ fontFamily: 'Press Start 2P, cursive' }}>Pré-visualização da imagem</h4>
+                <div className="w-full aspect-video bg-gray-200 border border-dashed border-gray-400 flex items-center justify-center overflow-hidden">
+                  {formData.imageUrl ? (
+                    <img src={formData.imageUrl} alt="Prévia do artigo" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xs text-gray-500" style={{ fontFamily: 'Volter' }}>Cole uma URL para visualizar</span>
+                  )}
+                </div>
+              </div>
+
+              {!isLoggedIn && (
+                <Button
+                  className="border-2 border-black bg-blue-600 hover:bg-blue-700 text-white rounded-none"
+                  style={{ boxShadow: '3px 3px 0px 0px #1f2937', fontFamily: 'VT323, monospace' }}
+                  onClick={() => window.open('/login', '_self')}
+                >
+                  Fazer login e enviar
+                </Button>
+              )}
+            </aside>
+
+            <div className="px-6 py-6 bg-gray-100 max-h-[70vh] overflow-y-auto">
+              {formError && (
+                <div className="mb-4 border-2 border-red-500 bg-red-100 px-4 py-3 text-sm text-red-800" style={{ fontFamily: 'Volter' }}>
+                  {formError}
+                </div>
+              )}
+              {rateLimitMessage && (
+                <div className="mb-4 border-2 border-blue-500 bg-blue-100 px-4 py-3 text-sm text-blue-800" style={{ fontFamily: 'Volter' }}>
+                  {rateLimitMessage}
+                </div>
+              )}
+              {!isLoggedIn && (
+                <div className="mb-6 border-2 border-yellow-400 bg-yellow-100 px-4 py-3 text-sm text-yellow-800" style={{ fontFamily: 'Volter' }}>
+                  Faça login com sua conta Habbo para preencher e enviar uma coluna.
+                </div>
+              )}
+              <div className="md:hidden border-2 border-black bg-white p-4 mb-6" style={{ boxShadow: '3px 3px 0px 0px #1f2937' }}>
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 border-2 border-black bg-gray-200 overflow-hidden">
+                    <img
+                      src={authorAvatarPreview}
+                      alt={habboAccount?.habbo_name || 'Avatar exemplo'}
+                      className="w-full h-full object-cover"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase text-gray-600 tracking-wide" style={{ fontFamily: 'Press Start 2P, cursive' }}>
+                      Autor vinculado
+                    </p>
+                    <p className="text-sm text-black" style={{ fontFamily: 'Volter' }}>
+                      {habboAccount ? habboAccount.habbo_name : 'Faça login para vincular'}
+                    </p>
+                    <button
+                      type="button"
+                      className="text-xs text-blue-700 underline mt-1"
+                      style={{ fontFamily: 'Volter' }}
+                      onClick={() => {
+                        if (habboAccount) {
+                          window.open(`/profile/${habboAccount.habbo_name}`, '_blank');
+                        } else {
+                          window.open('/login', '_self');
+                        }
+                      }}
+                    >
+                      {habboAccount ? 'Ver meu perfil' : 'Ir para o login'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <form onSubmit={handleSubmission} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="authorName" className="text-xs uppercase tracking-wide text-gray-700" style={{ fontFamily: 'Press Start 2P, cursive' }}>
+                      Seu Nick Habbo *
+                    </Label>
+                    <Input
+                      id="authorName"
+                      value={formData.authorName}
+                      readOnly
+                      disabled={!isLoggedIn}
+                      className="mt-2 border-2 border-black rounded-none bg-white"
+                      style={{ fontFamily: 'Volter' }}
+                      placeholder="Faça login para vincular"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs uppercase tracking-wide text-gray-700" style={{ fontFamily: 'Press Start 2P, cursive' }}>
+                      Hotel
+                    </Label>
+                    <Select value={formData.hotel} onValueChange={(value) => handleFormChange('hotel', value)} disabled={!isLoggedIn}>
+                      <SelectTrigger className="mt-2 border-2 border-black rounded-none bg-white" style={{ fontFamily: 'Volter' }}>
+                        <SelectValue placeholder="Selecione o hotel" />
+                      </SelectTrigger>
+                      <SelectContent className="border-2 border-black bg-white">
+                        {HOTEL_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value} className="font-normal" style={{ fontFamily: 'Volter' }}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="title" className="text-xs uppercase tracking-wide text-gray-700" style={{ fontFamily: 'Press Start 2P, cursive' }}>
+                    Título do Artigo *
+                  </Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(event) => handleFormChange('title', event.target.value)}
+                    disabled={!isLoggedIn}
+                    className="mt-2 border-2 border-black rounded-none bg-white"
+                    style={{ fontFamily: 'Volter' }}
+                    placeholder="Digite um título chamativo"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs uppercase tracking-wide text-gray-700" style={{ fontFamily: 'Press Start 2P, cursive' }}>
+                      Categoria *
+                    </Label>
+                    <Select value={formData.category} onValueChange={(value) => handleFormChange('category', value)} disabled={!isLoggedIn}>
+                      <SelectTrigger className="mt-2 border-2 border-black rounded-none bg-white" style={{ fontFamily: 'Volter' }}>
+                        <SelectValue placeholder="Selecione a categoria" />
+                      </SelectTrigger>
+                      <SelectContent className="border-2 border-black bg-white">
+                        {JOURNAL_CATEGORIES.map((category) => (
+                          <SelectItem key={category} value={category} className="font-normal" style={{ fontFamily: 'Volter' }}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="fansite" className="text-xs uppercase tracking-wide text-gray-700" style={{ fontFamily: 'Press Start 2P, cursive' }}>
+                      Fã site ou equipe (opcional)
+                    </Label>
+                    <Input
+                      id="fansite"
+                      value={formData.fansite}
+                      onChange={(event) => handleFormChange('fansite', event.target.value)}
+                      disabled={!isLoggedIn}
+                      className="mt-2 border-2 border-black rounded-none bg-white"
+                      style={{ fontFamily: 'Volter' }}
+                      placeholder="Ex.: HabboHub, Rádio Pixel"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="imageUrl" className="text-xs uppercase tracking-wide text-gray-700" style={{ fontFamily: 'Press Start 2P, cursive' }}>
+                    Imagem de Destaque (URL) *
+                  </Label>
+                  <Input
+                    id="imageUrl"
+                    value={formData.imageUrl}
+                    onChange={(event) => handleFormChange('imageUrl', event.target.value)}
+                    disabled={!isLoggedIn}
+                    className="mt-2 border-2 border-black rounded-none bg-white"
+                    style={{ fontFamily: 'Volter' }}
+                    placeholder="Cole a URL de uma imagem .png ou .gif"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="summary" className="text-xs uppercase tracking-wide text-gray-700" style={{ fontFamily: 'Press Start 2P, cursive' }}>
+                      Resumo *
+                    </Label>
+                    <Textarea
+                      id="summary"
+                      value={formData.summary}
+                      onChange={(event) => handleFormChange('summary', event.target.value)}
+                      disabled={!isLoggedIn}
+                      className="mt-2 border-2 border-black rounded-none bg-white"
+                      style={{ fontFamily: 'Volter' }}
+                      placeholder="Faça um resumo curto para destacar sua coluna"
+                      rows={5}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="contact" className="text-xs uppercase tracking-wide text-gray-700" style={{ fontFamily: 'Press Start 2P, cursive' }}>
+                      Contato ou Link (opcional)
+                    </Label>
+                    <Textarea
+                      id="contact"
+                      value={formData.contact}
+                      onChange={(event) => handleFormChange('contact', event.target.value)}
+                      disabled={!isLoggedIn}
+                      className="mt-2 border-2 border-black rounded-none bg-white"
+                      style={{ fontFamily: 'Volter' }}
+                      placeholder="Discord, redes sociais ou link para referência"
+                      rows={5}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="content" className="text-xs uppercase tracking-wide text-gray-700" style={{ fontFamily: 'Press Start 2P, cursive' }}>
+                    Conteúdo Completo *
+                  </Label>
+                  <Textarea
+                    id="content"
+                    value={formData.content}
+                    onChange={(event) => handleFormChange('content', event.target.value)}
+                    disabled={!isLoggedIn}
+                    className="mt-2 border-2 border-black rounded-none bg-white"
+                    style={{ fontFamily: 'Volter', minHeight: '160px' }}
+                    placeholder="Escreva o conteúdo completo da sua coluna"
+                    rows={10}
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <p className="text-xs text-gray-600" style={{ fontFamily: 'Volter' }}>
+                    Ao enviar, você autoriza a publicação do conteúdo no Journal Hub.
+                  </p>
+                  <div className="flex gap-3 justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-2 border-black rounded-none"
+                      style={{ boxShadow: '2px 2px 0px 0px #1f2937', fontFamily: 'VT323, monospace' }}
+                      onClick={() => {
+                        setIsSubmissionFormOpen(false);
+                        resetForm();
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={!isLoggedIn || isSubmitting}
+                      className="bg-green-600 hover:bg-green-700 text-white border-2 border-black rounded-none disabled:opacity-60 disabled:cursor-not-allowed"
+                      style={{ boxShadow: '3px 3px 0px 0px #1f2937', fontFamily: 'VT323, monospace' }}
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      {isSubmitting ? 'Enviando...' : 'Enviar Coluna'}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Submission Success Modal */}
       <Dialog open={showSubmissionModal} onOpenChange={setShowSubmissionModal}>
         <DialogContent className="max-w-md">
           <DialogHeader>
