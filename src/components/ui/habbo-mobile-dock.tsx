@@ -78,7 +78,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
     const toolsItem: DockItem = { 
       id: 'tools', 
       label: 'Ferramentas', 
-      icon: '/assets/Tools/ferramentas.png',
+      icon: '/assets/ferramentas.png',
       order: 5 
     };
 

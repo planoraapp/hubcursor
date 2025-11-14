@@ -127,7 +127,7 @@ const HabboHome: React.FC = () => {
     { id: 'homes', label: 'Home', icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home.gif', order: 2 },
     { id: 'console', label: 'Console', icon: '/assets/consoleon3.gif', order: 3 },
     { id: 'journal', label: 'Jornal', icon: '/assets/journal/news.png', order: 4 },
-    { id: 'tools', label: 'Ferramentas', icon: '/assets/Tools/ferramentas.png', order: 5 }
+    { id: 'tools', label: 'Ferramentas', icon: '/assets/ferramentas.png', order: 5 }
   ];
 
   const handleMobileItemClick = (itemId: string) => {

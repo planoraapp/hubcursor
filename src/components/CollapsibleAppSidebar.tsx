@@ -20,7 +20,7 @@ import { HabboUserPanel } from '@/components/HabboUserPanel';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
-export function CollapsibleAppSidebar() {
+function CollapsibleAppSidebarComponent() {
   const location = useLocation();
   const { habboAccount, isLoggedIn } = useAuth();
   const { t } = useI18n();
@@ -78,7 +78,7 @@ export function CollapsibleAppSidebar() {
     { nameKey: 'nav.console', path: '/console', icon: '/assets/console/consoleoff.gif' },
     { nameKey: 'nav.homes', path: '/homes', icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home.gif' },
     { nameKey: 'nav.journal', path: '/journal', icon: '/assets/journal/news.png' },
-    { nameKey: 'nav.tools', path: '/ferramentas', icon: '/assets/Tools/ferramentas.png' },
+    { nameKey: 'nav.tools', path: '/ferramentas', icon: '/assets/ferramentas.png' },
   ];
 
   if (isAdmin) {
@@ -106,7 +106,7 @@ export function CollapsibleAppSidebar() {
       fallback = '/assets/consoleoff.gif';
     } else if (current.includes('/assets/journal/news.png')) {
       fallback = '/assets/news.png';
-    } else if (current.includes('/assets/Tools/ferramentas.png')) {
+    } else if (current.includes('/assets/ferramentas.png')) {
       fallback = '/assets/ferramentas.png';
     } else if (current.includes('/assets/1044__-IT.png')) {
       fallback = '/placeholder.svg';
@@ -473,3 +473,6 @@ export function CollapsibleAppSidebar() {
     </div>
   );
 }
+
+export const CollapsibleAppSidebar = React.memo(CollapsibleAppSidebarComponent);
+CollapsibleAppSidebar.displayName = 'CollapsibleAppSidebar';
