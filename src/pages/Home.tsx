@@ -339,7 +339,7 @@ export const Home: React.FC = () => {
                       className="flex justify-center items-center mb-4 h-[220px] md:h-[240px]"
                     >
                       <img
-                        src="/assets/tools1.png"
+                        src="/assets/98__-2tN._-4Ni.png"
                         alt="Ferramentas HabboHub"
                         className="object-contain"
                         style={{ imageRendering: 'pixelated', maxHeight: '100%', width: 'auto' }}
