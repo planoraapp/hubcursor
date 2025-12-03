@@ -178,13 +178,13 @@ Write-Host "❌ Erros: $erros" -ForegroundColor $(if ($erros -gt 0) { "Red" } el
 Write-Host "💾 Espaço liberado: $("{0:N2} MB" -f ($totalSize / 1MB))`n" -ForegroundColor Yellow
 
 if ($erros -eq 0) {
-    Write-Host "✨ Todos os arquivos obsoletos foram removidos com sucesso!" -ForegroundColor Green
-    Write-Host "`n📝 Próximos passos:" -ForegroundColor Cyan
-    Write-Host "  1. Testar a aplicação para garantir que tudo funciona" -ForegroundColor White
-    Write-Host "  2. Fazer commit das mudanças: git add . && git commit -m 'chore: remove obsolete files'" -ForegroundColor White
-    Write-Host "  3. Push para o repositório" -ForegroundColor White
+    Write-Host "Todos os arquivos obsoletos foram removidos com sucesso!" -ForegroundColor Green
+    Write-Host "`nProximos passos:" -ForegroundColor Cyan
+    Write-Host "  1. Testar a aplicacao para garantir que tudo funciona" -ForegroundColor White
+    Write-Host "  2. Fazer commit das mudancas" -ForegroundColor White
+    Write-Host "  3. Push para o repositorio" -ForegroundColor White
 } else {
-    Write-Host "⚠️  Alguns arquivos não puderam ser deletados. Verifique os erros acima." -ForegroundColor Yellow
+    Write-Host "Alguns arquivos nao puderam ser deletados. Verifique os erros acima." -ForegroundColor Yellow
 }
 
 Write-Host ""
