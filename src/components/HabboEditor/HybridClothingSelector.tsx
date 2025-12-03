@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Palette, Shirt, PaintBucket, Crown, Glasses, Footprints, User, AlertCircle, RefreshCw } from 'lucide-react';
-import { useHybridClothingData, HybridClothingItem } from '@/hooks/useHybridClothingData';
+import { useHybridClothingSystem, HybridClothingItem } from '@/hooks/useHybridClothingSystem';
 import OptimizedClothingThumbnail from './OptimizedClothingThumbnail';
 
 interface HybridClothingSelectorProps {
@@ -58,7 +58,7 @@ const HybridClothingSelector = ({
   setSearchTerm,
   selectedHotel
 }: HybridClothingSelectorProps) => {
-  const { data: clothingData, isLoading, error, refetch } = useHybridClothingData(selectedHotel);
+  const { data: clothingData, isLoading, error, refetch } = useHybridClothingSystem(selectedHotel);
 
   // Filter and process items
   const categoryItems = useMemo(() => {

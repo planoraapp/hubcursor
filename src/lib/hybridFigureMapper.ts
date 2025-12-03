@@ -1,5 +1,5 @@
 
-import { HybridClothingItem } from '@/hooks/useHybridClothingData';
+import { HybridClothingItem } from '@/hooks/useHybridClothingSystem';
 
 export interface FigurePart {
   category: string;

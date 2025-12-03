@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { useTemplariosData } from '@/hooks/useTemplariosData';
-import { useTemplariosPreview } from '@/hooks/useTemplariosPreview';
-import { Gender } from '@/hooks/useTemplariosFigure';
+// import { useTemplariosData } from '@/hooks/useTemplariosData'; // Hook removido
+// import { useTemplariosPreview } from '@/hooks/useTemplariosPreview'; // Hook removido
+type Gender = 'M' | 'F';
 import TemplariosColorModal from './TemplariosColorModal';
 import { CATEGORY_NAMES } from '@/data/habboTemplariosData';
 
@@ -21,8 +21,10 @@ const TemplariosCategoryGrid: React.FC<TemplariosCategoryGridProps> = ({
   onSelectItem,
   onChangeColor
 }) => {
-  const { getItemsByCategory, getPaletteForCategory } = useTemplariosData();
-  const { getSinglePartPreviewUrl } = useTemplariosPreview();
+  // Hooks removidos - usando fallbacks
+  const getItemsByCategory = (type: string, g: Gender) => [];
+  const getPaletteForCategory = (type: string) => [];
+  const getSinglePartPreviewUrl = (type: string, setId: string, colorId?: string) => '';
   const [colorModalOpen, setColorModalOpen] = useState(false);
 
   const filteredItems = getItemsByCategory(activeType, gender);

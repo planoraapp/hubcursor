@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { useTemplariosData } from '@/hooks/useTemplariosData';
+// import { useTemplariosData } from '@/hooks/useTemplariosData'; // Hook removido
 import { CATEGORY_NAMES } from '@/data/habboTemplariosData';
 
 interface TemplariosCategoryNavigationProps {
@@ -14,7 +14,8 @@ const TemplariosCategoryNavigation: React.FC<TemplariosCategoryNavigationProps> 
   activeType,
   onCategorySelect
 }) => {
-  const { sets } = useTemplariosData();
+  // Hook removido - usando fallback
+  const sets: any[] = [];
   
   const categories = useMemo(() => {
     const types = [...new Set(sets.map(s => s.type))];

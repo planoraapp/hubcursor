@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { AlertCircle } from 'lucide-react';
-import { HybridClothingItem } from '@/hooks/useHybridClothingData';
+import { HybridClothingItem } from '@/hooks/useHybridClothingSystem';
 
 interface OptimizedClothingThumbnailProps {
   item: HybridClothingItem;

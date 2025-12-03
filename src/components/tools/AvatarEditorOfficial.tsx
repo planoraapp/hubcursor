@@ -51,8 +51,8 @@ import {
   Cherry,
   Apple
 } from 'lucide-react';
-import { useTemplariosData } from '@/hooks/useTemplariosData';
 import { useUnifiedHabboClothing } from '@/hooks/useUnifiedHabboClothing';
+import { useHybridClothingSystem } from '@/hooks/useHybridClothingSystem';
 
 // Componente para imagem com fallback
 const ClothingImageWithFallback = ({ itemId, category, gender, color, alt, verticalPosition = 50, unifiedClothingData }: {
@@ -297,11 +297,18 @@ const CATEGORIES = [
 ];
 
 const AvatarEditorOfficial = () => {
-  // Hook para dados do editor (fallback)
-  const { getItemsByCategory, getPaletteForCategory } = useTemplariosData();
-  
   // Hook para dados oficiais unificados do Habbo
   const { data: unifiedClothingData, colorPalettes, isLoading: isLoadingClothing, error: clothingError } = useUnifiedHabboClothing();
+  
+  // Funções de fallback (substituindo useTemplariosData)
+  const getItemsByCategory = (category: string) => {
+    if (!unifiedClothingData) return [];
+    return unifiedClothingData.filter(item => item.category === category);
+  };
+  
+  const getPaletteForCategory = (category: string) => {
+    return colorPalettes?.[category] || [];
+  };
   
   
   // Estado do avatar - CORRIGIDO para gênero masculino inicial

@@ -1,26 +1,34 @@
 
 import React, { useState, useMemo } from 'react';
-import { useTemplariosData } from '@/hooks/useTemplariosData';
-import { useTemplariosPreview } from '@/hooks/useTemplariosPreview';
-import { useTemplariosFigure } from '@/hooks/useTemplariosFigure';
+// import { useTemplariosData } from '@/hooks/useTemplariosData'; // Hook removido
+// import { useTemplariosPreview } from '@/hooks/useTemplariosPreview'; // Hook removido
+// import { useTemplariosFigure } from '@/hooks/useTemplariosFigure'; // Hook removido
 import { Copy, Download, Share2, RotateCcw } from 'lucide-react';
 import TemplariosCategoryNavigation from './TemplariosCategoryNavigation';
 import TemplariosCategoryGrid from './TemplariosCategoryGrid';
 
 const HabboTemplariosEditor: React.FC = () => {
-  const { getPaletteForCategory } = useTemplariosData();
-  const { getFullAvatarUrl } = useTemplariosPreview();
-  const {
-    gender,
-    setGender,
-    selection,
-    direction,
-    setDirection,
-    figureString,
-    updateSelection,
-    updateColor,
-    resetSelection
-  } = useTemplariosFigure();
+  // Hooks removidos - usando fallbacks
+  const getPaletteForCategory = (category: string) => [];
+  const getFullAvatarUrl = (figure: string, gender: string, hotel: string, size: string, direction: string, headDirection: string) => '';
+  
+  const [gender, setGender] = useState<'M' | 'F'>('M');
+  const [selection, setSelection] = useState<{ [type: string]: { setId: string; colorId?: string } | undefined }>({});
+  const [direction, setDirection] = useState('l');
+  const [figureString, setFigureString] = useState('hr-828-45.ch-665-92.lg-700-1.sh-705-1.hd-180-2');
+  
+  const updateSelection = (type: string, setId: string) => {
+    setSelection(prev => ({ ...prev, [type]: { setId } }));
+  };
+  
+  const updateColor = (type: string, colorId: string) => {
+    setSelection(prev => ({ ...prev, [type]: { ...prev[type], colorId } }));
+  };
+  
+  const resetSelection = () => {
+    setSelection({});
+    setFigureString('hr-828-45.ch-665-92.lg-700-1.sh-705-1.hd-180-2');
+  };
 
   const [activeType, setActiveType] = useState<string>('hr');
 
