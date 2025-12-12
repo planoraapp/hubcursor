@@ -5,7 +5,6 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { FunctionalConsole } from '@/components/console/FunctionalConsole';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/contexts/I18nContext';
-import { Button } from '@/components/ui/button';
 import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 import PageBanner from '@/components/ui/PageBanner';
 import { getBannerImageBySeed } from '@/utils/bannerUtils';

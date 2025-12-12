@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   Loader2, 
@@ -15,13 +15,17 @@ interface GlobalPhotoFeedColumnProps {
   className?: string;
 }
 
-export const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
+const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
   hotel = 'br',
   className = ''
 }) => {
   const { t } = useI18n();
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // Converter hotel para formato correto (br -> com.br para o hook)
+  const hotelCode = hotel === 'br' ? 'com.br' : hotel;
 
   const {
     photos,
@@ -34,10 +38,28 @@ export const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
     stats
   } = useGlobalPhotoFeed({
     limit: 20,
-    hotel,
-    enableCache: true,
-    cacheTime: 5
+    hotel: hotelCode,
+    enableCache: false, // Desabilitado temporariamente para garantir dados frescos
+    cacheTime: 1
   });
+
+  // IntersectionObserver for infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasMore || isLoadingMore || isLoading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingMore, isLoading, loadMore]);
 
   const handleUserClick = (userName: string) => {
     setSelectedUser(userName);
@@ -50,9 +72,8 @@ export const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
 
   return (
     <>
-      <div className={`bg-transparent text-white h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent ${className}`}>
-        <div className="flex-1 min-h-0">
-          <div className="space-y-4">
+      <div className={`bg-transparent text-white h-full w-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent ${className}`}>
+        <div className="space-y-4 w-full py-2">
               {isLoading && photos.length === 0 ? (
                 <div className="flex justify-center items-center h-32">
                   <Loader2 className="w-8 h-8 animate-spin text-white/60" />
@@ -92,24 +113,13 @@ export const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
                     ))}
                   </div>
 
-                  {/* Botão de carregar mais */}
-                  {hasMore && (
-                    <div className="flex justify-center pt-4">
-                      <Button
-                        variant="outline"
-                        onClick={loadMore}
-                        disabled={isLoadingMore}
-                        className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                      >
-                        {isLoadingMore ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Carregando...
-                          </>
-                        ) : (
-                          'Carregar mais fotos'
-                        )}
-                      </Button>
+                  {/* Sentinel para infinite scroll */}
+                  <div ref={sentinelRef} className="h-4" />
+
+                  {/* Loading mais fotos */}
+                  {isLoadingMore && (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="w-6 h-6 animate-spin text-white/60" />
                     </div>
                   )}
 
@@ -125,9 +135,8 @@ export const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
                   )}
                 </>
               )}
-            </div>
-          </div>
         </div>
+      </div>
 
       {/* Modal de perfil */}
       <ProfileModal
@@ -138,3 +147,6 @@ export const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
     </>
   );
 };
+
+export default GlobalPhotoFeedColumn;
+export { GlobalPhotoFeedColumn };

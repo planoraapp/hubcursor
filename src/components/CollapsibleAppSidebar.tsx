@@ -408,7 +408,7 @@ function CollapsibleAppSidebarComponent() {
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter className={`border-t-2 border-black ${isCollapsed ? 'p-1 gap-0' : 'p-3.5 gap-2'}`}>
+        <SidebarFooter className={`${isCollapsed ? 'p-1 gap-0' : 'p-3.5 gap-2'}`}>
           <div className={isCollapsed ? 'space-y-0' : 'space-y-2.5'}>
             {isLoggedIn && habboAccount ? (
               <HabboUserPanel />
@@ -461,8 +461,11 @@ function CollapsibleAppSidebarComponent() {
 
       <button
         onClick={toggleSidebar}
-        className="absolute -right-3 top-24 z-50 flex h-8 w-6 items-center justify-center rounded-r-md border-l-0 border-r-2 border-black bg-[#f5f5dc] transition-colors hover:bg-yellow-200/70"
-        style={{ boxShadow: '2px 0 4px rgba(0,0,0,0.1)' }}
+        className="hidden md:flex fixed top-24 z-[60] h-8 w-6 items-center justify-center rounded-r-md border-l-0 border-r-2 border-black bg-[#f5f5dc] transition-all duration-200 hover:bg-yellow-200/70"
+        style={{ 
+          boxShadow: '2px 0 4px rgba(0,0,0,0.1)',
+          left: isCollapsed ? 'calc(6rem - 12px)' : 'calc(16rem - 12px)'
+        }}
       >
         {isCollapsed ? (
           <ChevronRight className="h-3 w-3 text-[#8B4513]" />

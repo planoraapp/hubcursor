@@ -27,7 +27,7 @@ export const HabboUserPanel = () => {
   const { habboAccount, isLoggedIn, logout } = useAuth();
   const { language, setLanguage, t } = useI18n();
   const { toast } = useToast();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [userProfile, setUserProfile] = useState<HabboUserProfile | null>(null);
   const [loading, setLoading] = useState(false);
@@ -214,9 +214,6 @@ export const HabboUserPanel = () => {
                 )}
               </button>
             </div>
-
-            {/* Linha Divisória */}
-            <div className="border-t border-slate-300 mb-2"></div>
 
             {/* Avatar and Info */}
             <div className={`flex items-start gap-3 ${isCollapsed ? 'mb-1' : 'mb-4'}`}>

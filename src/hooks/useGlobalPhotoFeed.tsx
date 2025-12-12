@@ -38,17 +38,19 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
     return `global-feed-${hotel}-${cacheDate.toISOString().split('T')[0]}`;
   }, [hotel, cacheTime]);
 
-  // Função para buscar fotos usando Supabase Function (como funcionava antes)
-  const fetchGlobalPhotos = useCallback(async (currentCursor?: string): Promise<GlobalPhotoFeedData> => {try {
-      const startIndex = currentCursor ? parseInt(currentCursor) : 0;
-      const endIndex = startIndex + limit - 1;
+  // Função para buscar fotos usando Supabase Function
+  // O cursor agora representa dias atrás (0 = hoje, 1 = ontem, etc.)
+  const fetchGlobalPhotos = useCallback(async (currentCursor?: string): Promise<GlobalPhotoFeedData> => {
+    try {
+      // Converter hotel para formato esperado (com.br -> br)
+      const hotelCode = hotel === 'com.br' ? 'br' : hotel;
 
-      // Usar função Supabase para buscar fotos globais (como outros hooks fazem)
+      // Usar função Supabase para buscar fotos globais do dia específico
       const { data, error } = await supabase.functions.invoke('habbo-global-feed', {
         body: {
-          cursor: currentCursor,
+          cursor: currentCursor, // cursor = dayOffset (0 = hoje, 1 = ontem, etc.)
           limit,
-          hotel: 'br' // Corrigido: usar 'br' onde estão as fotos
+          hotel: hotelCode
         }
       });
 
@@ -71,17 +73,17 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
       // Debug: verificar usuários únicos
       if (data.photos && data.photos.length > 0) {
         const uniqueUsers = [...new Set(data.photos.map((p: any) => p.userName))];
-        console.log(`[🌍 GLOBAL FEED] Unique users found: ${uniqueUsers.join(', ')}`);
+        const dayOffset = currentCursor ? parseInt(currentCursor) : 0;
+        const dayLabel = dayOffset === 0 ? 'hoje' : dayOffset === 1 ? 'ontem' : `${dayOffset} dias atrás`;
+        console.log(`[🌍 GLOBAL FEED] ${data.photos.length} fotos de ${dayLabel}, usuários únicos: ${uniqueUsers.length} (${uniqueUsers.slice(0, 5).join(', ')}${uniqueUsers.length > 5 ? '...' : ''})`);
       }
-      
-      // Debug: verificar se há mais fotos no banco (sem filtro de hotel)
 
       return {
         photos: data.photos || [],
         nextCursor: data.nextCursor || null,
         hasMore: data.hasMore || false,
         totalCount: data.totalCount || 0,
-        cursor: data.cursor || startIndex.toString()
+        cursor: data.cursor || currentCursor || '0'
       };
 
     } catch (error) {
@@ -187,7 +189,8 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
             setAllPhotos(parsed.photos);
             if (parsed.cursor !== '0') {
               setCursor(parsed.cursor);
-            }}
+            }
+          }
         }
       } catch (error) {
         console.warn('[🌍 GLOBAL FEED] Cache load failed:', error);

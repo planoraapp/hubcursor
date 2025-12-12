@@ -23,7 +23,7 @@ import { PhotoCommentsCounter } from '@/components/console/PhotoCommentsCounter'
 
 const FriendsPhotoFeed = lazy(() => import('./FriendsPhotoFeed').then(module => ({ default: module.FriendsPhotoFeed })));
 const FindPhotoFeedColumn = lazy(() => import('@/components/console/FindPhotoFeedColumn').then(module => ({ default: module.FindPhotoFeedColumn })));
-const GlobalPhotoFeedColumn = lazy(() => import('@/components/console/GlobalPhotoFeedColumn').then(module => ({ default: module.GlobalPhotoFeedColumn })));
+const GlobalPhotoFeedColumn = lazy(() => import('@/components/console/GlobalPhotoFeedColumn'));
 
 
 // Componentes de ícones pixelizados no estilo Habbo
@@ -1605,7 +1605,7 @@ const PhotosTab: React.FC<any> = ({ isLoading }) => {
   };
 
   return (
-    <div className="h-full">
+    <div className="h-full w-full flex flex-col overflow-hidden">
       <Suspense fallback={
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
@@ -1614,9 +1614,8 @@ const PhotosTab: React.FC<any> = ({ isLoading }) => {
           </div>
         </div>
       }>
-        <div className="space-y-4 relative">
-          {/* Campo de Busca */}
-          <div className="p-4 border-b border-white/10">
+        {/* Campo de Busca - Fixo no topo */}
+        <div className="p-4 border-b border-white/10 flex-shrink-0">
             <div className="flex items-center gap-2">
               {/* Campo de busca com dropdown integrado */}
               <div className="flex-1 relative">
@@ -1747,21 +1746,22 @@ const PhotosTab: React.FC<any> = ({ isLoading }) => {
             </div>
           </div>
 
-          {/* Título do feed */}
-          <div className="flex items-center justify-between px-2">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <img
-                src="/assets/console/hotelfilter.png"
-                alt="Filtro"
-                className="h-5 w-auto object-contain"
-                style={{ imageRendering: 'pixelated' }}
-              />
-              Feed do Hotel
-            </h3>
-          </div>
+        {/* Título do feed - Fixo */}
+        <div className="flex items-center justify-between px-2 py-2 flex-shrink-0 border-b border-white/10">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <img
+              src="/assets/console/hotelfilter.png"
+              alt="Filtro"
+              className="h-5 w-auto object-contain"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            Feed do Hotel
+          </h3>
+        </div>
 
-          {/* Feed de fotos */}
-          <GlobalPhotoFeedColumn hotel={selectedCountry || 'br'} />
+        {/* Feed de fotos - Scrollável */}
+        <div className="flex-1 min-h-0 overflow-hidden w-full">
+          <GlobalPhotoFeedColumn hotel={selectedCountry || 'br'} className="h-full" />
         </div>
       </Suspense>
     </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Trophy, Home, Users, UserCheck, Camera, X } from 'lucide-react';
 import { useHabboPublicAPI } from '@/hooks/useHabboPublicAPI';
@@ -27,7 +27,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({ username }) => {
   const { habboAccount, isLoggedIn } = useAuth();
   
   // Usar o username do usuário logado se não for especificado
-  const targetUsername = username || habboAccount?.habbo_name || 'Beebop';
+  // useMemo para estabilizar o valor e evitar recarregamentos desnecessários
+  const targetUsername = useMemo(() => {
+    return username || habboAccount?.habbo_name || 'Beebop';
+  }, [username, habboAccount?.habbo_name]);
   
   const { userData, badges, rooms, groups, friends, photos, isLoading, error, refreshData, refreshBadges, refreshRooms, refreshGroups, refreshFriends } = useHabboPublicAPI(targetUsername);
 
