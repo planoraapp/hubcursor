@@ -118,49 +118,69 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
     )}&size=l&direction=2&head_direction=3&headonly=1`;
   };
 
-  const getRelativeTime = (dateString: string, timestamp?: number) => {
-    if (!dateString || dateString === "Invalid Date") return t('time.now');
-    
-    let photoDate: Date;
-    
-    // Tentar usar timestamp se disponível (mais preciso)
-    if (timestamp && timestamp > 0) {
-      photoDate = new Date(timestamp);
-    } else {
-      // Tentar parsear dateString
-      if (dateString.includes('/')) {
-        // Formato DD/MM/YYYY
-        const parts = dateString.split('/');
-        if (parts.length === 3) {
-          photoDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+  const getRelativeTime = (dateString: string, timestamp?: number | string) => {
+    // Se não houver nenhuma informação de data, assume "agora"
+    if ((!dateString || dateString === 'Invalid Date') && !timestamp) {
+      return t('time.now');
+    }
+
+    let photoDate: Date | null = null;
+
+    // 1) Priorizar timestamp bruto (mais confiável)
+    if (timestamp) {
+      if (typeof timestamp === 'number') {
+        // Habbo normalmente usa milissegundos; se vier em segundos, converte
+        const ts =
+          timestamp < 10_000_000_000
+            ? timestamp * 1000
+            : timestamp;
+        photoDate = new Date(ts);
+      } else if (typeof timestamp === 'string') {
+        const parsed = Date.parse(timestamp);
+        if (!Number.isNaN(parsed)) {
+          photoDate = new Date(parsed);
+        }
+      }
+    }
+
+    // 2) Fallback: tentar usar a string de data (ex: "20/12/2025")
+    if (!photoDate || Number.isNaN(photoDate.getTime())) {
+      if (dateString) {
+        if (dateString.includes('/')) {
+          // Formato DD/MM/YYYY
+          const parts = dateString.split('/');
+          if (parts.length === 3) {
+            const [dd, mm, yyyy] = parts.map(Number);
+            photoDate = new Date(yyyy, mm - 1, dd);
+          } else {
+            photoDate = new Date(dateString);
+          }
         } else {
           photoDate = new Date(dateString);
         }
-      } else {
-        photoDate = new Date(dateString);
       }
     }
-    
-    if (isNaN(photoDate.getTime())) {
-      return dateString;
+
+    // Se ainda estiver inválida, devolve a string bruta para não ficar "Agora" sempre
+    if (!photoDate || Number.isNaN(photoDate.getTime())) {
+      return dateString || t('time.now');
     }
-    
+
     const now = new Date();
     const diffMs = now.getTime() - photoDate.getTime();
     const diffMinutes = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    
+
     // Menos de 1 minuto: "agora"
     if (diffMinutes < 1) {
       return t('time.now');
     }
-    
+
     // Menos de 1 hora: "há X min"
     if (diffMinutes < 60) {
       return `há ${diffMinutes} min`;
     }
-    
+
     // Menos de 24 horas: "há Xh"
     if (diffHours < 24) {
       return `há ${diffHours}h`;
@@ -176,11 +196,11 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
     return photoDate.toLocaleDateString(locale, {
       day: '2-digit',
       month: '2-digit',
-      year: '2-digit'
+      year: '2-digit',
     });
   };
 
-  const formatDate = (dateString: string, timestamp?: number) => {
+  const formatDate = (dateString: string, timestamp?: number | string) => {
     return getRelativeTime(dateString, timestamp);
   };
 
