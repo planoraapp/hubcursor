@@ -293,7 +293,7 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
                   roomName: photo.roomName || '',
                   timestamp: photo.timestamp
                 } as EnhancedPhoto}
-                onUserClick={onNavigateToProfile}
+                onUserClick={(userName) => onNavigateToProfile(userName)}
                 onLikesClick={() => {}}
                 onCommentsClick={() => setCommentsModalPhoto({
                   id: photo.id,

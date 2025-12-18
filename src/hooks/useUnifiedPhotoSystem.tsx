@@ -16,14 +16,15 @@ export interface UnifiedPhoto {
 interface UseUnifiedPhotoSystemOptions {
   forceRefresh?: boolean;
   cacheTime?: number; // in minutes
+  uniqueId?: string;  // opcional: se já soubermos o uniqueId do usuário
 }
 
 export const useUnifiedPhotoSystem = (
-  username?: string, 
+  username?: string,
   hotel: string = 'br',
   options: UseUnifiedPhotoSystemOptions = {}
 ) => {
-  const { forceRefresh = false, cacheTime = 5 } = options; // Reduzido para 5 minutos
+  const { forceRefresh = false, cacheTime = 5, uniqueId } = options; // Reduzido para 5 minutos
 
   const { 
     data: photos = [], 
@@ -31,70 +32,47 @@ export const useUnifiedPhotoSystem = (
     error, 
     refetch 
   } = useQuery({
-    queryKey: ['unified-photos-api', username, hotel], // Removido forceRefresh do queryKey
+    // Incluir uniqueId na queryKey para refetch correto quando ele chegar
+    queryKey: ['unified-photos-api', username, hotel, uniqueId],
     queryFn: async (): Promise<UnifiedPhoto[]> => {
       if (!username) {
                 return [];
       }
 
-            // Logs removidos para evitar flicker
-
       try {
-                const { data, error } = await supabase.functions.invoke('habbo-photos-scraper', {
-          body: { 
-            username: username.trim(), 
-            hotel: hotel,
-            forceRefresh: forceRefresh
-          }
+        // Usar Edge Function centralizada para buscar todas as fotos do usuário
+        const trimmedUsername = username.trim();
+        const hotelCode = hotel === 'com.br' ? 'br' : hotel;
+
+        const { data, error } = await supabase.functions.invoke('habbo-photos-scraper', {
+          body: {
+            username: trimmedUsername,
+            hotel: hotelCode,
+            forceRefresh,
+            uniqueId: uniqueId || undefined,
+          },
         });
 
         if (error) {
-                    throw new Error(error.message || 'Failed to fetch photos from API');
-        }
-
-        // Logs removidos para evitar flicker
-
-        if (data && Array.isArray(data)) {
-          const unifiedPhotos: UnifiedPhoto[] = data.map(photo => {
-            // Determinar o timestamp correto
-            let finalTimestamp = Date.now();
-            
-            if (photo.timestamp) {
-              finalTimestamp = typeof photo.timestamp === 'number' ? photo.timestamp : new Date(photo.timestamp).getTime();
-            } else if (photo.date) {
-              // Se não há timestamp, tentar parsear a data
-              const parsedDate = new Date(photo.date);
-              if (!isNaN(parsedDate.getTime())) {
-                finalTimestamp = parsedDate.getTime();
-              }
-            }
-            
-            // Formatar a data corretamente
-            const formattedDate = new Date(finalTimestamp).toLocaleDateString('pt-BR', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric'
-            });
-            
-            return {
-              id: photo.id || photo.photo_id,
-              photo_id: photo.photo_id,
-              imageUrl: photo.imageUrl,
-              date: formattedDate,
-              likes: photo.likes || 0,
-              timestamp: finalTimestamp,
-              roomName: photo.roomName || 'Quarto do jogo',
-              source: 'api' as const
-            };
+          console.error('[🔍 UNIFIED PHOTOS] Edge Function error:', {
+            message: (error as any)?.message,
+            name: (error as any)?.name,
+            status: (error as any)?.status,
           });
-
-          // Logs removidos para evitar flicker
-
-          return unifiedPhotos;
-        } else {
-                    return [];
+          return [];
         }
 
+        const photosData = (data || []) as UnifiedPhoto[];
+
+        if (!Array.isArray(photosData) || photosData.length === 0) {
+          return [];
+        }
+
+        // Edge function já retorna no formato esperado para UnifiedPhoto
+        return photosData.map((photo) => ({
+          ...photo,
+          source: 'api' as const,
+        }));
       } catch (error: any) {
                 console.error('[🔍 UNIFIED PHOTOS] Error details:', {
           message: error.message,
@@ -115,14 +93,14 @@ export const useUnifiedPhotoSystem = (
   });
 
   const refreshPhotos = async (force = false) => {
-        console.log('[📋 UNIFIED PHOTOS] Refresh details:', {
+    console.log('[📋 UNIFIED PHOTOS] Refresh details:', {
       username,
       hotel,
       force,
       currentPhotoCount: photos.length,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
+
     return refetch();
   };
 
@@ -133,11 +111,9 @@ export const useUnifiedPhotoSystem = (
     refetch: refreshPhotos,
     photoCount: photos.length,
     // Utility methods
-    getPhotosBySource: (source: 'api') => 
-      photos.filter(photo => photo.source === source),
-    getPhotosWithLikes: () => 
-      photos.filter(photo => photo.likes > 0),
-    getRecentPhotos: (limit = 6) => 
-      photos.slice(0, limit)
+    getPhotosBySource: (source: 'api') =>
+      photos.filter((photo) => photo.source === source),
+    getPhotosWithLikes: () => photos.filter((photo) => photo.likes > 0),
+    getRecentPhotos: (limit = 6) => photos.slice(0, limit),
   };
 };

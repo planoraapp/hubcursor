@@ -411,7 +411,7 @@ function CollapsibleAppSidebarComponent() {
         <SidebarFooter className={`${isCollapsed ? 'p-1 gap-0' : 'p-3.5 gap-2'}`}>
           <div className={isCollapsed ? 'space-y-0' : 'space-y-2.5'}>
             {isLoggedIn && habboAccount ? (
-              <HabboUserPanel />
+              <HabboUserPanel sidebarCollapsed={isCollapsed} onExpandSidebar={toggleSidebar} />
             ) : (
               <div className="space-y-2">
                 {!isCollapsed ? (

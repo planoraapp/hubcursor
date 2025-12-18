@@ -19,7 +19,7 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   showDivider = false,
   className = ''
 }) => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { habboAccount } = useAuth();
   const [showLikesPopover, setShowLikesPopover] = useState(false);
   const [showCommentsPopover, setShowCommentsPopover] = useState(false);
@@ -34,7 +34,8 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   };
   
   const handleCommentsClick = () => {
-    onCommentsClick();
+    const photoId = photo.photo_id || photo.id;
+    onCommentsClick(photoId);
     setShowLikesPopover(false);
   };
   
@@ -101,8 +102,20 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
     isAddingComment
   } = usePhotoComments(photo.photo_id);
 
-  const getAvatarUrl = (userName: string) => {
-    return `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(userName)}&size=s&direction=2&head_direction=3&headonly=1`;
+  const getPhotoOwnerAvatarUrl = (userName: string) => {
+    // Priorizar informações de hotel vindas da própria foto
+    let domain =
+      (photo.hotelDomain as string | undefined) ||
+      (photo.hotel as string | undefined) ||
+      'com.br';
+
+    if (domain === 'br') {
+      domain = 'com.br';
+    }
+
+    return `https://www.habbo.${domain}/habbo-imaging/avatarimage?user=${encodeURIComponent(
+      userName,
+    )}&size=l&direction=2&head_direction=3&headonly=1`;
   };
 
   const getRelativeTime = (dateString: string, timestamp?: number) => {
@@ -152,17 +165,18 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
     if (diffHours < 24) {
       return `há ${diffHours}h`;
     }
-    
-    // Menos de 7 dias: "há X dias"
-    if (diffDays < 7) {
-      return `há ${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`;
-    }
-    
-    // Mais de 7 dias: mostrar data completa
-    return photoDate.toLocaleDateString('pt-BR', {
+
+    // A partir de 24h: exibir data absoluta, com formato por idioma
+    const lang = (language || 'pt').toLowerCase();
+    const isEnglish = lang.startsWith('en');
+    const isSpanish = lang.startsWith('es');
+
+    const locale = isEnglish ? 'en-US' : isSpanish ? 'es-ES' : 'pt-BR';
+
+    return photoDate.toLocaleDateString(locale, {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: '2-digit'
     });
   };
 
@@ -190,9 +204,20 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
     }
   };
 
+  const getAvatarUrl = (userName: string) => {
+    return `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(
+      userName,
+    )}&size=s&direction=2&head_direction=3&headonly=1`;
+  };
+
   const getRecentLikers = () => {
-    const currentUserLike = likes.find(like => like.user_id === photo.userLiked);
-    const otherLikes = likes.filter(like => like.user_id !== photo.userLiked);
+    const currentUserId = habboAccount?.id;
+    const currentUserLike = currentUserId
+      ? likes.find(like => like.user_id === currentUserId)
+      : undefined;
+    const otherLikes = currentUserId
+      ? likes.filter(like => like.user_id !== currentUserId)
+      : likes;
     
     if (currentUserLike) {
       return [currentUserLike, ...otherLikes.slice(0, 4)];
@@ -210,26 +235,34 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 flex-shrink-0 overflow-hidden">
             <img
-              src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${photo.userName}&size=l&direction=2&head_direction=3&headonly=1`}
+              src={getPhotoOwnerAvatarUrl(photo.userName)}
               alt={photo.userName}
-              className="w-full h-full cursor-pointer transition-opacity object-cover"
+              className="w-full h-full cursor-pointer object-cover"
+              loading="lazy"
               style={{ imageRendering: 'pixelated' }}
-              onClick={() => onUserClick(photo.userName)}
+              onClick={() => onUserClick(photo.userName, photo)}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
-                target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${encodeURIComponent(photo.userName)}&size=l&direction=2&head_direction=3&headonly=1`;
+                target.src = getPhotoOwnerAvatarUrl(photo.userName);
               }}
             />
           </div>
           <div className="flex-1">
             <button
-              onClick={() => onUserClick(photo.userName)}
+              onClick={() => onUserClick(photo.userName, photo)}
               className="font-semibold text-white hover:text-yellow-400 transition-colors"
             >
               {photo.userName}
             </button>
             <div className="text-xs text-white/60">
-              {formatDate(photo.date, photo.timestamp as number)}
+              {formatDate(
+                photo.date,
+                typeof photo.timestamp === 'number'
+                  ? photo.timestamp
+                  : photo.timestamp
+                  ? Date.parse(photo.timestamp as string)
+                  : undefined
+              )}
             </div>
           </div>
           <button className="text-white/60 hover:text-white transition-colors">

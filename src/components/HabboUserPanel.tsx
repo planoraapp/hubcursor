@@ -23,7 +23,12 @@ interface HabboUserProfile {
   created_at?: string;
 }
 
-export const HabboUserPanel = () => {
+interface HabboUserPanelProps {
+  sidebarCollapsed?: boolean;
+  onExpandSidebar?: () => void;
+}
+
+export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: HabboUserPanelProps = {}) => {
   const { habboAccount, isLoggedIn, logout } = useAuth();
   const { language, setLanguage, t } = useI18n();
   const { toast } = useToast();
@@ -165,6 +170,32 @@ export const HabboUserPanel = () => {
   };
 
   if (!isLoggedIn || !userProfile) return null;
+
+  // Se a sidebar estiver comprimida, mostrar apenas a cabeça do usuário
+  if (sidebarCollapsed) {
+    const userHeadSrc = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(userProfile.habbo_name)}&size=l&direction=2&head_direction=3&headonly=1`;
+    
+    return (
+      <button
+        onClick={onExpandSidebar}
+        className="w-full flex items-center justify-center p-2 hover:bg-yellow-200/50 transition-colors rounded cursor-pointer"
+        aria-label={`Expandir sidebar - ${userProfile.habbo_name}`}
+      >
+        <img
+          src={userHeadSrc}
+          alt={`Avatar de ${userProfile.habbo_name}`}
+          className="w-16 h-16 object-contain"
+          style={{
+            imageRendering: 'pixelated',
+          }}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${encodeURIComponent(userProfile.habbo_name)}&size=l&direction=2&head_direction=3&headonly=1`;
+          }}
+        />
+      </button>
+    );
+  }
 
   const getDesignStyles = () => {
     return {

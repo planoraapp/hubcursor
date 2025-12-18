@@ -167,11 +167,13 @@ export interface EnhancedPhoto {
   taken_date?: string;
   photo_type?: string;
   timestamp?: number;
+  hotel?: string;
+  hotelDomain?: string;
 }
 
 export interface PhotoCardProps {
   photo: EnhancedPhoto;
-  onUserClick: (userName: string) => void;
+  onUserClick: (userName: string, photo?: EnhancedPhoto) => void;
   onLikesClick: (photoId: string) => void;
   onCommentsClick: (photoId: string) => void;
   showDivider?: boolean;

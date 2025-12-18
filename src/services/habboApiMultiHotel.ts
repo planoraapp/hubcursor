@@ -1,8 +1,5 @@
 import type { HabboUser } from '@/types/habbo';
 
->;
-}
-
 const HOTEL_DOMAINS = [
   'com.br', // Brazil
   'com',    // International/US
@@ -15,11 +12,30 @@ const HOTEL_DOMAINS = [
   'tr'      // Turkey
 ];
 
-export const getUserByName = async (username: string): Promise<HabboUser | null> => {
-    for (const domain of HOTEL_DOMAINS) {
+const normalizePreferredDomain = (preferred?: string): string | undefined => {
+  if (!preferred) return undefined;
+  if (preferred === 'br') return 'com.br';
+  if (preferred === 'us') return 'com';
+  return preferred;
+};
+
+export const getUserByName = async (
+  username: string,
+  preferredDomain?: string
+): Promise<HabboUser | null> => {
+  const normalizedPreferred = normalizePreferredDomain(preferredDomain);
+
+  // Se tiver domínio preferido (por exemplo, vindo do hotel da foto),
+  // tentamos apenas esse domínio. Se não houver, iteramos por todos
+  // os domínios conhecidos em ordem.
+  const domainsToSearch = normalizedPreferred
+    ? [normalizedPreferred]
+    : [...HOTEL_DOMAINS];
+
+  for (const domain of domainsToSearch) {
     try {
       const url = `https://www.habbo.${domain}/api/public/users?name=${encodeURIComponent(username)}`;
-            const response = await fetch(url, {
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -30,22 +46,31 @@ export const getUserByName = async (username: string): Promise<HabboUser | null>
       if (response.ok) {
         const data = await response.json();
         if (data && data.name) {
-                    return {
+          // Enriquecer com informações úteis para outras partes do app
+          return {
             ...data,
             uniqueId: data.uniqueId || `hh${domain.replace('.', '')}-${data.name.toLowerCase()}`,
             // Garantir que memberSince está presente com dados reais da API
-            memberSince: data.memberSince || data.registeredDate || '2006-01-01T00:00:00.000+0000'
-          };
+            memberSince: data.memberSince || data.registeredDate || '2006-01-01T00:00:00.000+0000',
+            hotelDomain: domain,
+          } as HabboUser & { hotelDomain: string };
         }
       } else if (response.status === 404) {
-              } else {
-              }
+        // Se estamos tentando apenas o domínio preferido e ele não existe,
+        // não faz sentido tentar outros: retornamos null direto.
+        if (normalizedPreferred) {
+          return null;
+        }
+        // sem domínio preferido: seguimos tentando os demais
+      } else {
+        // Erros diferentes de 404 também não interrompem a busca global
+      }
     } catch (error) {
-            continue;
+      continue;
     }
   }
 
-    return null;
+  return null;
 };
 
 export const getUserById = async (userId: string): Promise<HabboUser | null> => {

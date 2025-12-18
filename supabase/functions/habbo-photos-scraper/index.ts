@@ -22,57 +22,65 @@ serve(async (req) => {
   }
 
   try {
-    const { username, hotel = 'br', forceRefresh = false } = await req.json();
+    const { username, hotel = 'br', forceRefresh = false, uniqueId: incomingUniqueId } = await req.json();
     
     console.log(`[habbo-photos-scraper] ====== NEW API APPROACH ======`);
     console.log(`[habbo-photos-scraper] Username: ${username}`);
     console.log(`[habbo-photos-scraper] Hotel: ${hotel}`);
     console.log(`[habbo-photos-scraper] Force refresh: ${forceRefresh}`);
+    console.log(`[habbo-photos-scraper] Incoming uniqueId: ${incomingUniqueId}`);
     
-    if (!username) {
-      console.error('[habbo-photos-scraper] No username provided');
-      return new Response(JSON.stringify({ error: 'Username is required' }), {
+    if (!username && !incomingUniqueId) {
+      console.error('[habbo-photos-scraper] No username or uniqueId provided');
+      return new Response(JSON.stringify({ error: 'Username or uniqueId is required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Step 1: Get user's uniqueId from official API
+    // Step 1: Resolver hotelDomain
     const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
-    const userApiUrl = `https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(username)}`;
-    
-    console.log(`[habbo-photos-scraper] Fetching user data from: ${userApiUrl}`);
-    
-    const userResponse = await fetch(userApiUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json',
-      },
-    });
+    let resolvedUniqueId: string | null = incomingUniqueId || null;
 
-    if (!userResponse.ok) {
-      console.error(`[habbo-photos-scraper] Failed to fetch user data: ${userResponse.status}`);
-      return new Response(JSON.stringify({ error: `User '${username}' not found` }), {
-        status: 404,
+    // Step 1: Se não recebemos uniqueId, buscar via API pública por nome
+    if (!resolvedUniqueId) {
+      const userApiUrl = `https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(username)}`;
+      
+      console.log(`[habbo-photos-scraper] Fetching user data from: ${userApiUrl}`);
+      
+      const userResponse = await fetch(userApiUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!userResponse.ok) {
+        console.error(`[habbo-photos-scraper] Failed to fetch user data by name: ${userResponse.status}`);
+        // Usuário não encontrado ou erro na API: retornar lista vazia em vez de 404
+        return new Response(JSON.stringify([]), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const userData = await userResponse.json();
+      resolvedUniqueId = userData.uniqueId || null;
+    }
+
+    if (!resolvedUniqueId) {
+      console.error(`[habbo-photos-scraper] No uniqueId available for user: ${username}`);
+      // Sem uniqueId válido: tratar como \"sem fotos\" em vez de erro 404
+      return new Response(JSON.stringify([]), {
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const userData = await userResponse.json();
-    const uniqueId = userData.uniqueId;
-
-    if (!uniqueId) {
-      console.error(`[habbo-photos-scraper] No uniqueId found for user: ${username}`);
-      return new Response(JSON.stringify({ error: `User '${username}' has no uniqueId` }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    console.log(`[habbo-photos-scraper] Found uniqueId: ${uniqueId}`);
+    console.log(`[habbo-photos-scraper] Using uniqueId: ${resolvedUniqueId}`);
 
     // Step 2: Get photos using the discovered API endpoint
-    const photosApiUrl = `https://www.habbo.${hotelDomain}/extradata/public/users/${uniqueId}/photos`;
+    const photosApiUrl = `https://www.habbo.${hotelDomain}/extradata/public/users/${resolvedUniqueId}/photos`;
     
     console.log(`[habbo-photos-scraper] Fetching photos from: ${photosApiUrl}`);
     
@@ -85,7 +93,9 @@ serve(async (req) => {
 
     if (!photosResponse.ok) {
       console.error(`[habbo-photos-scraper] Failed to fetch photos: ${photosResponse.status}`);
+      // Mesmo se a API de fotos falhar, responder com lista vazia e status 200
       return new Response(JSON.stringify([]), {
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

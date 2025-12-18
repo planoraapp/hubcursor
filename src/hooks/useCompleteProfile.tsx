@@ -1,6 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { getUserByName as getUserByNameMultiHotel } from '@/services/habboApiMultiHotel';
 
 export interface CompleteProfileStats {
   level: number;
@@ -35,6 +36,8 @@ export interface CompleteProfile {
   profileVisible: boolean;
   stats: CompleteProfileStats;
   data: CompleteProfileData;
+  hotelDomain?: string;
+  hotelCode?: string;
 }
 
 export const useCompleteProfile = (username: string, hotel: string = 'com.br') => {
@@ -44,59 +47,22 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br') =
       if (!username) throw new Error('Username is required');
       
       try {
-        // Primeiro, tentar usar a função Supabase
-        const { data, error } = await supabase.functions.invoke('habbo-complete-profile', {
-          body: { username: username.trim(), hotel }
-        });
+        // Normalizar apenas espaços em branco; manter pontuação exatamente como no Habbo
+        const cleanedUsername = username.trim();
 
-        if (!error && data) {
-          return {
-            uniqueId: data.uniqueId,
-            name: data.name,
-            figureString: data.figureString,
-            motto: data.motto,
-            online: data.online,
-            lastAccessTime: data.lastAccessTime,
-            memberSince: data.memberSince,
-            profileVisible: data.profileVisible,
-            stats: {
-              level: data.stats?.level || 0,
-              levelPercent: data.stats?.levelPercent || 0,
-              experience: 0,
-              starGems: data.stats?.level || 0,
-              badgesCount: data.stats?.badgesCount || 0,
-              friendsCount: data.stats?.friendsCount || 0,
-              groupsCount: data.stats?.groupsCount || 0,
-              roomsCount: data.stats?.roomsCount || 0,
-              photosCount: data.stats?.photosCount || 0,
-              habboTickerCount: 0
-            },
-            data: {
-              badges: data.badges || [],
-              friends: data.friends || [],
-              groups: data.groups || [],
-              rooms: data.rooms || [],
-              photos: data.photos || [],
-              selectedBadges: data.selectedBadges || []
-            }
-          };
+        // Usar busca global multi-hotel como fonte de verdade,
+        // priorizando o hotel informado (se existir)
+        const preferredDomain = hotel === 'br' ? 'com.br' : hotel;
+        const multiUser = await getUserByNameMultiHotel(cleanedUsername, preferredDomain);
+
+        if (!multiUser) {
+          throw new Error(`User '${cleanedUsername}' not found`);
         }
 
-        // Fallback: usar API direta do Habbo
-        const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
-        
-        const userResponse = await fetch(`https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(username)}`, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'application/json',
-          },
-        });
+        const userData: any = multiUser;
+        let hotelDomain = (multiUser as any).hotelDomain || preferredDomain;
+        const hotelCode = hotelDomain === 'com.br' ? 'br' : hotelDomain;
 
-        if (!userResponse.ok) {
-          throw new Error(`User '${username}' not found`);
-        }
-
-        const userData = await userResponse.json();
         const uniqueId = userData.uniqueId;
         
         // Buscar dados adicionais em paralelo
@@ -149,6 +115,8 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br') =
             photosCount: 0, // Será preenchido pelo useUnifiedPhotoSystem
             habboTickerCount: 0
           },
+          hotelDomain,
+          hotelCode,
           data: {
             badges: badges,
             friends: friends,

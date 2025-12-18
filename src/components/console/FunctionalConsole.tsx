@@ -176,6 +176,10 @@ export const FunctionalConsole: React.FC = () => {
     likes: number;
   } | null>(null);
 
+  // Estado para perfil aberto a partir do feed de Photos (hotel)
+  const [photosProfileUser, setPhotosProfileUser] = useState<string | null>(null);
+  const [photosProfileHotel, setPhotosProfileHotel] = useState<string | null>(null);
+
   // Handlers para navegação de fotos individuais
   const handlePhotoClick = (photo: any, index: number) => {
     // Usar photo_id (ID real da API do Habbo) ou photo.id, nunca gerar ID temporário
@@ -213,11 +217,8 @@ export const FunctionalConsole: React.FC = () => {
     isEditMode, toggleEditMode, bodyDirection, headDirection, rotateBody, rotateHead,
     hiddenPhotos, togglePhotoVisibility, viewingUser
   }) => {
-    // Detectar perfil privado: se não há dados completos ou se explicitamente privado
-    const isProfilePrivate = isViewingOtherUser && (
-      !user?.profileVisible || 
-      (badges.length === 0 && friends.length === 0 && rooms.length === 0 && groups.length === 0)
-    );
+    // Detectar perfil privado APENAS se a API indicar explicitamente
+    const isProfilePrivate = isViewingOtherUser && user?.profileVisible === false;
     
     // Detectar se o usuário não tem fotos (mesmo com perfil público)
     const hasNoPhotos = (photos?.length || 0) === 0;
@@ -267,8 +268,8 @@ export const FunctionalConsole: React.FC = () => {
             <div className="flex flex-col items-center gap-1">
               <div className="relative flex-shrink-0">
                 <img 
-                  src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=2`}
-                  alt={`Avatar de ${user?.name || 'Beebop'}`}
+                  src={`https://www.habbo.${user?.hotel === 'br' ? 'com.br' : (user?.hotel || 'com.br')}/habbo-imaging/avatarimage?figure=${encodeURIComponent(user?.figure_string || '')}&size=m&direction=2&head_direction=2`}
+                  alt={`Avatar de ${user?.name || 'Habbo'}`}
                   className="h-28 w-auto object-contain"
                   style={{ imageRendering: 'pixelated' }}
                   onError={(e) => {
@@ -288,9 +289,11 @@ export const FunctionalConsole: React.FC = () => {
             
             <div className="flex-1 min-w-0">
               <h2 className="text-2xl font-bold text-white mb-2 truncate">{user?.name || 'Beebop'}</h2>
-              <p className="text-white/70 italic mb-4 line-clamp-2">
-                "{user?.motto || 'HUB-ACTI1'}"
-              </p>
+              {user?.motto && user.motto.trim() ? (
+                <p className="text-white/70 italic mb-4 line-clamp-2">
+                  "{user.motto.trim()}"
+                </p>
+              ) : null}
               
               <div className="space-y-1 text-xs text-white/60">
                 <div className="flex items-center gap-2 min-w-0">
@@ -564,9 +567,34 @@ export const FunctionalConsole: React.FC = () => {
   const currentUser = habboAccount?.habbo_name;
   const username = viewingUser || currentUser || 'Beebop'; // Fallback para Beebop se não logado
   
-  // Buscar dados reais usando useCompleteProfile
-  const { data: completeProfile, isLoading, error: profileError } = useCompleteProfile(username, habboAccount?.hotel || 'com.br');
-  const { photos: photosData, isLoading: photosLoading } = useUnifiedPhotoSystem(username, habboAccount?.hotel || 'br');
+  // Definir hotel efetivo para busca de perfil/fotos
+  const effectiveHotelForProfile =
+    photosProfileHotel ||
+    habboAccount?.hotel ||
+    'com.br';
+
+  // Hotel base para fotos, antes de sabermos o hotel real do perfil
+  const baseHotelForPhotos =
+    photosProfileHotel
+      ? (photosProfileHotel === 'com.br' ? 'br' : photosProfileHotel)
+      : (habboAccount?.hotel || 'br');
+
+  // Buscar dados reais usando useCompleteProfile / useUnifiedPhotoSystem
+  const { data: completeProfile, isLoading, error: profileError } = useCompleteProfile(
+    username,
+    effectiveHotelForProfile,
+  );
+  const photosHotel =
+    completeProfile?.hotelCode || baseHotelForPhotos;
+
+  const { photos: photosData, isLoading: photosLoading } = useUnifiedPhotoSystem(
+    username,
+    photosHotel,
+    {
+      // Sempre que possível, passar o uniqueId já resolvido para a Edge Function
+      uniqueId: completeProfile?.uniqueId,
+    }
+  );
   
   // Debug logs removidos para evitar flicker
 
@@ -579,7 +607,7 @@ export const FunctionalConsole: React.FC = () => {
     figure_string: completeProfile.figureString,
     homeRoom: { name: "HabboHub" },
     uniqueId: completeProfile.uniqueId,
-    hotel: "br",
+    hotel: completeProfile.hotelCode || photosHotel,
     online: completeProfile.online,
     profileVisible: completeProfile.profileVisible ?? true // Assume público se não especificado
   } : null;
@@ -631,6 +659,33 @@ export const FunctionalConsole: React.FC = () => {
     setActiveTab('friends'); // Vai para a aba Friends ao ver perfil de outro usuário
     
     // Fecha qualquer modal que esteja aberto
+    if (activeModal) {
+      setActiveModal(null);
+    }
+  };
+
+  // Abrir perfil a partir do feed de Photos (hotel), mantendo a aba Photos
+  const openPhotosProfile = (targetUsername: string, photo?: any) => {
+    // Normalizar apenas espaços em branco; manter pontuação do nick
+    const cleanedUsername = (targetUsername || '').trim();
+
+    // Se a foto trouxer o hotel de origem, usá-lo para buscar o perfil correto
+    if (photo?.hotel || photo?.hotelDomain) {
+      const code = (photo.hotel as string) || (photo.hotelDomain as string) || '';
+      // Normalizar para formato esperado pelos hooks
+      const normalizedHotel =
+        code === 'com.br' ? 'com.br' :
+        code === 'br' ? 'com.br' :
+        code || 'com.br';
+      setPhotosProfileHotel(normalizedHotel);
+    } else {
+      setPhotosProfileHotel(null);
+    }
+
+    setViewingUser(cleanedUsername);
+    setPhotosProfileUser(cleanedUsername);
+    setActiveTab('photos');
+
     if (activeModal) {
       setActiveModal(null);
     }
@@ -726,9 +781,53 @@ export const FunctionalConsole: React.FC = () => {
           onNavigateToProfile={navigateToProfile}
         />;
       case 'photos':
-        return <PhotosTab 
-          isLoading={isLoading}
-        />;
+        if (photosProfileUser && viewingUser === photosProfileUser) {
+          // Reutilizar FeedTab para mostrar o perfil completo, mas dentro da aba Photos
+          return <FeedTab 
+            user={userData}
+            badges={badges} 
+            rooms={rooms} 
+            groups={groups} 
+            friends={friends} 
+            photos={photos} 
+            isLoading={isLoadingData}
+            onNavigateToProfile={navigateToProfile}
+            isViewingOtherUser={!!viewingUser}
+            viewingUsername={viewingUser}
+            currentUser={currentUser}
+            getPhotoInteractions={getPhotoInteractions}
+            setSelectedPhoto={setSelectedPhoto}
+            toggleLike={toggleLike}
+            addComment={addComment}
+            habboAccount={habboAccount}
+            username={username}
+            activeModal={activeModal}
+            setActiveModal={setActiveModal}
+            handleShowLikesModal={handleShowLikesModal}
+            handleShowCommentsModal={handleShowCommentsModal}
+            handlePhotoClick={handlePhotoClick}
+            isEditMode={isEditMode}
+            toggleEditMode={toggleEditMode}
+            bodyDirection={bodyDirection}
+            headDirection={headDirection}
+            rotateBody={rotateBody}
+            rotateHead={rotateHead}
+            hiddenPhotos={hiddenPhotos}
+            togglePhotoVisibility={togglePhotoVisibility}
+            setActiveTab={setActiveTab}
+            viewingUser={viewingUser}
+            onBackToPhotosFeed={() => {
+              setPhotosProfileUser(null);
+            }}
+          />;
+        }
+
+        return (
+          <PhotosTab 
+            isLoading={isLoadingData}
+            onUserClickFromFeed={openPhotosProfile}
+          />
+        );
       case 'photo':
         return selectedIndividualPhoto ? (
           <IndividualPhotoView
@@ -972,7 +1071,8 @@ const FeedTab: React.FC<any> = ({
   getPhotoInteractions, setSelectedPhoto, toggleLike, addComment, habboAccount, username, setActiveTab,
   activeModal, setActiveModal, handleShowLikesModal, handleShowCommentsModal, handlePhotoClick,
   isEditMode, toggleEditMode, bodyDirection, headDirection, rotateBody, rotateHead,
-  hiddenPhotos, togglePhotoVisibility, viewingUser
+  hiddenPhotos, togglePhotoVisibility, viewingUser,
+  onBackToPhotosFeed
 }) => {
   const { t } = useI18n();
   const [searchTerm, setSearchTerm] = useState('');
@@ -1054,11 +1154,8 @@ const FeedTab: React.FC<any> = ({
     }
   };
   
-  // Detectar perfil privado: se não há dados completos ou se explicitamente privado
-  const isProfilePrivate = isViewingOtherUser && (
-    !user?.profileVisible || 
-    (badges.length === 0 && friends.length === 0 && rooms.length === 0 && groups.length === 0)
-  );
+  // Detectar perfil privado APENAS se a API indicar explicitamente
+  const isProfilePrivate = isViewingOtherUser && user?.profileVisible === false;
   
   // Detectar se o usuário não tem fotos (mesmo com perfil público)
   const hasNoPhotos = (photos?.length || 0) === 0;
@@ -1082,6 +1179,32 @@ const FeedTab: React.FC<any> = ({
   if (isViewingOtherUser) {
     return (
       <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
+        {/* Botão opcional para voltar ao feed do hotel (usado na aba Photos) */}
+        {onBackToPhotosFeed && (
+          <div className="px-4 pt-3">
+            <button
+              onClick={onBackToPhotosFeed}
+              className="inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold rounded-lg border border-white/30 bg-transparent hover:bg-white hover:text-gray-800 transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-3 h-3"
+              >
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+              <span className="truncate">Voltar ao feed do hotel</span>
+            </button>
+          </div>
+        )}
+
         {/* Header do usuário com borda inferior */}
         <div className="p-4 border-b border-white/20 relative">
           {/* Bandeira no extremo superior direito */}
@@ -1096,8 +1219,8 @@ const FeedTab: React.FC<any> = ({
             <div className="flex flex-col items-center gap-1">
               <div className="relative flex-shrink-0">
                 <img 
-                  src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=2`}
-                  alt={`Avatar de ${user?.name || 'Beebop'}`}
+                  src={`https://www.habbo.${user?.hotel === 'br' ? 'com.br' : (user?.hotel || 'com.br')}/habbo-imaging/avatarimage?figure=${encodeURIComponent(user?.figure_string || '')}&size=m&direction=2&head_direction=2`}
+                  alt={`Avatar de ${user?.name || 'Habbo'}`}
                   className="h-28 w-auto object-contain"
                   style={{ imageRendering: 'pixelated' }}
                   onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -1117,9 +1240,11 @@ const FeedTab: React.FC<any> = ({
             
             <div className="flex-1 min-w-0">
               <h2 className="text-2xl font-bold text-white mb-2 truncate">{user?.name || 'Beebop'}</h2>
-              <p className="text-white/70 italic mb-4 line-clamp-2">
-                "{user?.motto && user.motto.trim() ? user.motto : 'null'}"
-              </p>
+              {user?.motto && user.motto.trim() && user.motto.trim().toLowerCase() !== 'null' ? (
+                <p className="text-white/70 italic mb-4 line-clamp-2">
+                  "{user.motto.trim()}"
+                </p>
+              ) : null}
               
               <div className="space-y-1 text-xs text-white/60">
                 <div className="flex items-center gap-2 min-w-0">
@@ -1367,7 +1492,7 @@ const FeedTab: React.FC<any> = ({
                 />
                 <p className="text-sm text-white/60">Este usuário tem o perfil privado</p>
               </div>
-            ) : !isProfilePrivate && hasNoPhotos ? (
+            ) : hasNoPhotos ? (
               <div className="col-span-3 flex flex-col items-center justify-center py-8 text-white/60">
                 <div className="text-4xl mb-2">📷</div>
                 <p className="text-sm">{t('pages.console.userHasNoPhotos')}</p>
@@ -1564,7 +1689,7 @@ const FeedTab: React.FC<any> = ({
 };
 
 // Componente da aba Photos (Feed Global)
-const PhotosTab: React.FC<any> = ({ isLoading }) => {
+const PhotosTab: React.FC<any> = ({ isLoading, onUserClickFromFeed }) => {
   const { t } = useI18n();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCountry, setSelectedCountry] = useState(null);
@@ -1761,7 +1886,11 @@ const PhotosTab: React.FC<any> = ({ isLoading }) => {
 
         {/* Feed de fotos - Scrollável */}
         <div className="flex-1 min-h-0 overflow-hidden w-full">
-          <GlobalPhotoFeedColumn hotel={selectedCountry || 'br'} className="h-full" />
+          <GlobalPhotoFeedColumn
+            hotel={selectedCountry || 'all'}
+            className="h-full"
+            onUserClick={onUserClickFromFeed}
+          />
         </div>
       </Suspense>
     </div>
