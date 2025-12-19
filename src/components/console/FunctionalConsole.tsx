@@ -25,6 +25,9 @@ const FriendsPhotoFeed = lazy(() => import('./FriendsPhotoFeed').then(module => 
 const FindPhotoFeedColumn = lazy(() => import('@/components/console/FindPhotoFeedColumn').then(module => ({ default: module.FindPhotoFeedColumn })));
 const GlobalPhotoFeedColumn = lazy(() => import('@/components/console/GlobalPhotoFeedColumn'));
 
+// Importar CommentsModal diretamente (não lazy, pois é usado condicionalmente)
+import { CommentsModal } from './FriendsPhotoFeed';
+
 
 // Componentes de ícones pixelizados no estilo Habbo
 
@@ -114,6 +117,21 @@ export const FunctionalConsole: React.FC = () => {
   const [showLikesModal, setShowLikesModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [selectedPhotoForModal, setSelectedPhotoForModal] = useState<any>(null);
+  
+  // Modal states for feed (friends feed)
+  const [feedLikesModalPhoto, setFeedLikesModalPhoto] = useState<any>(null);
+  const [feedCommentsModalPhoto, setFeedCommentsModalPhoto] = useState<any>(null);
+  const [isFeedModalVisible, setIsFeedModalVisible] = useState(false);
+  
+  // Animar entrada do modal
+  React.useEffect(() => {
+    if (feedLikesModalPhoto || feedCommentsModalPhoto) {
+      // Pequeno delay para garantir que o DOM foi atualizado
+      setTimeout(() => setIsFeedModalVisible(true), 10);
+    } else {
+      setIsFeedModalVisible(false);
+    }
+  }, [feedLikesModalPhoto, feedCommentsModalPhoto]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [bodyDirection, setBodyDirection] = useState(2);
   const [headDirection, setHeadDirection] = useState(3);
@@ -941,6 +959,72 @@ export const FunctionalConsole: React.FC = () => {
           )}
         </div>
 
+        {/* Modais do Feed - Renderizados acima da barra de navegação */}
+        {(feedLikesModalPhoto || feedCommentsModalPhoto) && (
+          <div className="absolute inset-0 z-[100] flex items-end justify-center pointer-events-none">
+            {/* Overlay escuro */}
+            <div 
+              className={`absolute inset-0 bg-black/50 backdrop-blur-sm pointer-events-auto transition-opacity duration-300 ${isFeedModalVisible ? 'opacity-100' : 'opacity-0'}`}
+              onClick={() => {
+                setFeedLikesModalPhoto(null);
+                setFeedCommentsModalPhoto(null);
+              }}
+            ></div>
+            
+            {/* Modal de Likes */}
+            {feedLikesModalPhoto && (
+              <div 
+                className={`relative w-full max-w-md mx-4 bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-400 rounded-t-2xl shadow-2xl max-h-[50vh] flex flex-col transform transition-all duration-300 ease-out pointer-events-auto ${
+                  isFeedModalVisible ? 'translate-y-0' : 'translate-y-full'
+                }`}
+                style={{
+                  marginBottom: '86px' // Altura da barra de navegação
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-400 to-yellow-300 border-b-2 border-yellow-500 rounded-t-xl">
+                  <h3 className="text-sm font-bold text-white" style={{
+                    textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+                  }}>
+                    Curtidas
+                  </h3>
+                  <button 
+                    onClick={() => setFeedLikesModalPhoto(null)}
+                    className="text-white hover:bg-white/20 rounded-full p-1"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4">
+                  <div className="text-center text-white/60 text-sm">
+                    Sistema de curtidas em desenvolvimento
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Modal de Comentários */}
+            {feedCommentsModalPhoto && (
+              <div 
+                className={`relative w-full max-w-md mx-4 bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-400 rounded-t-2xl shadow-2xl max-h-[70vh] flex flex-col transform transition-all duration-300 ease-out pointer-events-auto ${
+                  isFeedModalVisible ? 'translate-y-0' : 'translate-y-full'
+                }`}
+                style={{
+                  marginBottom: '86px' // Altura da barra de navegação
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <CommentsModal
+                  photo={feedCommentsModalPhoto}
+                  onClose={() => setFeedCommentsModalPhoto(null)}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Tab navigation at bottom - now part of external frame */}
         {/* Tab navigation at bottom - Habbo Classic Style */}
         <div className="relative bg-yellow-400">
@@ -1680,6 +1764,8 @@ const FeedTab: React.FC<any> = ({
             currentUserName={currentUser || 'Beebop'}
             hotel={habboAccount?.hotel || 'br'}
             onNavigateToProfile={onNavigateToProfile}
+            onLikesClick={(photo) => setFeedLikesModalPhoto(photo)}
+            onCommentsClick={(photo) => setFeedCommentsModalPhoto(photo)}
           />
         </Suspense>
       </div>

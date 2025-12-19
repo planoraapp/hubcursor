@@ -14,7 +14,7 @@ interface CommentsModalProps {
   onClose: () => void;
 }
 
-const CommentsModal: React.FC<CommentsModalProps> = ({ photo, onClose }) => {
+export const CommentsModal: React.FC<CommentsModalProps> = ({ photo, onClose }) => {
   const { habboAccount } = useAuth();
   const { t } = useI18n();
   const { 
@@ -146,12 +146,16 @@ interface FriendsPhotoFeedProps {
   currentUserName: string;
   hotel: string;
   onNavigateToProfile: (username: string) => void;
+  onLikesClick?: (photo: EnhancedPhoto) => void;
+  onCommentsClick?: (photo: EnhancedPhoto) => void;
 }
 
 export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
   currentUserName,
   hotel,
-  onNavigateToProfile
+  onNavigateToProfile,
+  onLikesClick,
+  onCommentsClick
 }) => {
   const { t } = useI18n();
   const queryClient = useQueryClient();
@@ -163,7 +167,6 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
     refetch
   } = useFriendsPhotos(currentUserName, hotel);
 
-  const [commentsModalPhoto, setCommentsModalPhoto] = useState<EnhancedPhoto | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
@@ -293,39 +296,48 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
                   roomName: photo.roomName || '',
                   timestamp: photo.timestamp
                 } as EnhancedPhoto}
-                onUserClick={(userName) => onNavigateToProfile(userName)}
-                onLikesClick={() => {}}
-                onCommentsClick={() => setCommentsModalPhoto({
-                  id: photo.id,
-                  photo_id: photo.id,
-                  userName: photo.userName,
-                  imageUrl: photo.imageUrl,
-                  date: photo.date,
-                  likes: [],
-                  likesCount: photo.likes,
-                  userLiked: false,
-                  type: 'PHOTO' as const,
-                  caption: photo.caption || '',
-                  roomName: photo.roomName || '',
-                  timestamp: photo.timestamp
-                } as EnhancedPhoto)}
+                onUserClick={onNavigateToProfile}
+                onLikesClick={(photoId) => {
+                  if (onLikesClick) {
+                    onLikesClick({
+                      id: photo.id,
+                      photo_id: photo.id,
+                      userName: photo.userName,
+                      imageUrl: photo.imageUrl,
+                      date: photo.date,
+                      likes: [],
+                      likesCount: photo.likes,
+                      userLiked: false,
+                      type: 'PHOTO' as const,
+                      caption: photo.caption || '',
+                      roomName: photo.roomName || '',
+                      timestamp: photo.timestamp
+                    } as EnhancedPhoto);
+                  }
+                }}
+                onCommentsClick={(photoId) => {
+                  if (onCommentsClick) {
+                    onCommentsClick({
+                      id: photo.id,
+                      photo_id: photo.id,
+                      userName: photo.userName,
+                      imageUrl: photo.imageUrl,
+                      date: photo.date,
+                      likes: [],
+                      likesCount: photo.likes,
+                      userLiked: false,
+                      type: 'PHOTO' as const,
+                      caption: photo.caption || '',
+                      roomName: photo.roomName || '',
+                      timestamp: photo.timestamp
+                    } as EnhancedPhoto);
+                  }
+                }}
                 showDivider={index < photos.length - 1}
               />
             ))}
           </div>
 
-          {/* Modal de Comentários - Desliza de baixo para cima */}
-          {commentsModalPhoto && (
-            <div className="absolute inset-0 z-50 flex items-end justify-center">
-              {/* Modal que desliza de baixo para cima */}
-              <div className="relative w-full max-w-md mx-4 bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-400 rounded-t-2xl shadow-2xl max-h-[70vh] flex flex-col transform transition-all duration-300 ease-out">
-                <CommentsModal
-                  photo={commentsModalPhoto}
-                  onClose={() => setCommentsModalPhoto(null)}
-                />
-              </div>
-            </div>
-          )}
         </div>
       );
 };

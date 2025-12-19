@@ -30,12 +30,23 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   const { checkCanComment, recordComment } = useCommentRateLimit();
   
   const handleLikesClick = () => {
-    setShowLikesPopover(!showLikesPopover);
+    // Se onLikesClick for fornecido, usar o callback (para feed de amigos)
+    // Caso contrário, mostrar modal interno (para outros contextos)
+    if (onLikesClick) {
+      const photoId = photo.photo_id || photo.id;
+      onLikesClick(photoId);
+    } else {
+      setShowLikesPopover(!showLikesPopover);
+    }
   };
   
   const handleCommentsClick = () => {
-    const photoId = photo.photo_id || photo.id;
-    onCommentsClick(photoId);
+    // Se onCommentsClick for fornecido, usar o callback (para feed de amigos)
+    // Caso contrário, usar comportamento padrão
+    if (onCommentsClick) {
+      const photoId = photo.photo_id || photo.id;
+      onCommentsClick(photoId);
+    }
     setShowLikesPopover(false);
   };
   
