@@ -25,8 +25,10 @@ const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
   const { t } = useI18n();
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // Converter hotel para formato correto (br -> com.br para o hook)
-  const hotelCode = hotel === 'br' ? 'com.br' : hotel;
+  // Converter hotel para formato correto (br -> com.br, tr -> com.tr para o hook)
+  let hotelCode = hotel;
+  if (hotel === 'br') hotelCode = 'com.br';
+  if (hotel === 'tr') hotelCode = 'com.tr';
 
   const {
     photos,
@@ -47,15 +49,16 @@ const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
   // IntersectionObserver for infinite scroll
   useEffect(() => {
     const sentinel = sentinelRef.current;
-    if (!sentinel || !hasMore || isLoadingMore || isLoading) return;
+    if (!sentinel) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+        // Verificar condições dentro do callback para permitir mudanças dinâmicas
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isLoading) {
           loadMore();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1, rootMargin: '100px' } // Adicionar margem para carregar antes de chegar ao fim
     );
 
     observer.observe(sentinel);

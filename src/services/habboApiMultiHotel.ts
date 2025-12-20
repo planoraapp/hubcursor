@@ -9,12 +9,13 @@ const HOTEL_DOMAINS = [
   'it',     // Italy
   'nl',     // Netherlands
   'fi',     // Finland
-  'tr'      // Turkey
+  'com.tr'  // Turkey
 ];
 
 const normalizePreferredDomain = (preferred?: string): string | undefined => {
   if (!preferred) return undefined;
   if (preferred === 'br') return 'com.br';
+  if (preferred === 'tr') return 'com.tr';
   if (preferred === 'us') return 'com';
   return preferred;
 };
@@ -25,11 +26,14 @@ export const getUserByName = async (
 ): Promise<HabboUser | null> => {
   const normalizedPreferred = normalizePreferredDomain(preferredDomain);
 
-  // Se tiver domínio preferido (por exemplo, vindo do hotel da foto),
-  // tentamos apenas esse domínio. Se não houver, iteramos por todos
-  // os domínios conhecidos em ordem.
+  // Construir lista de domínios para buscar:
+  // 1. Se houver domínio preferido, tentar primeiro ele
+  // 2. Depois tentar todos os outros domínios (caso o preferido falhe)
   const domainsToSearch = normalizedPreferred
-    ? [normalizedPreferred]
+    ? [
+        normalizedPreferred,
+        ...HOTEL_DOMAINS.filter((d) => d !== normalizedPreferred),
+      ]
     : [...HOTEL_DOMAINS];
 
   for (const domain of domainsToSearch) {
@@ -39,8 +43,8 @@ export const getUserByName = async (
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'User-Agent': 'HabboHub/1.0'
-        }
+          'User-Agent': 'HabboHub/1.0',
+        },
       });
 
       if (response.ok) {
@@ -49,27 +53,27 @@ export const getUserByName = async (
           // Enriquecer com informações úteis para outras partes do app
           return {
             ...data,
-            uniqueId: data.uniqueId || `hh${domain.replace('.', '')}-${data.name.toLowerCase()}`,
+            uniqueId:
+              data.uniqueId ||
+              `hh${domain.replace('.', '')}-${data.name.toLowerCase()}`,
             // Garantir que memberSince está presente com dados reais da API
-            memberSince: data.memberSince || data.registeredDate || '2006-01-01T00:00:00.000+0000',
+            memberSince:
+              data.memberSince ||
+              data.registeredDate ||
+              '2006-01-01T00:00:00.000+0000',
             hotelDomain: domain,
           } as HabboUser & { hotelDomain: string };
         }
-      } else if (response.status === 404) {
-        // Se estamos tentando apenas o domínio preferido e ele não existe,
-        // não faz sentido tentar outros: retornamos null direto.
-        if (normalizedPreferred) {
-          return null;
-        }
-        // sem domínio preferido: seguimos tentando os demais
-      } else {
-        // Erros diferentes de 404 também não interrompem a busca global
       }
+      // Se 404 ou outro erro, continuamos tentando os próximos domínios
+      // (não retornamos null imediatamente mesmo com domínio preferido)
     } catch (error) {
+      // Em caso de erro de rede, continuamos tentando os próximos domínios
       continue;
     }
   }
 
+  // Se nenhum domínio retornou o usuário, retornamos null
   return null;
 };
 
@@ -107,6 +111,7 @@ export const getAvatarUrl = (username: string, figureString?: string, hotel: str
   // Normalize hotel domain
   let domain = hotel;
   if (hotel === 'br') domain = 'com.br';
+  if (hotel === 'tr') domain = 'com.tr';
   if (hotel === 'us') domain = 'com';
   
   const baseUrl = `https://www.habbo.${domain}`;

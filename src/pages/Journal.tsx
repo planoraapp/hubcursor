@@ -133,7 +133,9 @@ interface ClassifiedAd {
 const normalizeHotelDomain = (hotel?: string) => {
   if (!hotel) return 'com.br';
   const normalized = hotel.toLowerCase();
-  return normalized === 'br' ? 'com.br' : normalized;
+  if (normalized === 'br') return 'com.br';
+  if (normalized === 'tr') return 'com.tr';
+  return normalized;
 };
 
 const Journal = () => {

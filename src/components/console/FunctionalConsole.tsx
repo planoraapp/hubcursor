@@ -268,7 +268,12 @@ export const FunctionalConsole: React.FC = () => {
             <div className="flex flex-col items-center gap-1">
               <div className="relative flex-shrink-0">
                 <img 
-                  src={`https://www.habbo.${user?.hotel === 'br' ? 'com.br' : (user?.hotel || 'com.br')}/habbo-imaging/avatarimage?figure=${encodeURIComponent(user?.figure_string || '')}&size=m&direction=2&head_direction=2`}
+                  src={`https://www.habbo.${(() => {
+                    const hotel = user?.hotel || 'com.br';
+                    if (hotel === 'br') return 'com.br';
+                    if (hotel === 'tr') return 'com.tr';
+                    return hotel;
+                  })()}/habbo-imaging/avatarimage?figure=${encodeURIComponent(user?.figure_string || '')}&size=m&direction=2&head_direction=2`}
                   alt={`Avatar de ${user?.name || 'Habbo'}`}
                   className="h-28 w-auto object-contain"
                   style={{ imageRendering: 'pixelated' }}
@@ -568,10 +573,15 @@ export const FunctionalConsole: React.FC = () => {
   const username = viewingUser || currentUser || 'Beebop'; // Fallback para Beebop se não logado
   
   // Definir hotel efetivo para busca de perfil/fotos
-  const effectiveHotelForProfile =
-    photosProfileHotel ||
-    habboAccount?.hotel ||
-    'com.br';
+  // Normalizar para formato de domínio (com.br, com, es, fr, etc.)
+  const effectiveHotelForProfile = (() => {
+    const hotel = photosProfileHotel || habboAccount?.hotel || 'com.br';
+    // Se for 'br', converter para 'com.br'; se for 'tr', converter para 'com.tr'; se for 'us', converter para 'com'
+    if (hotel === 'br') return 'com.br';
+    if (hotel === 'tr') return 'com.tr';
+    if (hotel === 'us') return 'com';
+    return hotel;
+  })();
 
   // Hotel base para fotos, antes de sabermos o hotel real do perfil
   const baseHotelForPhotos =
@@ -669,15 +679,57 @@ export const FunctionalConsole: React.FC = () => {
     // Normalizar apenas espaços em branco; manter pontuação do nick
     const cleanedUsername = (targetUsername || '').trim();
 
-    // Se a foto trouxer o hotel de origem, usá-lo para buscar o perfil correto
-    if (photo?.hotel || photo?.hotelDomain) {
-      const code = (photo.hotel as string) || (photo.hotelDomain as string) || '';
-      // Normalizar para formato esperado pelos hooks
-      const normalizedHotel =
-        code === 'com.br' ? 'com.br' :
-        code === 'br' ? 'com.br' :
-        code || 'com.br';
-      setPhotosProfileHotel(normalizedHotel);
+    // Função auxiliar para extrair código do hotel da URL da foto (fonte de verdade)
+    const extractHotelFromPhotoUrl = (url?: string): string | null => {
+      if (!url) return null;
+      // Padrão: hhXX onde XX é o código do hotel (ex: hhfi → fi, hhfr → fr)
+      const match = url.match(/\/hh([a-z]{2})\//);
+      if (match && match[1]) {
+        return match[1];
+      }
+      return null;
+    };
+
+    // Função auxiliar para converter código do hotel para domínio de API
+    const hotelCodeToDomain = (code: string): string => {
+      if (code === 'br') return 'com.br';
+      if (code === 'tr') return 'com.tr';
+      if (code === 'us' || code === 'com') return 'com';
+      // Outros hotéis (es, fr, de, it, nl, fi) usam o código diretamente como domínio
+      return code;
+    };
+
+    // Prioridade: 1) Extrair da URL da foto (fonte de verdade), 2) hotelDomain, 3) hotel
+    let hotelDomain: string | null = null;
+    
+    // 1. Tentar extrair da URL da foto
+    const photoUrl = photo?.s3_url || photo?.imageUrl || photo?.preview_url;
+    const hotelCodeFromUrl = extractHotelFromPhotoUrl(photoUrl);
+    if (hotelCodeFromUrl) {
+      hotelDomain = hotelCodeToDomain(hotelCodeFromUrl);
+    } else {
+      // 2. Tentar usar hotelDomain anotado na foto
+      const hotelDomainFromPhoto = photo?.hotelDomain;
+      if (hotelDomainFromPhoto) {
+        // Se já contém ponto, já é um domínio completo (com.br, com.tr, etc)
+        if (hotelDomainFromPhoto.includes('.')) {
+          hotelDomain = hotelDomainFromPhoto;
+        } else {
+          // Caso contrário, converter código para domínio
+          hotelDomain = hotelCodeToDomain(hotelDomainFromPhoto);
+        }
+      } else {
+        // 3. Tentar usar código do hotel anotado na foto
+        const hotelCodeFromPhoto = photo?.hotel;
+        if (hotelCodeFromPhoto) {
+          hotelDomain = hotelCodeToDomain(hotelCodeFromPhoto);
+        }
+      }
+    }
+
+    // Definir o hotel para o perfil (ou null para busca global)
+    if (hotelDomain) {
+      setPhotosProfileHotel(hotelDomain);
     } else {
       setPhotosProfileHotel(null);
     }
@@ -1120,7 +1172,9 @@ const FeedTab: React.FC<any> = ({
     try {
       // Buscar usuário na API real do Habbo
       const hotel = selectedCountry || 'br';
-      const hotelUrl = hotel === 'br' ? 'com.br' : hotel;
+      let hotelUrl = hotel;
+      if (hotel === 'br') hotelUrl = 'com.br';
+      if (hotel === 'tr') hotelUrl = 'com.tr';
       const response = await fetch(`https://www.habbo.${hotelUrl}/api/public/users?name=${encodeURIComponent(searchTerm)}`);
       
       if (!response.ok) {
@@ -1219,7 +1273,12 @@ const FeedTab: React.FC<any> = ({
             <div className="flex flex-col items-center gap-1">
               <div className="relative flex-shrink-0">
                 <img 
-                  src={`https://www.habbo.${user?.hotel === 'br' ? 'com.br' : (user?.hotel || 'com.br')}/habbo-imaging/avatarimage?figure=${encodeURIComponent(user?.figure_string || '')}&size=m&direction=2&head_direction=2`}
+                  src={`https://www.habbo.${(() => {
+                    const hotel = user?.hotel || 'com.br';
+                    if (hotel === 'br') return 'com.br';
+                    if (hotel === 'tr') return 'com.tr';
+                    return hotel;
+                  })()}/habbo-imaging/avatarimage?figure=${encodeURIComponent(user?.figure_string || '')}&size=m&direction=2&head_direction=2`}
                   alt={`Avatar de ${user?.name || 'Habbo'}`}
                   className="h-28 w-auto object-contain"
                   style={{ imageRendering: 'pixelated' }}

@@ -102,20 +102,124 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
     isAddingComment
   } = usePhotoComments(photo.photo_id);
 
-  const getPhotoOwnerAvatarUrl = (userName: string) => {
-    // Priorizar informações de hotel vindas da própria foto
-    let domain =
-      (photo.hotelDomain as string | undefined) ||
-      (photo.hotel as string | undefined) ||
-      'com.br';
-
-    if (domain === 'br') {
-      domain = 'com.br';
+  /**
+   * Extrai o código do hotel da URL da foto (fonte de verdade)
+   * Exemplo: .../hhfi/... → 'fi', .../hhfr/... → 'fr'
+   */
+  const extractHotelFromPhotoUrl = (url?: string): string | null => {
+    if (!url) return null;
+    
+    // Padrão: hhXX onde XX é o código do hotel
+    const match = url.match(/\/hh([a-z]{2})\//);
+    if (match && match[1]) {
+      return match[1];
     }
+    
+    return null;
+  };
 
+  /**
+   * Converte código do hotel para domínio de API
+   */
+  const hotelCodeToDomain = (code: string): string => {
+    if (code === 'br') return 'com.br';
+    if (code === 'tr') return 'com.tr';
+    if (code === 'us' || code === 'com') return 'com';
+    // Outros hotéis (es, fr, de, it, nl, fi) usam o código diretamente como domínio
+    return code;
+  };
+
+  /**
+   * Obtém o domínio correto do hotel baseado na foto
+   * Prioridade: 1) URL da foto, 2) hotelDomain da foto, 3) hotel da foto, 4) fallback
+   */
+  const getPhotoHotelDomain = (): string => {
+    // 1. Tentar extrair da URL da foto (fonte de verdade)
+    const photoUrl = photo.s3_url || photo.imageUrl || photo.preview_url;
+    const hotelCodeFromUrl = extractHotelFromPhotoUrl(photoUrl);
+    if (hotelCodeFromUrl) {
+      return hotelCodeToDomain(hotelCodeFromUrl);
+    }
+    
+    // 2. Tentar usar hotelDomain anotado na foto (já está no formato de domínio)
+    const hotelDomainFromPhoto = (photo as any).hotelDomain as string | undefined;
+    if (hotelDomainFromPhoto) {
+      // Se já contém ponto, já é um domínio completo (com.br, com.tr, etc)
+      if (hotelDomainFromPhoto.includes('.')) {
+        return hotelDomainFromPhoto;
+      }
+      // Caso contrário, converter código para domínio
+      return hotelCodeToDomain(hotelDomainFromPhoto);
+    }
+    
+    // 3. Tentar usar código do hotel anotado na foto
+    const hotelCodeFromPhoto = (photo as any).hotel as string | undefined;
+    if (hotelCodeFromPhoto) {
+      return hotelCodeToDomain(hotelCodeFromPhoto);
+    }
+    
+    // 4. Fallback padrão
+    return 'com.br';
+  };
+
+  const getPhotoOwnerAvatarUrl = (userName: string, preferredDomain?: string): string => {
+    // Se preferredDomain foi fornecido (fallback manual), usar ele
+    // Caso contrário, usar o domínio detectado da foto
+    const domain = preferredDomain ? hotelCodeToDomain(preferredDomain) : getPhotoHotelDomain();
+    
     return `https://www.habbo.${domain}/habbo-imaging/avatarimage?user=${encodeURIComponent(
       userName,
     )}&size=l&direction=2&head_direction=3&headonly=1`;
+  };
+
+  // Lista completa de domínios para fallback (ordenados por popularidade)
+  const ALL_HOTEL_DOMAINS = ['com.br', 'com', 'es', 'fr', 'de', 'it', 'nl', 'fi', 'com.tr'];
+  const MAX_RETRY_ATTEMPTS = 2; // Limitar a 2 tentativas adicionais (hotel original + 2 fallbacks = 3 total)
+  
+  const handleAvatarError = (e: React.SyntheticEvent<HTMLImageElement>, userName: string) => {
+    const target = e.target as HTMLImageElement;
+    
+    // Obter ou inicializar lista de tentativas
+    let triedDomains = (target as any)._triedDomains;
+    if (!triedDomains) {
+      triedDomains = [];
+      (target as any)._triedDomains = triedDomains;
+    }
+    
+    // Adicionar o domínio atual (que falhou) à lista de tentados
+    const currentDomain = getPhotoHotelDomain();
+    if (!triedDomains.includes(currentDomain)) {
+      triedDomains.push(currentDomain);
+    }
+    
+    // Limitar número de tentativas (hotel original + 2 fallbacks = máximo 3 tentativas)
+    if (triedDomains.length > MAX_RETRY_ATTEMPTS + 1) {
+      return;
+    }
+    
+    // Criar lista de fallback excluindo os hotéis já tentados
+    const fallbackDomains = ALL_HOTEL_DOMAINS.filter(d => 
+      !triedDomains.includes(d)
+    );
+    
+    const nextDomain = fallbackDomains[0];
+    
+    if (nextDomain) {
+      triedDomains.push(nextDomain);
+      
+      // Usar timeout para evitar requests abortados muito rápidos
+      const timeoutId = setTimeout(() => {
+        if (target && target.parentNode && target.isConnected) {
+          target.src = getPhotoOwnerAvatarUrl(userName, nextDomain);
+        }
+      }, 200);
+      
+      // Limpar timeout anterior se existir
+      if ((target as any)._retryTimeout) {
+        clearTimeout((target as any)._retryTimeout);
+      }
+      (target as any)._retryTimeout = timeoutId;
+    }
   };
 
   const getRelativeTime = (dateString: string, timestamp?: number | string) => {
@@ -261,10 +365,7 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
               loading="lazy"
               style={{ imageRendering: 'pixelated' }}
               onClick={() => onUserClick(photo.userName, photo)}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = getPhotoOwnerAvatarUrl(photo.userName);
-              }}
+              onError={(e) => handleAvatarError(e, photo.userName)}
             />
           </div>
           <div className="flex-1">

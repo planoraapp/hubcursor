@@ -119,7 +119,10 @@ serve(async (req) => {
 
       const results = await Promise.allSettled(
         hotelCodes.map(async (code) => {
-          const domain = code === 'br' ? 'com.br' : code;
+          // Normalizar domínios: br -> com.br, tr -> com.tr
+          let domain = code;
+          if (code === 'br') domain = 'com.br';
+          if (code === 'tr') domain = 'com.tr';
           const apiUrl = `https://www.habbo.${domain}/extradata/public/photos`;
 
           console.log(`[🌍 GLOBAL FEED] Fetching JSON photos from: ${apiUrl}`);
@@ -166,7 +169,10 @@ serve(async (req) => {
       // Ordenar por time (cronológico decrescente)
       rawPhotos.sort((a, b) => b.time - a.time);
     } else {
-      const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
+      // Normalizar domínios: br -> com.br, tr -> com.tr
+      let hotelDomain = hotel;
+      if (hotel === 'br') hotelDomain = 'com.br';
+      if (hotel === 'tr') hotelDomain = 'com.tr';
       const apiUrl = `https://www.habbo.${hotelDomain}/extradata/public/photos`;
 
       console.log(`[🌍 GLOBAL FEED] Fetching JSON photos from: ${apiUrl}`);
