@@ -162,6 +162,7 @@ export interface EnhancedPhoto {
   contentHeight?: number;
   caption?: string;
   roomName?: string;
+  roomId?: string | number; // ID do quarto quando disponível
   s3_url?: string;
   preview_url?: string;
   taken_date?: string;

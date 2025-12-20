@@ -51,12 +51,44 @@
   }
 }
 
+/* Animação para novas fotos no feed (deslizam de cima) */
+@keyframes slidePhotoFromTop {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animação de slide up (de baixo para cima) para modais */
+@keyframes slideUpFade {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-in {
   animation: slideInFromTop 0.3s ease-out;
 }
 
 .animate-out {
   animation: slideOutToTop 0.2s ease-in;
+}
+
+.animate-new-photo {
+  animation: slidePhotoFromTop 0.5s ease-out forwards;
+}
+
+.animate-slide-up-fade {
+  animation: slideUpFade 0.3s ease-out forwards;
 }
 
 .line-clamp-2 {

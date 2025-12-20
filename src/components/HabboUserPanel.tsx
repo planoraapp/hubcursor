@@ -171,9 +171,9 @@ export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: Ha
 
   if (!isLoggedIn || !userProfile) return null;
 
-  // Se a sidebar estiver comprimida, mostrar apenas a cabeça do usuário
+  // Se a sidebar estiver comprimida, mostrar a figurestring completa do corpo
   if (sidebarCollapsed) {
-    const userHeadSrc = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(userProfile.habbo_name)}&size=l&direction=2&head_direction=3&headonly=1`;
+    const userFullFigureSrc = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(userProfile.habbo_name)}&size=l&direction=2&head_direction=3`;
     
     return (
       <button
@@ -182,15 +182,16 @@ export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: Ha
         aria-label={`Expandir sidebar - ${userProfile.habbo_name}`}
       >
         <img
-          src={userHeadSrc}
+          src={userFullFigureSrc}
           alt={`Avatar de ${userProfile.habbo_name}`}
-          className="w-16 h-16 object-contain"
+          className="h-28 w-auto object-contain"
           style={{
             imageRendering: 'pixelated',
+            filter: 'drop-shadow(rgba(0, 0, 0, 0.3) 0px 4px 8px)',
           }}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${encodeURIComponent(userProfile.habbo_name)}&size=l&direction=2&head_direction=3&headonly=1`;
+            target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${encodeURIComponent(userProfile.habbo_name)}&size=l&direction=2&head_direction=3`;
           }}
         />
       </button>

@@ -51,6 +51,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (sessionData) {
           const session = JSON.parse(sessionData);
           setHabboAccount(session);
+          
+          // Atualizar estado online quando sessão é restaurada
+          if (session.supabase_user_id) {
+            const { error: updateError } = await supabase
+              .from('habbo_accounts')
+              .update({ is_online: true, updated_at: new Date().toISOString() })
+              .eq('supabase_user_id', session.supabase_user_id);
+            
+            if (updateError) {
+              console.error('Erro ao atualizar estado online:', updateError);
+            }
+          }
         }
       } catch (error) {
         localStorage.removeItem('habbohub_session');
@@ -102,6 +114,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       localStorage.setItem('habbohub_session', JSON.stringify(sessionData));
       setHabboAccount(sessionData);
+
+      // Atualizar estado online no banco de dados
+      if (habboAccount.supabase_user_id) {
+        const { error: updateError } = await supabase
+          .from('habbo_accounts')
+          .update({ is_online: true, updated_at: new Date().toISOString() })
+          .eq('supabase_user_id', habboAccount.supabase_user_id);
+        
+        if (updateError) {
+          console.error('Erro ao atualizar estado online:', updateError);
+        }
+      }
 
       toast({
         title: "Login realizado!",
@@ -163,6 +187,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async (): Promise<void> => {
     try {
       setLoading(true);
+      
+      // Atualizar estado online no banco de dados antes de limpar a sessão
+      if (habboAccount?.supabase_user_id) {
+        const { error: updateError } = await supabase
+          .from('habbo_accounts')
+          .update({ is_online: false, updated_at: new Date().toISOString() })
+          .eq('supabase_user_id', habboAccount.supabase_user_id);
+        
+        if (updateError) {
+          console.error('Erro ao atualizar estado online:', updateError);
+        }
+      }
       
       // Limpar sessão local
       localStorage.removeItem('habbohub_session');

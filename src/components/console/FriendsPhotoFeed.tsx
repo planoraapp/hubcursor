@@ -1,12 +1,13 @@
-﻿import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useFriendsPhotos } from "@/hooks/useFriendsPhotos";
 import { EnhancedPhotoCard } from "@/components/console/EnhancedPhotoCard";
 import { EnhancedPhoto } from "@/types/habbo";
-import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { Loader2, AlertCircle, RefreshCw, MessageCircle } from "lucide-react";
 import { usePhotoComments } from "@/hooks/usePhotoComments";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/contexts/I18nContext";
+import { getAvatarHeadUrl, getAvatarFallbackUrl } from '@/utils/avatarHelpers';
 
 // Componente do Modal de Comentários
 interface CommentsModalProps {
@@ -18,15 +19,20 @@ const CommentsModal: React.FC<CommentsModalProps> = ({ photo, onClose }) => {
   const { habboAccount } = useAuth();
   const { t } = useI18n();
   const { 
-    lastTwoComments,
+    comments,
+    commentsCount,
     addComment,
-    isAddingComment
-  } = usePhotoComments(photo.photo_id);
+    deleteComment,
+    canDeleteComment,
+    isAddingComment,
+    isDeletingComment
+  } = usePhotoComments(photo.photo_id || photo.id, photo.user || photo.userName);
 
   const [commentText, setCommentText] = useState('');
 
-  const getAvatarUrl = (userName: string) => {
-    return `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(userName)}&size=s&direction=2&head_direction=3&headonly=1`;
+  // Usar helper centralizado para URLs de avatar (não usado mais, mantido para compatibilidade)
+  const getPhotoUserAvatarUrl = (userName: string, hotel?: string) => {
+    return getAvatarHeadUrl(userName, hotel || 'br', undefined, 's');
   };
 
   const handleSubmitComment = async (e: React.FormEvent) => {
@@ -39,74 +45,120 @@ const CommentsModal: React.FC<CommentsModalProps> = ({ photo, onClose }) => {
 
   return (
     <>
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-400 to-yellow-300 border-b-2 border-yellow-500 rounded-t-xl">
-        <h3 className="text-sm font-bold text-white" style={{
-          textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
-        }}>
-          Comentários
-        </h3>
-        <button 
-          onClick={onClose}
-          className="text-white hover:bg-white/20 rounded-full p-1"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+      {/* Header - mesmo design do RoomDetailsModal */}
+      <div className="bg-yellow-400 border-2 border-black border-b-0 rounded-t-lg relative overflow-hidden flex-shrink-0" style={{
+        backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px)',
+        backgroundSize: '8px 8px'
+      }}>
+        <div className="pixel-pattern absolute inset-0 opacity-20"></div>
+        <div className="p-2 relative z-10 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-white font-bold text-xs" style={{
+            textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+          }}>
+            <MessageCircle className="w-4 h-4 text-white flex-shrink-0" />
+            <span>Comentários ({commentsCount || 0})</span>
+          </div>
+          <button 
+            onClick={onClose}
+            className="text-white hover:bg-white/20 rounded p-1"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       </div>
       
-      {/* Conteúdo */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {lastTwoComments && lastTwoComments.length > 0 ? (
-          <div className="space-y-3">
-            {lastTwoComments.map((comment) => (
-              <div key={comment.id} className="flex items-start gap-3">
-                <div className="w-8 h-8 flex-shrink-0 overflow-hidden rounded-full">
+      {/* Conteúdo com scroll - altura fixa para mostrar 5 comentários */}
+      <div className="bg-gray-900 relative overflow-y-auto flex-1" style={{
+        backgroundImage: 'repeating-linear-gradient(0deg, #333333, #333333 1px, #222222 1px, #222222 2px)',
+        backgroundSize: '100% 2px',
+        height: '320px' // Altura fixa para mostrar exatamente 5 comentários (~64px cada)
+      }}>
+        <div className="relative z-10 p-3 space-y-2">
+          {comments && comments.length > 0 ? (
+            comments.map((comment) => (
+              <div key={comment.id} className="flex items-start gap-3 p-2 hover:bg-white/5 rounded transition-colors">
+                <div className="w-10 h-10 flex-shrink-0 overflow-hidden">
                   <img
-                    src={getAvatarUrl(comment.habbo_name)}
+                    src={getAvatarHeadUrl(comment.habbo_name, comment.hotel || 'br', undefined, 's')}
                     alt={comment.habbo_name}
                     className="w-full h-full object-cover"
                     style={{ imageRendering: 'pixelated' }}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = getAvatarFallbackUrl(comment.habbo_name, 's');
+                    }}
                   />
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-semibold text-white">
-                      {comment.habbo_name}
-                    </span>
-                    <span className="text-xs text-white/60">
-                      {new Date(comment.created_at).toLocaleDateString('pt-BR')}
-                    </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-white">
+                        {comment.habbo_name}
+                      </span>
+                      <span className="text-xs text-white/60">
+                        {new Date(comment.created_at).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                    {canDeleteComment(comment) && (
+                      <button
+                        onClick={() => deleteComment(comment.id)}
+                        disabled={isDeletingComment}
+                        className="group relative w-5 h-5 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity disabled:opacity-50"
+                        title="Excluir comentário"
+                      >
+                        <img 
+                          src="/assets/deletetrash.gif" 
+                          alt="Excluir"
+                          className="max-w-full max-h-full object-contain"
+                          style={{ imageRendering: 'pixelated' }}
+                          onMouseOver={(e) => {
+                            if (!isDeletingComment) {
+                              e.currentTarget.src = '/assets/deletetrash1.gif';
+                            }
+                          }}
+                          onMouseOut={(e) => {
+                            if (!isDeletingComment) {
+                              e.currentTarget.src = '/assets/deletetrash.gif';
+                            }
+                          }}
+                        />
+                      </button>
+                    )}
                   </div>
-                  <p className="text-sm text-white/90">{comment.comment_text}</p>
+                  <p className="text-sm text-white/90 break-words">{comment.comment_text}</p>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center text-white/60 text-sm">
-            Nenhum comentário ainda
-          </div>
-        )}
+            ))
+          ) : (
+            <div className="text-center text-white/60 text-sm py-6">
+              Nenhum comentário ainda
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Campo de comentário */}
       {habboAccount && (
-        <div className="p-4 border-t border-white/20">
+        <div className="p-3 border-t border-white/10 bg-gray-900 flex-shrink-0">
           <form onSubmit={handleSubmitComment} className="flex items-center gap-2">
-            <div className="w-8 h-8 flex-shrink-0 overflow-hidden rounded-full">
+            <div className="w-10 h-10 flex-shrink-0 overflow-hidden">
               <img
                 src={habboAccount?.habbo_name
-                  ? `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=2&headonly=1`
-                  : `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-&size=m&direction=2&head_direction=2&headonly=1`
+                  ? getAvatarHeadUrl(habboAccount.habbo_name, habboAccount.hotel || 'br', undefined, 'm')
+                  : getAvatarHeadUrl('', 'br', 'hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-', 'm')
                 }
                 alt={habboAccount.habbo_name}
                 className="w-full h-full object-cover"
                 style={{ imageRendering: 'pixelated' }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-&size=m&direction=2&head_direction=2&headonly=1`;
+                  target.src = getAvatarHeadUrl('', 'br', 'hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-', 'm');
                 }}
               />
             </div>
@@ -146,16 +198,27 @@ interface FriendsPhotoFeedProps {
   currentUserName: string;
   hotel: string;
   onNavigateToProfile: (username: string) => void;
+  refreshTrigger?: number;
+  isHeaderVisible?: boolean;
 }
 
 export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
   currentUserName,
   hotel,
-  onNavigateToProfile
+  onNavigateToProfile,
+  refreshTrigger = 0,
+  isHeaderVisible = true
 }) => {
   const { t } = useI18n();
   const queryClient = useQueryClient();
   const { habboAccount, isLoggedIn } = useAuth();
+  const feedContainerRef = useRef<HTMLDivElement>(null);
+  const scrollRestoredRef = useRef(false);
+  const [modalPhotoWidth, setModalPhotoWidth] = useState<number | null>(null);
+  
+  // Chave única para salvar posição de scroll do feed de amigos
+  const scrollPositionKey = `feed-scroll-friends-${hotel}`;
+
   const {
     data: photos,
     isLoading,
@@ -166,6 +229,35 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
   const [commentsModalPhoto, setCommentsModalPhoto] = useState<EnhancedPhoto | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Calcular largura da foto quando o modal abrir
+  useEffect(() => {
+    if (!commentsModalPhoto) {
+      setModalPhotoWidth(null);
+      return;
+    }
+
+    const findPhotoWidth = () => {
+      // Procurar pela imagem usando o imageUrl
+      const images = document.querySelectorAll('img');
+      const targetImg = Array.from(images).find(img => 
+        img.src === commentsModalPhoto.imageUrl || 
+        img.src.includes(commentsModalPhoto.imageUrl.split('/').pop() || '')
+      );
+      
+      if (targetImg) {
+        const width = targetImg.offsetWidth || targetImg.clientWidth || targetImg.getBoundingClientRect().width;
+        if (width > 0) {
+          setModalPhotoWidth(width);
+        }
+      }
+    };
+
+    // Tentar encontrar imediatamente e também após um pequeno delay
+    findPhotoWidth();
+    const timeout = setTimeout(findPhotoWidth, 100);
+    return () => clearTimeout(timeout);
+  }, [commentsModalPhoto]);
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
@@ -174,10 +266,101 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
         queryKey: ['friends-photos'] 
       });
       await refetch();
+      
+      // Scroll para o topo após refresh
+      const scrollableParent = findScrollableParent(feedContainerRef.current);
+      if (scrollableParent) {
+        scrollableParent.scrollTop = 0;
+      }
     } finally {
       setIsRefreshing(false);
     }
   };
+
+  // Responder ao refreshTrigger externo
+  const lastRefreshTriggerRef = useRef(refreshTrigger);
+  useEffect(() => {
+    if (refreshTrigger > lastRefreshTriggerRef.current) {
+      lastRefreshTriggerRef.current = refreshTrigger;
+      handleRefresh();
+    }
+  }, [refreshTrigger]);
+
+  // Função para encontrar o elemento scrollável pai
+  const findScrollableParent = (element: HTMLElement | null): HTMLElement | null => {
+    if (!element) return null;
+    
+    let parent = element.parentElement;
+    while (parent) {
+      const style = window.getComputedStyle(parent);
+      if (style.overflowY === 'auto' || style.overflowY === 'scroll' || 
+          style.overflow === 'auto' || style.overflow === 'scroll') {
+        return parent;
+      }
+      parent = parent.parentElement;
+    }
+    return null;
+  };
+
+  // Salvar posição de scroll quando navegar para perfil
+  const handleNavigateToProfile = (username: string) => {
+    const scrollableParent = findScrollableParent(feedContainerRef.current);
+    if (scrollableParent) {
+      const scrollPosition = scrollableParent.scrollTop;
+      sessionStorage.setItem(scrollPositionKey, scrollPosition.toString());
+    }
+    onNavigateToProfile(username);
+  };
+
+  // Restaurar posição de scroll quando voltar ao feed
+  useEffect(() => {
+    if (feedContainerRef.current && photos && photos.length > 0 && !isLoading && !scrollRestoredRef.current) {
+      const scrollableParent = findScrollableParent(feedContainerRef.current);
+      if (scrollableParent) {
+        const savedScrollPosition = sessionStorage.getItem(scrollPositionKey);
+        if (savedScrollPosition !== null) {
+          requestAnimationFrame(() => {
+            if (scrollableParent) {
+              scrollableParent.scrollTop = parseInt(savedScrollPosition, 10);
+              scrollRestoredRef.current = true;
+            }
+          });
+        } else {
+          scrollRestoredRef.current = true;
+        }
+      }
+    }
+  }, [photos, isLoading, scrollPositionKey]);
+
+  // Salvar posição de scroll durante o scroll (debounced)
+  useEffect(() => {
+    const container = feedContainerRef.current;
+    if (!container) return;
+
+    const scrollableParent = findScrollableParent(container);
+    if (!scrollableParent) return;
+
+    let scrollTimeout: NodeJS.Timeout;
+    const handleScroll = () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        if (scrollableParent) {
+          sessionStorage.setItem(scrollPositionKey, scrollableParent.scrollTop.toString());
+        }
+      }, 300);
+    };
+
+    scrollableParent.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      scrollableParent.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, [scrollPositionKey, hotel]);
+
+  // Resetar flag quando hotel mudar
+  useEffect(() => {
+    scrollRestoredRef.current = false;
+  }, [hotel]);
 
   // Debug: log quando photos mudar
   useEffect(() => {
@@ -245,7 +428,12 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="text-4xl mb-4">📷</div>
+          <img 
+            src="/assets/console/hotelfilter.png" 
+            alt="Filtro" 
+            className="h-5 w-auto object-contain mx-auto mb-4"
+            style={{ imageRendering: 'pixelated' }}
+          />
           <p className="text-white/60 mb-2">{t('pages.console.noPhotos')}</p>
           <p className="text-white/40 text-sm">{t('pages.console.noPhotosDescription')}</p>
         </div>
@@ -254,10 +442,17 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
   }
 
       return (
-        <div className="space-y-4 relative overflow-hidden">
-          {/* Header do feed */}
-          <div className="flex items-center justify-between px-2">
-            <h3 className="text-lg font-bold text-white">
+        <div ref={feedContainerRef} className="space-y-4 relative overflow-hidden">
+          {/* Título do feed - Fixo */}
+          <div 
+            className="flex items-center justify-between px-2 py-2 flex-shrink-0"
+            style={{ 
+              position: 'sticky', 
+              top: 0,
+              zIndex: 99
+            }}
+          >
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
               {t('pages.console.feedTitle')}
             </h3>
             <button
@@ -274,9 +469,16 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
             </button>
           </div>
 
+          {/* Linha tracejada abaixo do título */}
+          <div className="border-t border-dashed border-white/20 my-2"></div>
+
           {/* Lista de fotos */}
           <div className="space-y-4">
-            {photos.map((photo, index) => (
+            {photos.map((photo, index) => {
+              // Converter código do hotel para domínio (ex: 'br' -> 'com.br', 'tr' -> 'com.tr')
+              const hotelDomain = hotel === 'br' ? 'com.br' : hotel === 'tr' ? 'com.tr' : hotel;
+              
+              return (
               <EnhancedPhotoCard
                 key={photo.id}
                 photo={{
@@ -284,6 +486,7 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
                   photo_id: photo.id,
                   userName: photo.userName,
                   imageUrl: photo.imageUrl,
+                  s3_url: photo.imageUrl, // Incluir também como s3_url para facilitar detecção do hotel
                   date: photo.date,
                   likes: [],
                   likesCount: photo.likes,
@@ -291,15 +494,19 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
                   type: 'PHOTO' as const,
                   caption: photo.caption || '',
                   roomName: photo.roomName || '',
-                  timestamp: photo.timestamp
+                  roomId: photo.roomId ? String(photo.roomId) : undefined, // Garantir que seja string
+                  timestamp: photo.timestamp,
+                  hotelDomain: hotelDomain, // Passar hotelDomain para facilitar detecção
+                  hotel: hotel // Passar código do hotel como fallback
                 } as EnhancedPhoto}
-                onUserClick={(userName) => onNavigateToProfile(userName)}
+                onUserClick={handleNavigateToProfile}
                 onLikesClick={() => {}}
                 onCommentsClick={() => setCommentsModalPhoto({
                   id: photo.id,
                   photo_id: photo.id,
                   userName: photo.userName,
                   imageUrl: photo.imageUrl,
+                  s3_url: photo.imageUrl,
                   date: photo.date,
                   likes: [],
                   likesCount: photo.likes,
@@ -307,18 +514,41 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
                   type: 'PHOTO' as const,
                   caption: photo.caption || '',
                   roomName: photo.roomName || '',
-                  timestamp: photo.timestamp
+                  roomId: photo.roomId ? String(photo.roomId) : undefined, // Garantir que seja string
+                  timestamp: photo.timestamp,
+                  hotelDomain: hotelDomain,
+                  hotel: hotel
                 } as EnhancedPhoto)}
                 showDivider={index < photos.length - 1}
               />
-            ))}
+              );
+            })}
           </div>
 
-          {/* Modal de Comentários - Desliza de baixo para cima */}
+          {/* Modal de Comentários - mesmo design do RoomDetailsModal */}
           {commentsModalPhoto && (
-            <div className="absolute inset-0 z-50 flex items-end justify-center">
-              {/* Modal que desliza de baixo para cima */}
-              <div className="relative w-full max-w-md mx-4 bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-400 rounded-t-2xl shadow-2xl max-h-[70vh] flex flex-col transform transition-all duration-300 ease-out">
+            <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ pointerEvents: 'auto' }}>
+              {/* Overlay para fechar ao clicar fora */}
+              <div
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                onClick={() => setCommentsModalPhoto(null)}
+              />
+              
+              {/* Modal */}
+              <div
+                className="relative p-0 bg-transparent border-0 overflow-hidden rounded-lg animate-slide-up-fade z-50"
+                style={{
+                  width: modalPhotoWidth ? `${modalPhotoWidth}px` : '100%',
+                  maxWidth: '100%',
+                  backgroundImage: 'repeating-linear-gradient(0deg, #333333, #333333 1px, #222222 1px, #222222 2px)',
+                  backgroundSize: '100% 2px',
+                  pointerEvents: 'auto',
+                  height: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
                 <CommentsModal
                   photo={commentsModalPhoto}
                   onClose={() => setCommentsModalPhoto(null)}

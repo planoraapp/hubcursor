@@ -100,7 +100,7 @@ export const RoomsModal: React.FC<RoomsModalProps> = ({
                 return (
                   <Popover key={room.id}>
                     <PopoverTrigger asChild>
-                      <div className="p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors cursor-pointer border border-white/10">
+                      <div className="p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors cursor-pointer border border-black">
                         <div className="flex items-center gap-3">
                           {/* Thumbnail do quarto - otimizado */}
                           <div className="relative w-16 h-16 flex-shrink-0 rounded overflow-hidden">

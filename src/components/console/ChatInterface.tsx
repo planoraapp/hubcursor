@@ -194,9 +194,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
 
       {!currentChat ? (
         /* Lista de conversas */
-        <div className="flex-1 overflow-y-auto scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
+        <div className="flex-1 overflow-y-auto scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent relative">
           {filteredConversations.length > 0 ? (
-            <div>
+            <div className="pb-16">
               {filteredConversations.map((conv, index) => (
                 <div key={conv.userId}>
                   {/* Linha tracejada divisória (exceto na primeira conversa) */}
@@ -209,14 +209,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                       setCurrentChat(conv.userId);
                       fetchMessages(conv.userId);
                     }}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 cursor-pointer transition-colors relative"
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 cursor-pointer transition-colors relative"
                   >
                   {/* Avatar - Apenas cabeça */}
                   <div className="relative flex-shrink-0">
                     <img
                       src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${conv.username}&size=l&direction=2&head_direction=2&headonly=1`}
                       alt={conv.username}
-                      className="w-20 h-20 object-cover"
+                      className="w-16 h-16 object-contain"
                       style={{ imageRendering: 'pixelated' }}
                     />
                     <div className={cn(
@@ -245,13 +245,29 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
               ))}
             </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center p-8">
+            <div className="flex-1 flex items-center justify-center p-8 pb-24">
               <div className="text-center text-white/60">
                 <p className="text-sm">Nenhuma conversa encontrada</p>
                 <p className="text-xs mt-2">Envie mensagens para seus amigos!</p>
               </div>
             </div>
           )}
+          
+          {/* Botão Enviar mensagem para um amigo - Fixo na parte inferior */}
+          <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-center z-10 bg-gradient-to-t from-gray-900/80 via-gray-900/40 to-transparent pointer-events-none">
+            <button
+              onClick={async () => {
+                const habboName = prompt('Digite o nome do amigo para enviar mensagem:');
+                if (habboName && habboName.trim()) {
+                  await startConversationWith(habboName.trim());
+                }
+              }}
+              className="py-1 px-4 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center pointer-events-auto shadow-lg"
+            >
+              <Send className="w-4 h-4" />
+              Enviar mensagem para um amigo
+            </button>
+          </div>
         </div>
       ) : (
         /* Área de conversa ativa */
@@ -386,6 +402,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                         className="w-14 h-14 object-cover transition-transform duration-100"
                         style={{ imageRendering: 'pixelated' }}
                       />
+                      {/* Indicador de estado online/offline (apenas para mensagens do outro usuário) */}
+                      {!isOwn && selectedConversation && (
+                        <div className={cn(
+                          "absolute bottom-0 right-0 w-3 h-3 border-2 border-[#1a1a1a] rounded-full",
+                          selectedConversation.isOnline ? "bg-green-500" : "bg-gray-500"
+                        )}></div>
+                      )}
                     </div>
 
                     {/* Balão de mensagem e timestamp */}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Heart, MessageCircle, User, Calendar, MapPin, MoreHorizontal, Send } from 'lucide-react';
 import { usePhotoLikes } from '@/hooks/usePhotoLikes';
@@ -10,6 +10,9 @@ import { validateComment, sanitizeComment, COMMENT_CONFIG } from '@/utils/commen
 import { PhotoCardProps, PhotoType } from '@/types/habbo';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { RoomDetailsModal } from './modals/RoomDetailsModal';
+import { getPhotoId, getPhotoUserName } from '@/utils/photoNormalizer';
+import { getAvatarHeadUrl, getAvatarFallbackUrl } from '@/utils/avatarHelpers';
 
 export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   photo,
@@ -25,6 +28,14 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   const [showCommentsPopover, setShowCommentsPopover] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showRoomDetails, setShowRoomDetails] = useState(false);
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [selectedRoomHotel, setSelectedRoomHotel] = useState<string>('');
+  const [roomDisplayName, setRoomDisplayName] = useState<string | null>(null);
+  const photoImageRef = React.useRef<HTMLImageElement>(null);
+  const [photoWidth, setPhotoWidth] = useState<number | null>(null);
+  const commentFormRef = React.useRef<HTMLDivElement>(null);
+  const [modalPosition, setModalPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   
   // Rate limiting
   const { checkCanComment, recordComment } = useCommentRateLimit();
@@ -34,21 +45,97 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   };
   
   const handleCommentsClick = () => {
-    const photoId = photo.photo_id || photo.id;
-    onCommentsClick(photoId);
+    setShowCommentsPopover(!showCommentsPopover);
     setShowLikesPopover(false);
   };
+
+  // Calcular posição do modal baseado no formulário de comentários
+  React.useLayoutEffect(() => {
+    if (!showCommentsPopover || !commentFormRef.current) {
+      setModalPosition(null);
+      return;
+    }
+
+    const calculatePosition = () => {
+      const commentDiv = commentFormRef.current;
+      if (!commentDiv) {
+        console.log('❌ Comment div ref not found');
+        return;
+      }
+
+      const divRect = commentDiv.getBoundingClientRect();
+      
+      // Encontrar o container pai com position relative (deve ser o div principal do componente)
+      let container = commentDiv.parentElement;
+      while (container) {
+        const style = getComputedStyle(container);
+        if (style.position === 'relative' || style.position === 'absolute' || style.position === 'fixed') {
+          break;
+        }
+        container = container.parentElement;
+        if (container && container.classList && container.classList.contains('space-y-3')) {
+          // Encontramos o container principal
+          break;
+        }
+      }
+      
+      if (!container) {
+        container = commentDiv.closest('.space-y-3') || commentDiv.parentElement;
+      }
+
+      const containerRect = container?.getBoundingClientRect() || { top: 0, left: 0 };
+      
+      // Posição relativa ao container
+      const relativeTop = divRect.top - containerRect.top;
+      const relativeLeft = divRect.left - containerRect.left;
+      
+      // Largura do modal = largura da div do formulário
+      const modalWidth = divRect.width;
+      
+      // Altura do modal = altura para 5 comentários (320px)
+      const modalHeight = 320;
+      
+      // Posição: começar do topo da div e expandir para cima
+      const position = {
+        top: relativeTop - modalHeight,
+        left: relativeLeft,
+        width: modalWidth
+      };
+      
+      console.log('📍 Modal position calculated:', position, { divRect, containerRect });
+      setModalPosition(position);
+    };
+
+    // Calcular imediatamente e após um pequeno delay
+    calculatePosition();
+    const timeout = setTimeout(calculatePosition, 50);
+    const timeout2 = setTimeout(calculatePosition, 200);
+    
+    // Recalcular em resize e scroll
+    const handleResize = () => calculatePosition();
+    const handleScroll = () => calculatePosition();
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('scroll', handleScroll, true);
+    return () => {
+      clearTimeout(timeout);
+      clearTimeout(timeout2);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [showCommentsPopover]);
   
   /**
    * Enviar comentário com validação e rate limiting
    */
-  const handleSubmitComment = async () => {
+  const handleSubmitComment = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    
     if (!habboAccount) {
       toast.error(t('toast.loginRequired'));
       return;
     }
 
-    const photoId = photo.photo_id || photo.id;
+    const photoId = getPhotoId(photo);
     
     // Verificar rate limit
     const rateLimitStatus = checkCanComment(photoId);
@@ -79,6 +166,10 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
       setCommentText('');
       toast.success(t('toast.commentSent'));
       
+      // Abrir modal de comentários após enviar
+      setShowCommentsPopover(true);
+      setShowLikesPopover(false);
+      
     } catch (error: any) {
       console.error('Erro ao enviar comentário:', error);
       toast.error(t('toast.commentError'));
@@ -93,14 +184,18 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
     userLiked, 
     toggleLike, 
     isToggling 
-  } = usePhotoLikes(photo.photo_id);
+  } = usePhotoLikes(getPhotoId(photo));
 
   const { 
+    comments,
     commentsCount, 
     lastTwoComments,
     addComment,
-    isAddingComment
-  } = usePhotoComments(photo.photo_id);
+    deleteComment,
+    canDeleteComment,
+    isAddingComment,
+    isDeletingComment
+  } = usePhotoComments(getPhotoId(photo), getPhotoUserName(photo));
 
   /**
    * Extrai o código do hotel da URL da foto (fonte de verdade)
@@ -162,14 +257,60 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
     return 'com.br';
   };
 
-  const getPhotoOwnerAvatarUrl = (userName: string, preferredDomain?: string): string => {
-    // Se preferredDomain foi fornecido (fallback manual), usar ele
-    // Caso contrário, usar o domínio detectado da foto
-    const domain = preferredDomain ? hotelCodeToDomain(preferredDomain) : getPhotoHotelDomain();
+  // Buscar nome do quarto quando houver roomName
+  useEffect(() => {
+    if (!photo.roomName) {
+      setRoomDisplayName(null);
+      return;
+    }
     
-    return `https://www.habbo.${domain}/habbo-imaging/avatarimage?user=${encodeURIComponent(
-      userName,
-    )}&size=l&direction=2&head_direction=3&headonly=1`;
+    // Prioridade: 1) roomId direto, 2) extrair do roomName (ex: "Room 117037234" -> "117037234")
+    let roomId: string | null = null;
+    
+    if (photo.roomId) {
+      roomId = String(photo.roomId);
+    } else {
+      const roomIdMatch = photo.roomName.match(/Room\s+(\d+)/i);
+      if (roomIdMatch) {
+        roomId = roomIdMatch[1];
+      }
+    }
+    
+    if (!roomId) {
+      setRoomDisplayName(photo.roomName); // Se não conseguir extrair ID, usar o roomName original
+      return;
+    }
+    
+    // Buscar nome do quarto da API
+    const fetchRoomName = async () => {
+      const hotelDomain = getPhotoHotelDomain();
+      try {
+        const response = await fetch(`https://www.habbo.${hotelDomain}/api/public/rooms/${roomId}`, {
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        if (response.ok) {
+          const roomData = await response.json();
+          if (roomData.name) {
+            setRoomDisplayName(roomData.name);
+          } else {
+            setRoomDisplayName(photo.roomName); // Fallback para roomName original
+          }
+        } else {
+          setRoomDisplayName(photo.roomName); // Fallback para roomName original
+        }
+      } catch (error) {
+        console.error('Erro ao buscar nome do quarto:', error);
+        setRoomDisplayName(photo.roomName); // Fallback para roomName original
+      }
+    };
+    
+    fetchRoomName();
+  }, [photo.roomName, photo.roomId, photo.s3_url, photo.imageUrl, photo.preview_url, photo.hotelDomain, photo.hotel]);
+
+  const getPhotoOwnerAvatarUrl = (userName: string, preferredDomain?: string): string => {
+    const domain = preferredDomain ? hotelCodeToDomain(preferredDomain) : getPhotoHotelDomain();
+    return getAvatarHeadUrl(userName, domain, undefined, 'l');
   };
 
   // Lista completa de domínios para fallback (ordenados por popularidade)
@@ -328,10 +469,9 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
     }
   };
 
-  const getAvatarUrl = (userName: string) => {
-    return `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(
-      userName,
-    )}&size=s&direction=2&head_direction=3&headonly=1`;
+  // Usar helper centralizado para URLs de avatar
+  const getPhotoUserAvatarUrl = (userName: string) => {
+    return getAvatarHeadUrl(userName, getPhotoHotelDomain(), undefined, 's');
   };
 
   const getRecentLikers = () => {
@@ -353,7 +493,7 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   const hasMoreLikes = likesCount > recentLikers.length;
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-3 relative", className)}>
       {/* User Info */}
       <div className="px-1 py-2 bg-transparent">
         <div className="flex items-center gap-3">
@@ -393,8 +533,9 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
       </div>
 
       {/* Photo */}
-      <div className="relative">
+      <div className="relative" style={{ position: 'relative' }}>
         <img
+          ref={photoImageRef}
           src={photo.imageUrl}
           alt={`Foto de ${photo.userName}`}
           className="w-full h-auto object-contain"
@@ -403,6 +544,20 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
             target.src = '/placeholder.svg';
           }}
         />
+        
+        {/* Modal de detalhes do quarto - renderizado aqui para estar no mesmo contexto */}
+        {showRoomDetails && selectedRoomId && (
+          <RoomDetailsModal
+            roomId={selectedRoomId}
+            hotelDomain={selectedRoomHotel}
+            photoImageRef={photoImageRef}
+            isOpen={showRoomDetails}
+            onClose={() => {
+              setShowRoomDetails(false);
+              setSelectedRoomId(null);
+            }}
+          />
+        )}
         
         {/* Hub.gif logo - canto inferior esquerdo */}
         <div className="absolute bottom-2 left-2">
@@ -416,137 +571,400 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
           />
         </div>
         
-        {/* Popover de Likes */}
+        {/* Modal de Likes - mesmo design do RoomDetailsModal */}
         {showLikesPopover && (
-          <div className="absolute inset-0 z-50 flex items-end justify-center">
-            {/* Overlay escuro */}
-            <div 
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          <>
+            {/* Overlay para fechar ao clicar fora */}
+            <div
+              className="fixed inset-0 bg-transparent"
               onClick={() => setShowLikesPopover(false)}
-            ></div>
+              style={{ pointerEvents: 'auto', zIndex: 49 }}
+            />
             
-            {/* Modal que desliza de baixo para cima */}
-            <div className="relative w-full max-w-md mx-4 bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-400 rounded-t-2xl shadow-2xl max-h-[50vh] flex flex-col transform transition-all duration-300 ease-out">
+            {/* Modal */}
+            <div
+              className={cn(
+                "absolute top-0 left-0 right-0 bottom-0 z-50 flex items-center justify-center",
+                "p-0"
+              )}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div
+                className="relative w-full max-w-md mx-4 p-0 bg-transparent border-0 overflow-hidden rounded-lg animate-slide-up-fade"
+                style={{
+                  backgroundImage: 'repeating-linear-gradient(0deg, #333333, #333333 1px, #222222 1px, #222222 2px)',
+                  backgroundSize: '100% 2px',
+                  pointerEvents: 'auto',
+                  maxHeight: '400px',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
               {/* Header */}
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-400 to-yellow-300 border-b-2 border-yellow-500 rounded-t-xl">
-                <h3 className="text-sm font-bold text-white" style={{
-                  textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
-                }}>
-                  Curtidas
-                </h3>
-                <button 
-                  onClick={() => setShowLikesPopover(false)}
-                  className="text-white hover:bg-white/20 rounded-full p-1"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              
-              {/* Conteúdo */}
-              <div className="flex-1 overflow-y-auto p-4">
-                <div className="text-center text-white/60 text-sm">
-                  Sistema de curtidas em desenvolvimento
+              <div className="bg-yellow-400 border-2 border-black border-b-0 rounded-t-lg relative overflow-hidden flex-shrink-0" style={{
+                backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px)',
+                backgroundSize: '8px 8px'
+              }}>
+                <div className="pixel-pattern absolute inset-0 opacity-20"></div>
+                <div className="p-2 relative z-10 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-white font-bold text-xs" style={{
+                    textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+                  }}>
+                    <Heart className="w-4 h-4 text-white flex-shrink-0 fill-current" />
+                    <span>Curtidas ({likesCount})</span>
+                  </div>
+                  <button 
+                    onClick={() => setShowLikesPopover(false)}
+                    className="text-white hover:bg-white/20 rounded p-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
               </div>
+              
+              {/* Conteúdo com scroll */}
+              <div className="bg-gray-900 relative overflow-y-auto flex-1" style={{
+                backgroundImage: 'repeating-linear-gradient(0deg, #333333, #333333 1px, #222222 1px, #222222 2px)',
+                backgroundSize: '100% 2px'
+              }}>
+                <div className="relative z-10 p-3 space-y-2">
+                  {likes.length > 0 ? (
+                    likes.map((like) => (
+                      <div key={like.id} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded transition-colors">
+                        <div className="w-10 h-10 flex-shrink-0 overflow-hidden">
+                          <img
+                            src={getPhotoUserAvatarUrl(like.habbo_name)}
+                            alt={like.habbo_name}
+                            className="w-full h-full object-cover"
+                            style={{ imageRendering: 'pixelated' }}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = getAvatarFallbackUrl(like.habbo_name, 's');
+                            }}
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <button
+                            onClick={() => onUserClick(like.habbo_name, photo)}
+                            className="text-sm font-semibold text-white hover:text-yellow-400 transition-colors truncate block w-full text-left"
+                          >
+                            {like.habbo_name}
+                          </button>
+                          <div className="text-xs text-white/60">
+                            {new Date(like.created_at).toLocaleDateString('pt-BR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric'
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-white/60 text-sm py-6">
+                      Nenhuma curtida ainda
+                    </div>
+                  )}
+                </div>
+              </div>
+              </div>
             </div>
-          </div>
+          </>
         )}
-        
+
+        {/* Modal de Comentários - abre a partir do formulário de comentários */}
+        {showCommentsPopover && (
+          <>
+            {/* Overlay para fechar ao clicar fora - não cobre a área do formulário */}
+            <div
+              className="fixed inset-0 bg-transparent"
+              onClick={(e) => {
+                // Não fechar se o clique for na área do formulário
+                const target = e.target as HTMLElement;
+                if (commentFormRef.current && commentFormRef.current.contains(target)) {
+                  return;
+                }
+                setShowCommentsPopover(false);
+              }}
+              style={{ pointerEvents: 'auto', zIndex: 49 }}
+            />
+            
+            {/* Modal posicionado acima do formulário */}
+            <div
+              className="absolute z-50 overflow-hidden rounded-lg animate-in slide-in-from-bottom duration-300"
+              style={{
+                top: modalPosition ? `${modalPosition.top}px` : 'auto',
+                bottom: modalPosition ? 'auto' : '100%',
+                left: modalPosition ? `${modalPosition.left}px` : '0px',
+                width: modalPosition ? `${modalPosition.width}px` : '100%',
+                height: '320px',
+                display: 'flex',
+                flexDirection: 'column',
+                pointerEvents: 'auto',
+                marginBottom: modalPosition ? '0' : '8px'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div
+                className="relative w-full h-full flex flex-col"
+                style={{
+                  backgroundImage: 'repeating-linear-gradient(0deg, #333333, #333333 1px, #222222 1px, #222222 2px)',
+                  backgroundSize: '100% 2px',
+                  backgroundColor: 'transparent'
+                }}
+              >
+                {/* Header com cores do formulário */}
+                <div className="flex-shrink-0 border-b border-white/20" style={{
+                  backgroundColor: '#1a1a1a'
+                }}>
+                  <div className="p-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-white font-semibold text-sm">
+                      <MessageCircle className="w-4 h-4 text-white/70" />
+                      <span>Comentários ({commentsCount})</span>
+                    </div>
+                    <button 
+                      onClick={() => setShowCommentsPopover(false)}
+                      className="text-white/60 hover:text-white hover:bg-white/10 rounded p-1 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Conteúdo com scroll - altura fixa para mostrar 5 comentários */}
+                <div className="relative overflow-y-auto" style={{
+                  backgroundColor: '#1a1a1a',
+                  height: 'calc(320px - 48px)' // Altura total menos altura do header (~48px)
+                }}>
+                  <div className="relative z-10 p-3 space-y-2">
+                    {comments && comments.length > 0 ? (
+                      comments.map((comment: any) => (
+                        <div key={comment.id} className="flex items-start gap-3 p-2 hover:bg-white/5 rounded transition-colors">
+                          <div className="w-10 h-10 flex-shrink-0 overflow-hidden">
+                            <img
+                              src={getAvatarHeadUrl(comment.habbo_name, comment.hotel || 'br', undefined, 's')}
+                              alt={comment.habbo_name}
+                              className="w-full h-full object-cover"
+                              style={{ imageRendering: 'pixelated' }}
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = getAvatarFallbackUrl(comment.habbo_name, 's');
+                              }}
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => onUserClick(comment.habbo_name, photo)}
+                                  className="text-sm font-semibold text-white hover:text-yellow-400 transition-colors"
+                                >
+                                  {comment.habbo_name}
+                                </button>
+                                <span className="text-xs text-white/60">
+                                  {new Date(comment.created_at).toLocaleDateString('pt-BR', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric'
+                                  })}
+                                </span>
+                              </div>
+                              {canDeleteComment(comment) && (
+                                <button
+                                  onClick={() => deleteComment(comment.id)}
+                                  disabled={isDeletingComment}
+                                  className="group relative w-5 h-5 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity disabled:opacity-50"
+                                  title="Excluir comentário"
+                                >
+                                  <img 
+                                    src="/assets/deletetrash.gif" 
+                                    alt="Excluir"
+                                    className="max-w-full max-h-full object-contain"
+                                    style={{ imageRendering: 'pixelated' }}
+                                    onMouseOver={(e) => {
+                                      if (!isDeletingComment) {
+                                        e.currentTarget.src = '/assets/deletetrash1.gif';
+                                      }
+                                    }}
+                                    onMouseOut={(e) => {
+                                      if (!isDeletingComment) {
+                                        e.currentTarget.src = '/assets/deletetrash.gif';
+                                      }
+                                    }}
+                                  />
+                                </button>
+                              )}
+                            </div>
+                            <p className="text-sm text-white/90 break-words">{comment.comment_text}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-white/60 text-sm py-6">
+                        Nenhum comentário ainda
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </>
+        )}
 
       {/* Caption and Room */}
       {(photo.caption || photo.roomName) && (
-        <div className="space-y-1">
+        <div className="space-y-1 pt-2 pb-3">
           {photo.caption && (
             <p className="text-sm text-white/90">{photo.caption}</p>
           )}
-          {photo.roomName && (
-            <div className="flex items-center gap-1 text-xs text-white/60">
-              <MapPin className="w-3 h-3" />
-              <span>{photo.roomName}</span>
-            </div>
-          )}
+          {photo.roomName && (() => {
+            // Prioridade: 1) roomId direto, 2) extrair do roomName (ex: "Room 117037234" -> "117037234"), 3) tentar extrair qualquer número do roomName
+            let roomId: string | null = null;
+            
+            if (photo.roomId) {
+              // Usar roomId direto se disponível
+              roomId = String(photo.roomId);
+            } else {
+              // Tentar extrair do formato "Room XXXXX"
+              const roomIdMatch = photo.roomName.match(/Room\s+(\d+)/i);
+              if (roomIdMatch) {
+                roomId = roomIdMatch[1];
+              } else {
+                // Tentar extrair qualquer número do roomName (última tentativa)
+                const numberMatch = photo.roomName.match(/(\d+)/);
+                if (numberMatch) {
+                  roomId = numberMatch[1];
+                }
+              }
+            }
+            
+            const hotelDomain = getPhotoHotelDomain();
+            
+            // Usar nome do quarto se disponível, senão usar roomName original
+            const displayText = roomDisplayName || photo.roomName;
+            
+            if (!roomId) {
+              // Sem roomId, não é clicável (ex: "Quarto do jogo")
+              return (
+                <div className="flex items-center gap-1 text-xs text-white/60">
+                  <MapPin className="w-3 h-3" />
+                  <span>{displayText}</span>
+                </div>
+              );
+            }
+
+            return (
+              <div 
+                className={cn(
+                  "flex items-center gap-1 text-xs text-white/60 cursor-pointer hover:text-white/80 transition-colors"
+                )}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedRoomId(roomId!);
+                  setSelectedRoomHotel(hotelDomain);
+                  setShowRoomDetails(true);
+                }}
+              >
+                <MapPin className="w-3 h-3" />
+                <span>{displayText}</span>
+              </div>
+            );
+          })()}
         </div>
       )}
 
       {/* Actions */}
       <div className="px-1 py-2 bg-transparent">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleLike}
-              disabled={isToggling}
-              className={`flex items-center gap-2 transition-colors ${
-                userLiked ? 'text-red-500' : 'text-white/60 hover:text-red-500'
-              }`}
-            >
-              <Heart className={`w-6 h-6 ${userLiked ? 'fill-current' : ''}`} />
-            </button>
-            <button 
-              onClick={handleLikesClick}
-              className="text-sm font-medium hover:underline text-white/60 hover:text-white"
-            >
-              {likesCount}
-            </button>
-          </div>
-          
-          <button
-            onClick={handleCommentsClick}
-            className="flex items-center gap-2 text-white/60 transition-colors hover:text-white"
-          >
-            <MessageCircle className="w-6 h-6" />
-            <span className="text-sm font-medium">{commentsCount}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Recent Likers */}
-      {likesCount > 0 && (
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="flex -space-x-2">
-              {recentLikers.slice(0, 5).map((like, index) => (
-                <div
-                  key={like.id}
-                  className="w-6 h-6 overflow-hidden"
-                  style={{ zIndex: 5 - index }}
-                >
-                  <img
-                    src={getAvatarUrl(like.habbo_name)}
-                    alt={`Avatar de ${like.habbo_name}`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${encodeURIComponent(like.habbo_name)}&size=s&direction=2&head_direction=3&headonly=1`;
-                    }}
-                  />
-                </div>
-              ))}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleLike}
+                disabled={isToggling}
+                className={`flex items-center gap-2 transition-colors ${
+                  userLiked ? 'text-red-500' : 'text-white/60 hover:text-red-500'
+                }`}
+              >
+                <Heart className={`w-6 h-6 ${userLiked ? 'fill-current' : ''}`} />
+              </button>
+              <button 
+                onClick={handleLikesClick}
+                className="text-sm font-medium hover:underline text-white/60 hover:text-white"
+              >
+                {likesCount}
+              </button>
             </div>
             
             <button
-              onClick={handleLikesClick}
-              className="text-xs text-white/60 hover:text-white transition-colors"
+              onClick={handleCommentsClick}
+              className="flex items-center gap-2 text-white/60 transition-colors hover:text-white"
             >
-              {hasMoreLikes ? `e mais ${likesCount - recentLikers.length}` : `${likesCount} ${likesCount === 1 ? t('pages.console.likes') : t('pages.console.likesPlural')}`}
+              <MessageCircle className="w-6 h-6" />
+              <span className="text-sm font-medium">{commentsCount}</span>
             </button>
           </div>
+
+          {/* Recent Likers - à direita */}
+          {likesCount > 0 && (
+            <button
+              onClick={handleLikesClick}
+              className="flex items-center gap-2 text-white/60 hover:text-white transition-colors"
+            >
+              <div className="flex -space-x-2">
+                {recentLikers.slice(0, 5).map((like, index) => (
+                  <div
+                    key={like.id}
+                    className="w-6 h-6 overflow-hidden"
+                    style={{ zIndex: 5 - index }}
+                  >
+                    <img
+                      src={getPhotoUserAvatarUrl(like.habbo_name)}
+                      alt={`Avatar de ${like.habbo_name}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = getAvatarFallbackUrl(like.habbo_name, 's');
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+              
+              <span className="text-xs">
+                {hasMoreLikes ? `e mais ${likesCount - recentLikers.length}` : `${likesCount} ${likesCount === 1 ? t('pages.console.likes') : t('pages.console.likesPlural')}`}
+              </span>
+            </button>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Campo para novo comentário - sempre visível */}
-      <div className="px-1 py-2 bg-transparent">
-        <form className="flex items-center gap-2" onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmitComment();
-        }}>
+      <div 
+        ref={commentFormRef}
+        className="px-1 py-2 bg-transparent relative z-50"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <form 
+          className="flex items-center gap-2" 
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmitComment();
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Avatar do usuário logado */}
           <div className="w-10 h-10 flex-shrink-0 overflow-hidden">
             <img
               src={habboAccount?.habbo_name
-                ? `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=2&headonly=1`
-                : `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-&size=m&direction=2&head_direction=2&headonly=1`
+                ? getAvatarHeadUrl(habboAccount.habbo_name, habboAccount.hotel || 'br', undefined, 'm')
+                : getAvatarHeadUrl('', 'br', 'hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-', 'm')
               }
               alt={habboAccount?.habbo_name || 'Guest'}
               className="w-full h-full object-cover"
@@ -568,6 +986,7 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
               maxLength={COMMENT_CONFIG.MAX_LENGTH}
               disabled={isSubmitting}
               className="w-full px-3 py-2 pr-10 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:border-yellow-400 text-sm disabled:opacity-50"
+              onClick={(e) => e.stopPropagation()}
             />
             
             {/* Botão de enviar - só aparece quando há texto */}

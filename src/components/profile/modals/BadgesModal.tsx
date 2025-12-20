@@ -104,7 +104,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({
                             }}
                           />
                         </div>
-                        <p className="text-xs text-white/60 mt-2 truncate leading-tight">
+                        <p className={`text-xs text-white/60 mt-2 leading-tight ${translatedBadge.description ? 'truncate' : 'line-clamp-3'}`}>
                           {translatedBadge.name}
                         </p>
                         {translatedBadge.description && (

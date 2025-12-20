@@ -13,6 +13,7 @@ export interface FriendPhoto {
   timestamp?: number;
   caption?: string;
   roomName?: string;
+  roomId?: string | number; // ID do quarto quando disponível
 }
 
 export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') => {
@@ -117,7 +118,8 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
             timestamp: finalTimestamp,
             date: formattedDate,
             caption: photo.caption || '',
-            roomName: photo.roomName || ''
+            roomName: photo.roomName || '',
+            roomId: photo.roomId ? String(photo.roomId) : undefined // Garantir que seja string
           };
         });
 

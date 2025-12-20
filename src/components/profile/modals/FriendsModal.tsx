@@ -12,7 +12,7 @@ interface FriendsModalProps {
   onClose: () => void;
   friends: any[];
   userName: string;
-  onNavigateToProfile?: (username: string) => void;
+  onNavigateToProfile?: (username: string, hotelOrUniqueId?: string) => void;
 }
 
 export const FriendsModal: React.FC<FriendsModalProps> = ({ 
@@ -72,7 +72,8 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({
                     className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer transition-colors"
                     onClick={() => {
                       if (onNavigateToProfile) {
-                        onNavigateToProfile(friend.name);
+                        // Passar uniqueId para permitir extração do hotel
+                        onNavigateToProfile(friend.name, friend.uniqueId);
                       } else {
                         setSelectedFriend(friend.name);
                       }

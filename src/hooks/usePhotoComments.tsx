@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useI18n } from '@/contexts/I18nContext';
 
-export const usePhotoComments = (photoId: string) => {
+export const usePhotoComments = (photoId: string, photoOwnerName?: string) => {
   const { habboAccount } = useAuth();
   const { t } = useI18n();
   const queryClient = useQueryClient();
@@ -16,7 +16,7 @@ export const usePhotoComments = (photoId: string) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('photo_comments')
-        .select('id, user_id, habbo_name, comment_text, created_at')
+        .select('id, user_id, habbo_name, hotel, comment_text, created_at')
         .eq('photo_id', photoId)
         .order('created_at', { ascending: true });
 
@@ -45,6 +45,7 @@ export const usePhotoComments = (photoId: string) => {
           photo_id: photoId,
           user_id: habboAccount.supabase_user_id,
           habbo_name: habboAccount.habbo_name,
+          hotel: habboAccount.hotel || 'br',
           comment_text: commentText.trim()
         });
 
@@ -111,7 +112,16 @@ export const usePhotoComments = (photoId: string) => {
 
   // Check if current user can delete a comment (own comment or photo owner)
   const canDeleteComment = (comment: any) => {
-    return comment.user_id === habboAccount?.supabase_user_id;
+    if (!habboAccount?.habbo_name) return false;
+    
+    // Pode deletar se for o autor do comentário
+    const isCommentAuthor = comment.user_id === habboAccount.supabase_user_id || 
+                           comment.habbo_name === habboAccount.habbo_name;
+    
+    // Pode deletar se for o dono da foto
+    const isPhotoOwner = photoOwnerName && photoOwnerName === habboAccount.habbo_name;
+    
+    return isCommentAuthor || isPhotoOwner;
   };
 
   return {

@@ -27,12 +27,12 @@ export const useCommentRateLimit = () => {
   const [globalRestriction, setGlobalRestriction] = useState<number | null>(null);
 
   // Configurações
-  const BASIC_INTERVAL = 30 * 1000; // 30 segundos
-  const COMMENT_LIMIT = 3; // 3 comentários
+  const BASIC_INTERVAL = 10 * 1000; // 10 segundos (reduzido de 30s)
+  const COMMENT_LIMIT = 20; // 20 comentários (aumentado de 3) - o servidor valida 3 por foto/10min, mas client-side permite mais para UX
   const WINDOW_TIME = 10 * 60 * 1000; // 10 minutos
   const PHOTO_RESTRICTION_TIME = 60 * 60 * 1000; // 1 hora
   const GLOBAL_RESTRICTION_TIME = 6 * 60 * 60 * 1000; // 6 horas
-  const SPAM_THRESHOLD = 3; // 3 fotos com restrição ativa = spam
+  const SPAM_THRESHOLD = 10; // 10 fotos com restrição ativa = spam (aumentado de 3)
 
   // Carregar dados do localStorage
   useEffect(() => {

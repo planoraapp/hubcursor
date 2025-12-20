@@ -85,7 +85,7 @@ export const useChat = () => {
          try {
            const { data: habboData, error: habboError } = await supabase
              .from('habbo_accounts')
-             .select('id, supabase_user_id, habbo_name, figure_string, is_online')
+             .select('id, supabase_user_id, habbo_name, figure_string, is_online, updated_at, created_at')
              .in('supabase_user_id', userIds);
  
            if (!habboError && habboData) {
@@ -93,12 +93,18 @@ export const useChat = () => {
              const validUserIds = new Set(habboData.map((habbo) => habbo.supabase_user_id));
              
              // Atualizar dados dos usuários válidos
-             habboData.forEach((habbo) => {
+             habboData.forEach((habbo: any) => {
                const conv = conversationsMap.get(habbo.supabase_user_id);
                if (conv) {
                  conv.username = habbo.habbo_name;
                  conv.figureString = habbo.figure_string;
-                 conv.isOnline = habbo.is_online;
+                 
+                 // Verificar se está realmente online baseado em updated_at (5 minutos de tolerância)
+                 const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+                 const lastUpdate = habbo.updated_at || habbo.created_at;
+                 const isActuallyOnline = habbo.is_online && lastUpdate && lastUpdate >= fiveMinutesAgo;
+                 
+                 conv.isOnline = isActuallyOnline;
                }
              });
              
@@ -152,18 +158,23 @@ export const useChat = () => {
       if (!conversation || !conversation.figureString) {
         const { data: userData } = await supabase
           .from('habbo_accounts')
-          .select('habbo_name, figure_string, is_online')
+          .select('habbo_name, figure_string, is_online, updated_at, created_at')
           .eq('supabase_user_id', otherUserId)
           .single();
         
         if (userData) {
+          // Verificar se está realmente online baseado em updated_at (5 minutos de tolerância)
+          const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+          const lastUpdate = (userData as any).updated_at || (userData as any).created_at;
+          const isActuallyOnline = userData.is_online && lastUpdate && lastUpdate >= fiveMinutesAgo;
+          
           setConversations(prev => prev.map(conv => 
             conv.userId === otherUserId 
               ? { 
                   ...conv, 
                   username: userData.habbo_name,
                   figureString: userData.figure_string,
-                  isOnline: userData.is_online,
+                  isOnline: isActuallyOnline,
                   unreadCount: 0 
                 } 
               : conv
@@ -461,6 +472,81 @@ export const useChat = () => {
       supabase.removeChannel(channel);
     };
   }, [userId, currentChat]);
+
+  // Subscription para atualizar estado online dos usuários em tempo real
+  useEffect(() => {
+    if (!userId || conversations.length === 0) return;
+
+    const channel = supabase
+      .channel('habbo-accounts-online-status')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'habbo_accounts',
+        },
+        (payload) => {
+          const updatedUser = payload.new as { supabase_user_id: string; is_online: boolean; updated_at?: string };
+          const oldUser = payload.old as { supabase_user_id: string; is_online: boolean; updated_at?: string };
+          
+          // Verificar se o estado online mudou e se o usuário está em uma das conversas
+          if (updatedUser.supabase_user_id && conversations.some(conv => conv.userId === updatedUser.supabase_user_id)) {
+            // Verificar se está realmente online baseado em updated_at (5 minutos de tolerância)
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+            const lastUpdate = updatedUser.updated_at || '';
+            const isActuallyOnline = updatedUser.is_online && lastUpdate && lastUpdate >= fiveMinutesAgo;
+            
+            setConversations(prev => prev.map(conv => 
+              conv.userId === updatedUser.supabase_user_id
+                ? { ...conv, isOnline: isActuallyOnline }
+                : conv
+            ));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, conversations]);
+
+  // Verificar periodicamente se os usuários ainda estão online (polling de fallback)
+  useEffect(() => {
+    if (!userId || conversations.length === 0) return;
+
+    const interval = setInterval(async () => {
+      // Buscar estado atualizado dos usuários nas conversas
+      const userIds = conversations.map(conv => conv.userId);
+      if (userIds.length === 0) return;
+
+      try {
+        const { data: habboData } = await supabase
+          .from('habbo_accounts')
+          .select('supabase_user_id, is_online, updated_at')
+          .in('supabase_user_id', userIds);
+
+        if (habboData) {
+          const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+          
+          setConversations(prev => prev.map(conv => {
+            const userData = habboData.find((u: any) => u.supabase_user_id === conv.userId);
+            if (userData) {
+              const lastUpdate = userData.updated_at || '';
+              const isActuallyOnline = userData.is_online && lastUpdate && lastUpdate >= fiveMinutesAgo;
+              return { ...conv, isOnline: isActuallyOnline };
+            }
+            return conv;
+          }));
+        }
+      } catch (error) {
+        console.error('Erro ao verificar estado online:', error);
+      }
+    }, 30000); // Verificar a cada 30 segundos
+
+    return () => clearInterval(interval);
+  }, [userId, conversations]);
 
   return {
     conversations,

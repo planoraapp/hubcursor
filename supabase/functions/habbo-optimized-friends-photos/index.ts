@@ -174,8 +174,28 @@ if (import.meta.main) {
       console.log(`[habbo-optimized-friends-photos] Pagination: showing photos ${startIndex} to ${endIndex} of ${photosToShow.length}`);
       
       // 8. Converter para formato final
-      const finalPhotos = paginatedPhotos.map((item) => {
+      const finalPhotos = paginatedPhotos.map((item, index) => {
         const { photo, friend, realTimestamp } = item;
+        
+        // DEBUG: Log primeiro objeto photo para ver estrutura
+        if (index === 0) {
+          console.log(`[habbo-optimized-friends-photos] Sample photo object keys:`, Object.keys(photo));
+          console.log(`[habbo-optimized-friends-photos] Sample photo.room_id:`, photo.room_id);
+          console.log(`[habbo-optimized-friends-photos] Sample photo.roomId:`, photo.roomId);
+          console.log(`[habbo-optimized-friends-photos] Sample photo.room:`, photo.room);
+          console.log(`[habbo-optimized-friends-photos] Sample photo.roomName:`, photo.roomName);
+        }
+        
+        // Tentar obter room_id de diferentes fontes (priorizar room_id com underscore como na API global)
+        let roomId: string | number | null = photo.room_id || photo.roomId || photo.room?.id || photo.room?.room_id || null;
+        
+        // Converter para string se existir
+        if (roomId !== null && roomId !== undefined) {
+          roomId = String(roomId);
+        }
+        
+        // Formatar roomName: se houver room_id, usar "Room {room_id}", senão usar roomName original ou fallback
+        const roomName = roomId ? `Room ${roomId}` : (photo.roomName || "Quarto do jogo");
         
         return {
           id: photo.id,
@@ -186,7 +206,8 @@ if (import.meta.main) {
           userName: friend.name,
           userAvatar: `https://www.habbo.${normalizedHotel === "br" ? "com.br" : normalizedHotel}/habbo-imaging/avatarimage?figure=${friend.figureString}&size=s&direction=2&head_direction=3&action=std`,
           timestamp: realTimestamp,
-          roomName: photo.roomName || "Quarto do jogo",
+          roomName: roomName,
+          roomId: roomId, // Incluir roomId como string se disponível
           caption: photo.caption || ""
         };
       });

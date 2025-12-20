@@ -196,11 +196,58 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
     setIsLoadingMore(false);
   }, []);
 
-  // Função para refresh manual
+  // Função para refresh manual (reseta tudo)
   const refreshFeed = useCallback(async () => {
     resetFeed();
     await refetch();
   }, [resetFeed, refetch]);
+
+  // Função para verificar e adicionar apenas novas fotos no topo (sem resetar o feed)
+  const checkForNewPhotos = useCallback(async (): Promise<{ count: number; newPhotoIds: string[] }> => {
+    try {
+      console.log('[🌍 GLOBAL FEED] Checking for new photos (preserving existing feed)...');
+      
+      // Buscar apenas a primeira página (cursor=0) para verificar novas fotos
+      const hotelCode = hotel === 'com.br' ? 'br' : hotel;
+      const { data, error } = await supabase.functions.invoke('habbo-global-feed', {
+        body: {
+          cursor: '0',
+          limit,
+          hotel: hotelCode
+        }
+      });
+
+      if (error || !data || !data.photos) {
+        console.log('[🌍 GLOBAL FEED] No new photos found or error occurred');
+        return { count: 0, newPhotoIds: [] };
+      }
+
+      // Comparar com fotos existentes e pegar apenas as novas (que não estão no feed)
+      const existingPhotoIds = new Set(allPhotos.map(p => p.id || p.photo_id));
+      const newPhotos = data.photos.filter((p: EnhancedPhoto) => {
+        const photoId = p.id || p.photo_id;
+        return !existingPhotoIds.has(photoId);
+      });
+
+      if (newPhotos.length > 0) {
+        console.log(`[🌍 GLOBAL FEED] Found ${newPhotos.length} new photos, adding to top`);
+        
+        // Extrair IDs das novas fotos
+        const newPhotoIds = newPhotos.map(p => p.id || p.photo_id).filter(Boolean) as string[];
+        
+        // Adicionar novas fotos no INÍCIO do array (topo do feed)
+        setAllPhotos(prev => [...newPhotos, ...prev]);
+        
+        return { count: newPhotos.length, newPhotoIds };
+      } else {
+        console.log('[🌍 GLOBAL FEED] No new photos found');
+        return { count: 0, newPhotoIds: [] };
+      }
+    } catch (error) {
+      console.error('[🌍 GLOBAL FEED] Error checking for new photos:', error);
+      return { count: 0, newPhotoIds: [] };
+    }
+  }, [hotel, limit, allPhotos]);
 
   // Atualizar lista de fotos quando dados mudarem
   useEffect(() => {
@@ -319,6 +366,7 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
     loadMore,
     resetFeed,
     refreshFeed,
+    checkForNewPhotos,
     stats: {
       ...stats,
       currentPageOffset,
