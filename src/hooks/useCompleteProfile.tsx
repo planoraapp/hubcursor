@@ -44,7 +44,7 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br') =
   return useQuery({
     queryKey: ['complete-profile', username, hotel],
     queryFn: async (): Promise<CompleteProfile> => {
-      if (!username) throw new Error('Username is required');
+      if (!username || username.trim() === '') throw new Error('Username is required');
       
       try {
         // Normalizar apenas espaços em branco; manter pontuação exatamente como no Habbo
@@ -131,7 +131,7 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br') =
         throw new Error(error.message || 'Failed to fetch complete profile');
       }
     },
-    enabled: !!username,
+    enabled: !!username && username.trim() !== '', // Só habilitar se houver username válido
     staleTime: 5 * 60 * 1000, // Cache por 5 minutos
     retry: 2,
     refetchOnWindowFocus: false,

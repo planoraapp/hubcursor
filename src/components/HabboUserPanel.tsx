@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp, ChevronLeft, Award, Globe, Bell, Wifi } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { generateUniqueUsername } from '@/utils/usernameUtils';
 
 interface HabboUserProfile {
   habbo_name: string;
@@ -36,8 +37,22 @@ export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: Ha
   const [showSettings, setShowSettings] = useState(false);
   const [userProfile, setUserProfile] = useState<HabboUserProfile | null>(null);
   const [loading, setLoading] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [isOnline, setIsOnline] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+    // Carregar preferência do localStorage, padrão é true (ativado)
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('habbo-hub-notification-sound-enabled');
+      return saved !== null ? saved === 'true' : true;
+    }
+    return true;
+  });
+  const [isOnline, setIsOnline] = useState(() => {
+    // Carregar preferência do localStorage, padrão é true (online)
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('habbo-hub-online-status-enabled');
+      return saved !== null ? saved === 'true' : true;
+    }
+    return true;
+  });
 
   // Função para remover acentos para compatibilidade com fonte Volter
   const removeAccents = (text: string) => {
@@ -56,9 +71,41 @@ export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: Ha
       .replace(/[Ç]/g, 'C');
   };
 
-  // Simular dados do usuário (em produção, viria da API)
+  // Carregar estado inicial do banco de dados
   useEffect(() => {
-    if (habboAccount) {
+    if (habboAccount?.supabase_user_id) {
+      // Carregar preferência salva do localStorage
+      const savedStatus = localStorage.getItem('habbo-hub-online-status-enabled');
+      const shouldBeOnline = savedStatus !== null ? savedStatus === 'true' : true;
+      
+      // Atualizar banco de dados com o estado salvo
+      const updateStatusInDB = async () => {
+        try {
+          // Verificar se há userId antes de tentar atualizar
+          if (!habboAccount?.supabase_user_id) {
+            console.log('[HABBO USER PANEL] No supabase_user_id available, skipping update');
+            return;
+          }
+
+          const { supabase } = await import('@/integrations/supabase/client');
+          const { error } = await supabase.functions.invoke('keep-online', {
+            body: {
+              userId: habboAccount.supabase_user_id,
+              isOnline: shouldBeOnline
+            }
+          });
+          
+          if (error) {
+            console.error('[HABBO USER PANEL] Error updating online status:', error);
+          }
+        } catch (error) {
+          console.error('[HABBO USER PANEL] Error:', error);
+        }
+      };
+      
+      updateStatusInDB();
+      setIsOnline(shouldBeOnline);
+      
       setUserProfile({
         habbo_name: habboAccount.habbo_name,
         habbo_id: habboAccount.habbo_id,
@@ -70,7 +117,7 @@ export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: Ha
           { code: 'HC', name: 'HC', description: 'Habbo Club' },
           { code: 'VIP', name: 'VIP', description: 'Very Important Person' }
         ],
-        is_online: true,
+        is_online: shouldBeOnline,
         created_at: habboAccount.created_at
       });
     }
@@ -147,9 +194,46 @@ export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: Ha
     }
   };
 
-  const handleStatusToggle = () => {
+  const handleStatusToggle = async () => {
     const newStatus = !isOnline;
     setIsOnline(newStatus);
+    
+    // Salvar preferência no localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('habbo-hub-online-status-enabled', String(newStatus));
+    }
+    
+    // Atualizar banco de dados
+    if (habboAccount?.supabase_user_id) {
+      try {
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { error } = await supabase.functions.invoke('keep-online', {
+          body: {
+            userId: habboAccount.supabase_user_id,
+            isOnline: newStatus
+          }
+        });
+        
+        if (error) {
+          console.error('[HABBO USER PANEL] Error updating online status:', error);
+          toast({
+            title: "⚠️ Erro",
+            description: "Não foi possível atualizar o status. Tente novamente.",
+            variant: "destructive"
+          });
+          return;
+        }
+      } catch (error) {
+        console.error('[HABBO USER PANEL] Error:', error);
+        toast({
+          title: "⚠️ Erro",
+          description: "Não foi possível atualizar o status. Tente novamente.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
     toast({
       title: newStatus ? "✅ Status alterado" : "⚠️ Status alterado",
       description: newStatus 
@@ -161,11 +245,17 @@ export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: Ha
   const handleNotificationsToggle = () => {
     const newStatus = !notificationsEnabled;
     setNotificationsEnabled(newStatus);
+    
+    // Salvar preferência no localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('habbo-hub-notification-sound-enabled', String(newStatus));
+    }
+    
     toast({
       title: newStatus ? "✅ Notificações ativadas" : "⚠️ Notificações desativadas",
       description: newStatus 
-        ? "Você receberá alertas do site" 
-        : "Você não receberá mais alertas do site",
+        ? "Você receberá alertas sonoros do site" 
+        : "Você não receberá mais alertas sonoros do site",
     });
   };
 
@@ -349,7 +439,7 @@ export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: Ha
               </div>
             </div>
             
-            <Link to={`/home/ptbr-${userProfile.habbo_name}`} className="block">
+            <Link to={`/home/${generateUniqueUsername(userProfile.habbo_name, userProfile.hotel)}`} className="block">
               <button className={`w-full flex items-center justify-between ${styles.button}`}>
                 <span 
                   className="text-gray-900 text-sm"

@@ -373,7 +373,7 @@ export const FunctionalConsole: React.FC = () => {
             </div>
             
             <div className="flex-1 min-w-0">
-              <h2 className="text-2xl font-bold text-white mb-2 truncate">{user?.name || 'Beebop'}</h2>
+              <h2 className="text-2xl font-bold text-white mb-2 truncate">{user?.name || habboAccount?.habbo_name || 'Usuário'}</h2>
               {user?.motto && user.motto.trim() ? (
                 <p className="text-white/70 italic mb-4 line-clamp-2">
                   "{user.motto.trim()}"
@@ -649,22 +649,14 @@ export const FunctionalConsole: React.FC = () => {
   const { getPhotoInteractions, toggleLike, addComment } = usePhotoInteractions();
   
   // Usar o usuário logado como padrão, ou o usuário sendo visualizado
+  // IMPORTANTE: Só usar habboAccount se estiver realmente disponível e carregado
   const currentUser = habboAccount?.habbo_name;
-  const username = viewingUser || currentUser || 'Beebop'; // Fallback para Beebop se não logado
+  // Só definir username se houver um valor válido - não usar fallback "Beebop"
+  const username = viewingUser || (currentUser && currentUser.trim() ? currentUser : undefined);
   
   // Definir hotel efetivo para busca de perfil/fotos
   // Normalizar para formato de domínio (com.br, com, es, fr, etc.)
-  // CRÍTICO: Se não há viewingUser, sempre usar o hotel do usuário logado
   const effectiveHotelForProfile = (() => {
-    // Se estamos visualizando nosso próprio perfil (viewingUser é null), usar sempre o hotel do usuário logado
-    if (!viewingUser) {
-      const hotel = habboAccount?.hotel || 'com.br';
-      if (hotel === 'br') return 'com.br';
-      if (hotel === 'tr') return 'com.tr';
-      if (hotel === 'us') return 'com';
-      return hotel;
-    }
-    // Se estamos visualizando outro usuário, usar photosProfileHotel ou fallback
     const hotel = photosProfileHotel || habboAccount?.hotel || 'com.br';
     // Se for 'br', converter para 'com.br'; se for 'tr', converter para 'com.tr'; se for 'us', converter para 'com'
     if (hotel === 'br') return 'com.br';
@@ -674,19 +666,15 @@ export const FunctionalConsole: React.FC = () => {
   })();
 
   // Hotel base para fotos, antes de sabermos o hotel real do perfil
-  // CRÍTICO: Se não há viewingUser, sempre usar o hotel do usuário logado
-  const baseHotelForPhotos = (() => {
-    if (!viewingUser) {
-      return habboAccount?.hotel || 'br';
-    }
-    return photosProfileHotel
+  const baseHotelForPhotos =
+    photosProfileHotel
       ? (photosProfileHotel === 'com.br' ? 'br' : photosProfileHotel)
       : (habboAccount?.hotel || 'br');
-  })();
 
   // Buscar dados reais usando useCompleteProfile / useUnifiedPhotoSystem
+  // Só buscar se houver um username válido (não usar fallback "Beebop")
   const { data: completeProfile, isLoading, error: profileError } = useCompleteProfile(
-    username,
+    username || '', // Passar string vazia se não houver username - a query será desabilitada
     effectiveHotelForProfile,
   );
   const photosHotel =
@@ -1574,7 +1562,7 @@ const FeedTab: React.FC<any> = ({
             </div>
             
             <div className="flex-1 min-w-0">
-              <h2 className="text-2xl font-bold text-white mb-2 truncate">{user?.name || 'Beebop'}</h2>
+              <h2 className="text-2xl font-bold text-white mb-2 truncate">{user?.name || habboAccount?.habbo_name || 'Usuário'}</h2>
               {user?.motto && user.motto.trim() && user.motto.trim().toLowerCase() !== 'null' ? (
                 <p className="text-white/70 italic mb-4 line-clamp-2">
                   "{user.motto.trim()}"
@@ -2057,7 +2045,7 @@ const FeedTab: React.FC<any> = ({
           </div>
         }>
           <FriendsPhotoFeed
-            currentUserName={currentUser || 'Beebop'}
+            currentUserName={currentUser || ''}
             hotel={habboAccount?.hotel || 'br'}
             onNavigateToProfile={onNavigateToProfile}
             refreshTrigger={friendsRefreshTrigger}
