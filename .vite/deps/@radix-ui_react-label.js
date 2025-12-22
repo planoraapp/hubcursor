@@ -1,25 +1,66 @@
 "use client";
 import {
-  Primitive
-} from "./chunk-X27JR763.js";
-import "./chunk-S4MXMZ6H.js";
+  createSlot
+} from "./chunk-MQKNW4HW.js";
+import "./chunk-PF6AD44X.js";
 import {
   require_jsx_runtime
-} from "./chunk-G7Y47P27.js";
-import "./chunk-UR7M4CTY.js";
+} from "./chunk-67WGWSRF.js";
+import {
+  require_react_dom
+} from "./chunk-GZTOERBL.js";
 import {
   require_react
-} from "./chunk-FXJVXTVJ.js";
+} from "./chunk-2CLD7BNN.js";
 import {
   __toESM
-} from "./chunk-4B2QHNJT.js";
+} from "./chunk-WOOG5QLI.js";
 
 // node_modules/@radix-ui/react-label/dist/index.mjs
+var React2 = __toESM(require_react(), 1);
+
+// node_modules/@radix-ui/react-label/node_modules/@radix-ui/react-primitive/dist/index.mjs
 var React = __toESM(require_react(), 1);
+var ReactDOM = __toESM(require_react_dom(), 1);
 var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
+var NODES = [
+  "a",
+  "button",
+  "div",
+  "form",
+  "h2",
+  "h3",
+  "img",
+  "input",
+  "label",
+  "li",
+  "nav",
+  "ol",
+  "p",
+  "select",
+  "span",
+  "svg",
+  "ul"
+];
+var Primitive = NODES.reduce((primitive, node) => {
+  const Slot = createSlot(`Primitive.${node}`);
+  const Node = React.forwardRef((props, forwardedRef) => {
+    const { asChild, ...primitiveProps } = props;
+    const Comp = asChild ? Slot : node;
+    if (typeof window !== "undefined") {
+      window[Symbol.for("radix-ui")] = true;
+    }
+    return (0, import_jsx_runtime.jsx)(Comp, { ...primitiveProps, ref: forwardedRef });
+  });
+  Node.displayName = `Primitive.${node}`;
+  return { ...primitive, [node]: Node };
+}, {});
+
+// node_modules/@radix-ui/react-label/dist/index.mjs
+var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
 var NAME = "Label";
-var Label = React.forwardRef((props, forwardedRef) => {
-  return (0, import_jsx_runtime.jsx)(
+var Label = React2.forwardRef((props, forwardedRef) => {
+  return (0, import_jsx_runtime2.jsx)(
     Primitive.label,
     {
       ...props,

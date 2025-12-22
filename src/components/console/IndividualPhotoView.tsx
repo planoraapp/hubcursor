@@ -21,6 +21,12 @@ interface IndividualPhotoViewProps {
     likes: number;
     roomName?: string;
     roomId?: string | number;
+    s3_url?: string;
+    preview_url?: string;
+    hotel?: string;
+    hotelDomain?: string;
+    caption?: string;
+    timestamp?: number;
   };
   userName: string;
   onBack: () => void;
@@ -94,11 +100,21 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
 
   /**
    * Obtém o domínio do hotel da foto
-   * Prioridade: 1) URL da foto, 2) fallback
+   * Prioridade: 1) hotelDomain do photo, 2) hotel do photo (convertido), 3) URL da foto, 4) fallback
    */
   const getPhotoHotelDomain = (): string => {
-    // Tentar extrair da URL da foto (fonte de verdade)
-    const photoUrl = photo.imageUrl;
+    // Prioridade 1: Usar hotelDomain direto do photo
+    if (photo.hotelDomain) {
+      return photo.hotelDomain;
+    }
+    
+    // Prioridade 2: Converter hotel (código) para domínio
+    if (photo.hotel) {
+      return hotelCodeToDomain(photo.hotel);
+    }
+    
+    // Prioridade 3: Tentar extrair da URL da foto (fonte de verdade)
+    const photoUrl = photo.imageUrl || photo.s3_url || photo.preview_url;
     const hotelCodeFromUrl = extractHotelFromPhotoUrl(photoUrl);
     if (hotelCodeFromUrl) {
       return hotelCodeToDomain(hotelCodeFromUrl);
@@ -108,15 +124,54 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
     return 'com.br';
   };
 
+  // Estado para armazenar roomId extraído
+  const [extractedRoomId, setExtractedRoomId] = useState<string | null>(null);
+  
   // Buscar nome do quarto quando houver roomName
   useEffect(() => {
-    if (!photo.roomName || !photo.roomId) {
+    if (!photo.roomName) {
       setRoomDisplayName(null);
+      setExtractedRoomId(null);
       return;
     }
     
-    // Usar roomId direto da API
-    const roomId = String(photo.roomId);
+    // Verificar se é um placeholder (ex: "Quarto do jogo")
+    const isPlaceholder = photo.roomName.toLowerCase().includes('quarto do jogo') || 
+                         photo.roomName.toLowerCase().includes('game room');
+    
+    if (isPlaceholder && !photo.roomId) {
+      setRoomDisplayName(photo.roomName);
+      setExtractedRoomId(null);
+      return;
+    }
+    
+    // Prioridade: 1) roomId direto, 2) extrair do roomName (ex: "Room 117037234" -> "117037234"), 3) tentar extrair qualquer número do roomName
+    let roomId: string | null = null;
+    
+    if (photo.roomId) {
+      // Usar roomId direto se disponível
+      roomId = String(photo.roomId);
+    } else {
+      // Tentar extrair do formato "Room XXXXX"
+      const roomIdMatch = photo.roomName.match(/Room\s+(\d+)/i);
+      if (roomIdMatch) {
+        roomId = roomIdMatch[1];
+      } else {
+        // Tentar extrair qualquer número do roomName (última tentativa)
+        const numberMatch = photo.roomName.match(/(\d+)/);
+        if (numberMatch) {
+          roomId = numberMatch[1];
+        }
+      }
+    }
+    
+    // Armazenar roomId extraído para uso no botão
+    setExtractedRoomId(roomId);
+    
+    if (!roomId) {
+      setRoomDisplayName(photo.roomName); // Se não conseguir extrair ID, usar o roomName original
+      return;
+    }
     
     // Buscar nome do quarto da API
     const fetchRoomName = async () => {
@@ -131,14 +186,20 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
           if (roomData.name) {
             setRoomDisplayName(roomData.name);
           } else {
-            setRoomDisplayName(photo.roomName!); // Fallback para roomName original
+            setRoomDisplayName(photo.roomName); // Fallback para roomName original
           }
+        } else if (response.status === 404) {
+          // 404 é esperado se o quarto não existir mais - não fazer log de erro
+          setRoomDisplayName(photo.roomName); // Fallback para roomName original
         } else {
-          setRoomDisplayName(photo.roomName!); // Fallback para roomName original
+          // Outros erros - logar apenas em modo debug
+          console.debug(`[IndividualPhotoView] Erro ${response.status} ao buscar quarto ${roomId}:`, response.statusText);
+          setRoomDisplayName(photo.roomName); // Fallback para roomName original
         }
       } catch (error) {
-        console.error('Erro ao buscar nome do quarto:', error);
-        setRoomDisplayName(photo.roomName!); // Fallback para roomName original
+        // Erros de rede - logar apenas em modo debug
+        console.debug('[IndividualPhotoView] Erro de rede ao buscar nome do quarto:', error);
+        setRoomDisplayName(photo.roomName); // Fallback para roomName original
       }
     };
     
@@ -484,41 +545,49 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
             {photo.roomName && (
               <div className="space-y-1 pt-2 pb-3">
                 {(() => {
-                  // Usar roomId direto da API (já temos esse dado)
-                  const roomId = photo.roomId ? String(photo.roomId) : null;
-                  
+                  // Usar roomId extraído do useEffect ou do photo diretamente
+                  const roomId = extractedRoomId || (photo.roomId ? String(photo.roomId) : null);
                   const hotelDomain = getPhotoHotelDomain();
                   
                   // Usar nome do quarto se disponível, senão usar roomName original
                   const displayText = roomDisplayName || photo.roomName;
                   
-                  // Sempre tornar clicável se houver roomId
-                  if (roomId) {
+                  // Verificar se é "Quarto do jogo" ou similar (sem informações reais do quarto)
+                  const isPlaceholderRoom = !roomId || 
+                    photo.roomName.toLowerCase().includes('quarto do jogo') ||
+                    photo.roomName.toLowerCase().includes('game room') ||
+                    (!photo.roomId && !extractedRoomId && !photo.roomName.match(/\d+/));
+                  
+                  if (isPlaceholderRoom) {
+                    // Sem roomId válido, não é clicável
                     return (
-                      <div 
-                        className={cn(
-                          "flex items-center gap-1 text-xs text-white/60 cursor-pointer hover:text-white/80 transition-colors"
-                        )}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setSelectedRoomId(roomId!);
-                          setSelectedRoomHotel(hotelDomain);
-                          setShowRoomDetails(true);
-                        }}
-                      >
+                      <div className="flex items-center gap-1 text-xs text-white/60">
                         <MapPin className="w-3 h-3" />
                         <span>{displayText}</span>
                       </div>
                     );
                   }
 
-                  // Sem roomId, não é clicável (ex: "Quarto do jogo")
                   return (
-                    <div className="flex items-center gap-1 text-xs text-white/60">
+                    <button
+                      type="button"
+                      className={cn(
+                        "flex items-center gap-1 text-xs text-white/60 cursor-pointer hover:text-white/80 transition-colors w-full text-left"
+                      )}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (roomId) {
+                          console.log('[IndividualPhotoView] Abrindo modal do quarto:', { roomId, hotelDomain, displayText });
+                          setSelectedRoomId(roomId);
+                          setSelectedRoomHotel(hotelDomain);
+                          setShowRoomDetails(true);
+                        }
+                      }}
+                    >
                       <MapPin className="w-3 h-3" />
                       <span>{displayText}</span>
-                    </div>
+                    </button>
                   );
                 })()}
               </div>

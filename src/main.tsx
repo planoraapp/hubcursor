@@ -7,6 +7,8 @@ import { AuthProvider } from '@/hooks/useAuth'
 import { I18nProvider } from '@/contexts/I18nContext'
 import { NotificationProvider, useNotification } from '@/hooks/useNotification'
 import { NotificationContainer } from '@/components/ui/notification'
+import { ChatNotificationProvider } from '@/contexts/ChatNotificationContext'
+import { useKeepOnline } from '@/hooks/useKeepOnline'
 import { Analytics } from '@vercel/analytics/react'
 import './index.css'
 import './styles/widget-skins.css'
@@ -170,6 +172,8 @@ const router = createBrowserRouter([
 // Componente principal com notificações
 const AppWithNotifications = () => {
   const { notifications, addNotification, removeNotification } = useNotification();
+  // Manter usuário online enquanto usar o site
+  useKeepOnline();
 
   return (
     <>
@@ -189,8 +193,10 @@ root.render(
     <I18nProvider>
       <AuthProvider>
         <NotificationProvider>
-          <AppWithNotifications />
-          <Analytics />
+          <ChatNotificationProvider>
+            <AppWithNotifications />
+            <Analytics />
+          </ChatNotificationProvider>
         </NotificationProvider>
       </AuthProvider>
     </I18nProvider>

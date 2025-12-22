@@ -78,33 +78,59 @@ export const getUserByName = async (
 };
 
 export const getUserById = async (userId: string): Promise<HabboUser | null> => {
-    for (const domain of HOTEL_DOMAINS) {
-    try {
-      const url = `https://www.habbo.${domain}/api/public/users/${encodeURIComponent(userId)}`;
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'HabboHub/1.0'
-        }
-      });
+  // A API do Habbo pode aceitar o uniqueId em diferentes formatos:
+  // 1. Formato completo: "hhbr-00e6988dddeb5a1838658c854d62fe49"
+  // 2. Apenas o hash: "00e6988dddeb5a1838658c854d62fe49"
+  // 3. Com diferentes prefixos de hotel (hhbr, hhcom, hhes, etc.)
+  
+  // Extrair apenas o hash se estiver no formato hhXX-...
+  const hashOnly = userId.includes('-') ? userId.split('-').slice(1).join('-') : userId;
+  
+  // Lista de IDs para tentar (formato completo primeiro, depois apenas hash)
+  const idsToTry = userId.startsWith('hh') ? [userId, hashOnly] : [userId, `hhbr-${userId}`, `hhcom-${userId}`];
+  
+  console.log(`[getUserById] Tentando buscar usuário com ID: ${userId}, formatos:`, idsToTry);
+  
+  for (const domain of HOTEL_DOMAINS) {
+    for (const idToTry of idsToTry) {
+      try {
+        // Tentar endpoint básico primeiro
+        const url = `https://www.habbo.${domain}/api/public/users/${encodeURIComponent(idToTry)}`;
+        console.log(`[getUserById] Tentando: ${url}`);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'HabboHub/1.0'
+          }
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data.name) {
-                    return {
-            ...data,
-            uniqueId: data.uniqueId || userId
-          };
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.name) {
+            console.log(`[getUserById] ✅ Usuário encontrado em ${domain} com ID ${idToTry}:`, data.name);
+            return {
+              ...data,
+              uniqueId: data.uniqueId || userId,
+              hotelDomain: domain
+            };
+          }
+        } else if (response.status === 404) {
+          // Se 404, continuar tentando outros formatos
+          console.log(`[getUserById] 404 para ${idToTry} em ${domain}, tentando próximo formato...`);
+          continue;
         }
+      } catch (error) {
+        // Continuar para o próximo formato/domínio
+        console.warn(`[getUserById] Erro ao buscar ${idToTry} em ${domain}:`, error);
+        continue;
       }
-    } catch (error) {
-            continue;
     }
   }
 
-    return null;
+  console.warn(`[getUserById] ❌ Usuário não encontrado com ID: ${userId}`);
+  return null;
 };
 
 export const getAvatarUrl = (username: string, figureString?: string, hotel: string = 'com.br'): string => {

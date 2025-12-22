@@ -129,16 +129,27 @@ Deno.serve(async (req) => {
 
     // LOGIN
     if (action === 'login' && habbo_name && password) {
-      // Buscar conta
-      const { data: accounts, error: searchError } = await supabase
+      // Buscar conta por nome E hotel (se hotel fornecido)
+      let query = supabase
         .from('habbo_accounts')
         .select('*')
         .ilike('habbo_name', habbo_name)
-        .limit(1)
+      
+      // Filtrar por hotel se fornecido
+      if (hotel) {
+        query = query.eq('hotel', hotel)
+      }
+      
+      query = query.limit(1)
+      
+      const { data: accounts, error: searchError } = await query
 
       if (searchError || !accounts || accounts.length === 0) {
+        const errorMessage = hotel 
+          ? `Usuário não encontrado no hotel ${hotel}. Você precisa criar uma conta primeiro usando o método de verificação por motto.`
+          : 'Usuário não encontrado'
         return new Response(
-          JSON.stringify({ error: 'Usuário não encontrado' }),
+          JSON.stringify({ error: errorMessage }),
           { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }

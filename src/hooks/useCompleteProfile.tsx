@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { getUserByName as getUserByNameMultiHotel } from '@/services/habboApiMultiHotel';
+import { getUserByName as getUserByNameMultiHotel, getUserById as getUserByIdMultiHotel } from '@/services/habboApiMultiHotel';
 
 export interface CompleteProfileStats {
   level: number;
@@ -40,74 +40,194 @@ export interface CompleteProfile {
   hotelCode?: string;
 }
 
-export const useCompleteProfile = (username: string, hotel: string = 'com.br') => {
+export const useCompleteProfile = (username: string, hotel: string = 'com.br', uniqueId?: string) => {
+  // Normalizar username: se for string vazia ou apenas espaços, tratar como inválido
+  const normalizedUsername = username?.trim() || '';
+  // Query é válida se temos username OU uniqueId
+  const isValidUsername = normalizedUsername !== '' || !!uniqueId;
+  
   return useQuery({
-    queryKey: ['complete-profile', username, hotel],
+    queryKey: ['complete-profile', normalizedUsername, hotel, uniqueId],
     queryFn: async (): Promise<CompleteProfile> => {
-      if (!username || username.trim() === '') throw new Error('Username is required');
+      if (!normalizedUsername && !uniqueId) throw new Error('Username or uniqueId is required');
       
       try {
-        // Normalizar apenas espaços em branco; manter pontuação exatamente como no Habbo
-        const cleanedUsername = username.trim();
-
-        // Usar busca global multi-hotel como fonte de verdade,
-        // priorizando o hotel informado (se existir)
+        // Se temos uniqueId, usar diretamente (mais confiável)
+        let multiUser;
         const preferredDomain = hotel === 'br' ? 'com.br' : hotel;
-        const multiUser = await getUserByNameMultiHotel(cleanedUsername, preferredDomain);
+        
+        // Debug: verificar parâmetros recebidos
+        console.log('[useCompleteProfile] Parâmetros:', {
+          normalizedUsername,
+          uniqueId,
+          hotel: preferredDomain
+        });
+        
+        // Estratégia: Tentar por username primeiro (mais confiável), depois por uniqueId
+        // Isso porque a busca por username geralmente funciona melhor na API do Habbo
+        
+        if (normalizedUsername && normalizedUsername.toLowerCase() !== 'beebop' && normalizedUsername.trim() !== '') {
+          // Prioridade 1: Buscar por username (mais confiável)
+          console.log(`[useCompleteProfile] Tentando buscar por username primeiro: ${normalizedUsername}`);
+          multiUser = await getUserByNameMultiHotel(normalizedUsername, preferredDomain);
+          
+          if (multiUser) {
+            console.log(`[useCompleteProfile] ✅ Usuário encontrado por username: ${multiUser.name}`);
+          }
+        }
+        
+        // Se não encontrou por username e temos uniqueId, tentar por uniqueId
+        if (!multiUser && uniqueId) {
+          console.log(`[useCompleteProfile] Username não funcionou, tentando por uniqueId: ${uniqueId}`);
+          multiUser = await getUserByIdMultiHotel(uniqueId);
+          
+          if (multiUser) {
+            console.log(`[useCompleteProfile] ✅ Usuário encontrado por uniqueId: ${multiUser.name}`);
+          } else {
+            console.warn(`[useCompleteProfile] ⚠️ UniqueId também não funcionou: ${uniqueId}`);
+          }
+        }
+        
+        // Se ainda não encontrou e temos ambos, tentar buscar por username em todos os hotéis
+        if (!multiUser && normalizedUsername && normalizedUsername.toLowerCase() !== 'beebop' && normalizedUsername.trim() !== '') {
+          console.log(`[useCompleteProfile] Tentando buscar por username em todos os hotéis: ${normalizedUsername}`);
+          multiUser = await getUserByNameMultiHotel(normalizedUsername); // Sem preferredDomain para tentar todos
+        }
 
         if (!multiUser) {
-          throw new Error(`User '${cleanedUsername}' not found`);
+          // Se temos uniqueId mas não encontramos, o problema pode ser o formato
+          if (uniqueId) {
+            throw new Error(`User with uniqueId '${uniqueId}' not found. The API may not accept this format.`);
+          }
+          const errorUsername = normalizedUsername || 'usuário';
+          throw new Error(`User '${errorUsername}' not found`);
         }
 
         const userData: any = multiUser;
         let hotelDomain = (multiUser as any).hotelDomain || preferredDomain;
         const hotelCode = hotelDomain === 'com.br' ? 'br' : hotelDomain;
 
-        const uniqueId = userData.uniqueId;
+        // IMPORTANTE: Usar o uniqueId retornado pela API (não o que temos armazenado)
+        // A API pode retornar um formato diferente do que temos no banco
+        const resolvedUniqueId = userData.uniqueId;
         
-        // Buscar dados adicionais em paralelo
-        const [badgesResponse, friendsResponse, groupsResponse, roomsResponse] = await Promise.allSettled([
-          fetch(`https://www.habbo.${hotelDomain}/api/public/users/${uniqueId}/badges`, {
-            headers: { 'Accept': 'application/json' }
+        if (!resolvedUniqueId) {
+          throw new Error('UniqueId não encontrado na resposta da API');
+        }
+        
+        console.log(`[useCompleteProfile] Usando uniqueId da API: ${resolvedUniqueId} para buscar dados adicionais`);
+        
+        // Buscar dados adicionais em paralelo usando o uniqueId retornado pela API
+        // Tentar primeiro o endpoint /profile que pode ter dados mais completos
+        const [profileResponse, badgesResponse, friendsResponse, groupsResponse, roomsResponse] = await Promise.allSettled([
+          // Tentar endpoint /profile primeiro (pode ter dados mais completos)
+          fetch(`https://www.habbo.${hotelDomain}/api/public/users/${encodeURIComponent(resolvedUniqueId)}/profile`, {
+            headers: { 'Accept': 'application/json', 'User-Agent': 'HabboHub/1.0' }
           }),
-          fetch(`https://www.habbo.${hotelDomain}/api/public/users/${uniqueId}/friends`, {
-            headers: { 'Accept': 'application/json' }
+          fetch(`https://www.habbo.${hotelDomain}/api/public/users/${encodeURIComponent(resolvedUniqueId)}/badges`, {
+            headers: { 'Accept': 'application/json', 'User-Agent': 'HabboHub/1.0' }
           }),
-          fetch(`https://www.habbo.${hotelDomain}/api/public/users/${uniqueId}/groups`, {
-            headers: { 'Accept': 'application/json' }
+          fetch(`https://www.habbo.${hotelDomain}/api/public/users/${encodeURIComponent(resolvedUniqueId)}/friends`, {
+            headers: { 'Accept': 'application/json', 'User-Agent': 'HabboHub/1.0' }
           }),
-          fetch(`https://www.habbo.${hotelDomain}/api/public/users/${uniqueId}/rooms`, {
-            headers: { 'Accept': 'application/json' }
+          fetch(`https://www.habbo.${hotelDomain}/api/public/users/${encodeURIComponent(resolvedUniqueId)}/groups`, {
+            headers: { 'Accept': 'application/json', 'User-Agent': 'HabboHub/1.0' }
+          }),
+          fetch(`https://www.habbo.${hotelDomain}/api/public/users/${encodeURIComponent(resolvedUniqueId)}/rooms`, {
+            headers: { 'Accept': 'application/json', 'User-Agent': 'HabboHub/1.0' }
           })
         ]);
+        
+        // Tentar extrair dados do profile se disponível
+        let profileData: any = null;
+        if (profileResponse.status === 'fulfilled') {
+          const profileRes = profileResponse.value;
+          if (profileRes && typeof profileRes === 'object' && 'ok' in profileRes && profileRes.ok) {
+            try {
+              profileData = await profileRes.json();
+              console.log('[useCompleteProfile] ✅ Dados do /profile obtidos');
+            } catch (e) {
+              console.warn('[useCompleteProfile] Erro ao processar /profile:', e);
+            }
+          } else {
+            console.log('[useCompleteProfile] Endpoint /profile não disponível ou retornou erro');
+          }
+        }
 
-        const badges = badgesResponse.status === 'fulfilled' ? await badgesResponse.value.json().catch(() => []) : [];
-        let friends = friendsResponse.status === 'fulfilled' ? await friendsResponse.value.json().catch(() => []) : [];
-        const groups = groupsResponse.status === 'fulfilled' ? await groupsResponse.value.json().catch(() => []) : [];
-        const rooms = roomsResponse.status === 'fulfilled' ? await roomsResponse.value.json().catch(() => []) : [];
+        // Processar respostas das APIs
+        const badges = badgesResponse.status === 'fulfilled' && badgesResponse.value.ok 
+          ? await badgesResponse.value.json().catch(() => []) 
+          : [];
+        let friends = [];
+        if (friendsResponse.status === 'fulfilled' && friendsResponse.value.ok) {
+          try {
+            friends = await friendsResponse.value.json();
+            console.log(`[useCompleteProfile] ✅ Friends obtidos: ${friends.length} amigos`);
+            if (friends.length > 0) {
+              console.log(`[useCompleteProfile] Primeiro amigo:`, friends[0]);
+            }
+          } catch (e) {
+            console.error('[useCompleteProfile] Erro ao processar friends:', e);
+            friends = [];
+          }
+        } else {
+          console.warn('[useCompleteProfile] ⚠️ Resposta de friends não foi bem-sucedida:', {
+            status: friendsResponse.status,
+            ok: friendsResponse.status === 'fulfilled' ? friendsResponse.value.ok : 'N/A'
+          });
+        }
+        const groups = groupsResponse.status === 'fulfilled' && groupsResponse.value.ok
+          ? await groupsResponse.value.json().catch(() => []) 
+          : [];
+        const rooms = roomsResponse.status === 'fulfilled' && roomsResponse.value.ok
+          ? await roomsResponse.value.json().catch(() => []) 
+          : [];
+        
+        console.log(`[useCompleteProfile] Dados obtidos:`, {
+          badges: badges.length,
+          friends: friends.length,
+          groups: groups.length,
+          rooms: rooms.length,
+          hasProfileData: !!profileData
+        });
 
-        // Garantir que friends tenha profileVisible (a API já retorna isso)
+        // Garantir que friends tenha todos os campos necessários
         if (friends.length > 0) {
           friends = friends.map(friend => ({
             ...friend,
+            name: friend.name || friend.username || 'Nome não disponível',
+            uniqueId: friend.uniqueId || friend.id || '',
+            motto: friend.motto || '',
+            online: friend.online !== undefined ? friend.online : false,
+            figureString: friend.figureString || '',
             profileVisible: friend.profileVisible == null ? true : friend.profileVisible // Default para true se não especificado
           }));
+          
+          console.log(`[useCompleteProfile] Friends processados:`, {
+            total: friends.length,
+            sample: friends[0]
+          });
+        } else {
+          console.log('[useCompleteProfile] ⚠️ Nenhum amigo encontrado na resposta da API');
         }
 
+        // Usar dados do /profile se disponível, senão usar dados básicos
+        const finalUserData = profileData || userData;
+        
         return {
-          uniqueId: userData.uniqueId,
-          name: userData.name,
-          figureString: userData.figureString,
-          motto: userData.motto || '',
-          online: userData.online || false,
-          lastAccessTime: userData.lastAccessTime || '',
-          memberSince: userData.memberSince || '',
-          profileVisible: userData.profileVisible !== false,
+          uniqueId: resolvedUniqueId,
+          name: finalUserData.name || userData.name,
+          figureString: finalUserData.figureString || userData.figureString,
+          motto: finalUserData.motto || userData.motto || '',
+          online: finalUserData.online !== undefined ? finalUserData.online : (userData.online || false),
+          lastAccessTime: finalUserData.lastAccessTime || userData.lastAccessTime || '',
+          memberSince: finalUserData.memberSince || userData.memberSince || '',
+          profileVisible: finalUserData.profileVisible !== false && userData.profileVisible !== false,
           stats: {
-            level: userData.starGemCount || userData.currentLevel || 0,
-            levelPercent: userData.currentLevelCompletePercent || 0,
-            experience: 0,
-            starGems: userData.starGemCount || userData.currentLevel || 0,
+            level: finalUserData.currentLevel || userData.currentLevel || userData.starGemCount || 0,
+            levelPercent: finalUserData.currentLevelCompletePercent || userData.currentLevelCompletePercent || 0,
+            experience: finalUserData.totalExperience || userData.totalExperience || 0,
+            starGems: finalUserData.starGemCount || userData.starGemCount || 0,
             badgesCount: badges.length || 0,
             friendsCount: friends.length || 0,
             groupsCount: groups.length || 0,
@@ -123,7 +243,7 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br') =
             groups: groups,
             rooms: rooms,
             photos: [], // Será preenchido pelo useUnifiedPhotoSystem
-            selectedBadges: userData.selectedBadges || []
+            selectedBadges: finalUserData.selectedBadges || userData.selectedBadges || []
           }
         };
       } catch (error: any) {
@@ -131,7 +251,7 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br') =
         throw new Error(error.message || 'Failed to fetch complete profile');
       }
     },
-    enabled: !!username && username.trim() !== '', // Só habilitar se houver username válido
+    enabled: isValidUsername, // Só habilitar se houver username válido ou uniqueId
     staleTime: 5 * 60 * 1000, // Cache por 5 minutos
     retry: 2,
     refetchOnWindowFocus: false,

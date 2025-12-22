@@ -76,11 +76,12 @@ export const Login: React.FC = () => {
         throw new Error(`Código ${verificationCode} não encontrado na sua motto. Verifique se você copiou corretamente.`);
       }
 
-      // Verificar se usuário já existe (case-insensitive)
+      // Verificar se usuário já existe para este hotel específico (case-insensitive)
       const { data: existingAccounts } = await supabase
         .from('habbo_accounts')
         .select('*')
         .ilike('habbo_name', username)
+        .eq('hotel', selectedHotel)
         .limit(1);
       
       const existingAccount = existingAccounts?.[0];
@@ -189,10 +190,31 @@ export const Login: React.FC = () => {
 
     setIsLoggingIn(true);
     try {
+      // Verificar se existe uma conta para este usuário neste hotel específico
+      const { data: existingAccounts, error: checkError } = await supabase
+        .from('habbo_accounts')
+        .select('*')
+        .ilike('habbo_name', username.trim())
+        .eq('hotel', selectedHotel)
+        .limit(1);
+      
+      if (checkError) {
+        console.error('Erro ao verificar conta:', checkError);
+        error('Erro', 'Erro ao verificar conta. Tente novamente.');
+        setIsLoggingIn(false);
+        return;
+      }
+      
+      if (!existingAccounts || existingAccounts.length === 0) {
+        error('Conta não encontrada', `Não existe uma conta para o usuário "${username}" no hotel ${habboHotels.find(h => h.code === selectedHotel)?.name}. Você precisa criar uma conta primeiro usando o método de verificação por motto.`);
+        setIsLoggingIn(false);
+        return;
+      }
+      
       // Salvar país selecionado no localStorage para uso posterior
       localStorage.setItem('selected_habbo_hotel', selectedHotel);
       
-      const success = await login(username.trim(), password);
+      const success = await login(username.trim(), password, selectedHotel);
       if (success) {
         // O redirecionamento será feito automaticamente pelo useEffect
       }

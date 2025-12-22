@@ -175,12 +175,12 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
           const thumbnailUrls = getRoomThumbnailUrls(roomId, hotelCode);
           setThumbnailUrl(thumbnailUrls[0]);
         } else {
-          toast.error('Quarto não encontrado');
+          toast.error(t('messages.error'));
           onClose();
         }
       } catch (error) {
         console.error('Erro ao buscar detalhes do quarto:', error);
-        toast.error('Erro ao carregar detalhes do quarto');
+        toast.error(t('messages.error'));
       } finally {
         setIsLoading(false);
       }
@@ -200,7 +200,7 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
       await navigator.clipboard.writeText(roomIdText);
       setCopiedRoomId(true);
       setIsCopyButtonExpanded(true);
-      toast.success('ID do quarto copiado!');
+      toast.success(t('messages.success'));
       
       // Limpar timeout anterior se existir
       if (copyTimeoutRef.current) {
@@ -214,7 +214,7 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
       }, 3000);
     } catch (err) {
       console.error('Erro ao copiar:', err);
-      toast.error('Erro ao copiar ID');
+      toast.error(t('messages.error'));
     }
   };
 

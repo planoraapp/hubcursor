@@ -170,6 +170,7 @@ export interface EnhancedPhoto {
   timestamp?: number;
   hotel?: string;
   hotelDomain?: string;
+  userUniqueId?: string; // uniqueId do usuário que postou a foto
 }
 
 export interface PhotoCardProps {

@@ -80,7 +80,34 @@ if (import.meta.main) {
         // Processar batch em paralelo
         await Promise.all(batch.map(async (friend) => {
           try {
-            const friendPhotosUrl = `https://www.habbo.${normalizedHotel === "br" ? "com.br" : normalizedHotel}/extradata/public/users/${friend.uniqueId}/photos`;
+            // Garantir que friend.uniqueId esteja presente
+            // Se não estiver, tentar buscar o usuário por nome para obter o uniqueId
+            let friendUniqueId = friend.uniqueId;
+            
+            if (!friendUniqueId && friend.name) {
+              console.log(`[habbo-optimized-friends-photos] ⚠️ uniqueId ausente para ${friend.name}, tentando buscar...`);
+              try {
+                const userApiUrl = `https://www.habbo.${normalizedHotel === "br" ? "com.br" : normalizedHotel}/api/public/users?name=${encodeURIComponent(friend.name)}`;
+                const userResponse = await fetch(userApiUrl);
+                if (userResponse.ok) {
+                  const userData = await userResponse.json();
+                  friendUniqueId = userData.uniqueId;
+                  // Atualizar o objeto friend com o uniqueId encontrado
+                  friend.uniqueId = friendUniqueId;
+                  console.log(`[habbo-optimized-friends-photos] ✅ uniqueId encontrado para ${friend.name}: ${friendUniqueId}`);
+                }
+              } catch (fetchError) {
+                console.log(`[habbo-optimized-friends-photos] Não foi possível buscar uniqueId para ${friend.name}`);
+              }
+            }
+            
+            // Se ainda não tiver uniqueId, pular este amigo
+            if (!friendUniqueId) {
+              console.warn(`[habbo-optimized-friends-photos] ⚠️ Não foi possível obter uniqueId para ${friend.name}, pulando...`);
+              return;
+            }
+            
+            const friendPhotosUrl = `https://www.habbo.${normalizedHotel === "br" ? "com.br" : normalizedHotel}/extradata/public/users/${friendUniqueId}/photos`;
             const photosResponse = await fetch(friendPhotosUrl);
             
             if (photosResponse.ok) {
@@ -123,7 +150,7 @@ if (import.meta.main) {
                   
                   return {
                     photo,
-                    friend,
+                    friend: { ...friend, uniqueId: friendUniqueId }, // Garantir que uniqueId esteja presente
                     realTimestamp: timestamp
                   };
                 });
@@ -186,6 +213,16 @@ if (import.meta.main) {
           console.log(`[habbo-optimized-friends-photos] Sample photo.roomName:`, photo.roomName);
         }
         
+        // DEBUG: Verificar se friend.uniqueId está presente (especialmente para Beebop)
+        if (!friend.uniqueId && friend.name) {
+          console.warn(`[habbo-optimized-friends-photos] ⚠️ friend.uniqueId ausente para ${friend.name}. Objeto friend:`, {
+            name: friend.name,
+            uniqueId: friend.uniqueId,
+            hasUniqueId: 'uniqueId' in friend,
+            allKeys: Object.keys(friend)
+          });
+        }
+        
         // Tentar obter room_id de diferentes fontes (priorizar room_id com underscore como na API global)
         let roomId: string | number | null = photo.room_id || photo.roomId || photo.room?.id || photo.room?.room_id || null;
         
@@ -197,6 +234,19 @@ if (import.meta.main) {
         // Formatar roomName: se houver room_id, usar "Room {room_id}", senão usar roomName original ou fallback
         const roomName = roomId ? `Room ${roomId}` : (photo.roomName || "Quarto do jogo");
         
+        // Garantir que userUniqueId sempre esteja presente
+        // Se friend.uniqueId não estiver disponível, tentar extrair da URL da foto ou usar undefined
+        let userUniqueId = friend.uniqueId;
+        
+        // Se uniqueId não estiver presente, tentar extrair da URL da foto (formato: /hhbr/ ou /hhXX-)
+        if (!userUniqueId && photo.url) {
+          const urlMatch = photo.url.match(/\/(hh[a-z]{2}(?:-[a-f0-9]+)?)\//);
+          if (urlMatch && urlMatch[1]) {
+            userUniqueId = urlMatch[1];
+            console.log(`[habbo-optimized-friends-photos] ✅ Extraído uniqueId da URL para ${friend.name}: ${userUniqueId}`);
+          }
+        }
+        
         return {
           id: photo.id,
           photo_id: photo.id,
@@ -204,6 +254,7 @@ if (import.meta.main) {
           date: new Date(realTimestamp).toLocaleDateString("pt-BR"),
           likes: photo.likesCount || 0,
           userName: friend.name,
+          userUniqueId: userUniqueId, // Incluir uniqueId do usuário para navegação (com fallback)
           userAvatar: `https://www.habbo.${normalizedHotel === "br" ? "com.br" : normalizedHotel}/habbo-imaging/avatarimage?figure=${friend.figureString}&size=s&direction=2&head_direction=3&action=std`,
           timestamp: realTimestamp,
           roomName: roomName,

@@ -10,6 +10,7 @@ export interface UnifiedPhoto {
   likes: number;
   timestamp?: number;
   roomName?: string;
+  roomId?: string | number;
   source: 'api';
 }
 

@@ -98,11 +98,18 @@ export const rateLimiter = new RateLimiter();
 
 // Configurações pré-definidas para diferentes ações
 export const RATE_LIMITS = {
-  // Chat: 10 mensagens por minuto
+  // Chat: 5 mensagens a cada 8 segundos (novo limite mais rigoroso)
   CHAT_MESSAGE: {
-    maxAttempts: 10,
-    windowMs: 60 * 1000, // 1 minuto
-    message: '⏱️ Você está enviando mensagens muito rápido. Aguarde um momento.'
+    maxAttempts: 5,
+    windowMs: 8 * 1000, // 8 segundos
+    message: '⏱️ Você está enviando mensagens muito rápido. Aguarde um momento (máximo 5 mensagens a cada 8 segundos).'
+  },
+  
+  // Comentários em fotos: 5 comentários a cada 8 segundos
+  PHOTO_COMMENT: {
+    maxAttempts: 5,
+    windowMs: 8 * 1000, // 8 segundos
+    message: '⏱️ Você está comentando muito rápido. Aguarde um momento (máximo 5 comentários a cada 8 segundos).'
   },
   
   // Bloqueio de usuários: 5 ações por minuto

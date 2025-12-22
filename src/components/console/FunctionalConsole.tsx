@@ -199,7 +199,9 @@ export const FunctionalConsole: React.FC = () => {
       photoId,
       imageUrl: photo.imageUrl || photo.s3_url || photo.url,
       hotelDomain: photo.hotelDomain,
-      hotel: photo.hotel
+      hotel: photo.hotel,
+      roomName: photo.roomName,
+      roomId: photo.roomId
     });
     
     // Extrair hotelDomain do photo ou usar o hotel padrão do perfil
@@ -218,13 +220,29 @@ export const FunctionalConsole: React.FC = () => {
       hotelDomain = effectiveHotel === 'br' ? 'com.br' : effectiveHotel === 'tr' ? 'com.tr' : effectiveHotel === 'us' ? 'com' : effectiveHotel;
     }
     
+    // Extrair roomId se não estiver presente mas houver roomName
+    let roomId: string | undefined = photo.roomId ? String(photo.roomId) : undefined;
+    if (!roomId && photo.roomName) {
+      // Tentar extrair do formato "Room XXXXX"
+      const roomIdMatch = photo.roomName.match(/Room\s+(\d+)/i);
+      if (roomIdMatch) {
+        roomId = roomIdMatch[1];
+      } else {
+        // Tentar extrair qualquer número do roomName (última tentativa)
+        const numberMatch = photo.roomName.match(/(\d+)/);
+        if (numberMatch) {
+          roomId = numberMatch[1];
+        }
+      }
+    }
+    
     const photoData = {
       id: photoId, // Usar o ID real da foto do Habbo
       imageUrl: photo.imageUrl || photo.url || photo.s3_url || `https://habbo-stories-content.s3.amazonaws.com/servercamera/purchased/hhbr/p-464837-${1755308009079 + index}.png`,
       date: photo.date || new Date().toLocaleDateString('pt-BR'),
       likes: photo.likes || photo.likesCount || 0,
       roomName: photo.roomName || undefined,
-      roomId: photo.roomId ? String(photo.roomId) : undefined,
+      roomId: roomId, // Usar roomId extraído ou do photo
       hotel: photo.hotel || (hotelDomain === 'com.br' ? 'br' : hotelDomain === 'com.tr' ? 'tr' : hotelDomain === 'com' ? 'com' : hotelDomain),
       hotelDomain: hotelDomain,
       caption: photo.caption || undefined,

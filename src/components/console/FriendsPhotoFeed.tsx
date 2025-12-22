@@ -197,7 +197,7 @@ const CommentsModal: React.FC<CommentsModalProps> = ({ photo, onClose }) => {
 interface FriendsPhotoFeedProps {
   currentUserName: string;
   hotel: string;
-  onNavigateToProfile: (username: string) => void;
+  onNavigateToProfile: (username: string, hotelDomain?: string, uniqueId?: string) => void;
   refreshTrigger?: number;
   isHeaderVisible?: boolean;
 }
@@ -219,12 +219,31 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
   // Chave única para salvar posição de scroll do feed de amigos
   const scrollPositionKey = `feed-scroll-friends-${hotel}`;
 
+  // Usar habboAccount para obter uniqueId se disponível
+  const habboUniqueId = habboAccount?.habbo_id || undefined;
+  
+  // Debug: verificar parâmetros
+  React.useEffect(() => {
+    if (currentUserName) {
+      console.log('[FriendsPhotoFeed] Configuração:', {
+        currentUserName,
+        hotel,
+        habboUniqueId,
+        habboAccount: habboAccount ? {
+          habbo_name: habboAccount.habbo_name,
+          hotel: habboAccount.hotel
+        } : null,
+        isValid: currentUserName && currentUserName.trim() && currentUserName.toLowerCase() !== 'beebop'
+      });
+    }
+  }, [currentUserName, hotel, habboUniqueId, habboAccount]);
+  
   const {
     data: photos,
     isLoading,
     error,
     refetch
-  } = useFriendsPhotos(currentUserName, hotel);
+  } = useFriendsPhotos(currentUserName, hotel, habboUniqueId);
 
   const [commentsModalPhoto, setCommentsModalPhoto] = useState<EnhancedPhoto | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -303,13 +322,60 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
   };
 
   // Salvar posição de scroll quando navegar para perfil
-  const handleNavigateToProfile = (username: string) => {
+  const handleNavigateToProfile = (username: string, photo?: any) => {
     const scrollableParent = findScrollableParent(feedContainerRef.current);
     if (scrollableParent) {
       const scrollPosition = scrollableParent.scrollTop;
       sessionStorage.setItem(scrollPositionKey, scrollPosition.toString());
     }
-    onNavigateToProfile(username);
+    
+    // Extrair hotelDomain e uniqueId do objeto photo se disponível
+    let hotelDomain: string | undefined = undefined;
+    let userUniqueId: string | undefined = undefined;
+    
+    if (photo) {
+      // Debug: verificar o que está no objeto photo
+      console.log('[FriendsPhotoFeed] handleNavigateToProfile - photo object:', {
+        userName: photo.userName,
+        userUniqueId: photo.userUniqueId,
+        hotelDomain: photo.hotelDomain,
+        hotel: photo.hotel,
+        hasUserUniqueId: 'userUniqueId' in photo
+      });
+      
+      // Priorizar hotelDomain, depois hotel (código), depois o hotel padrão do feed
+      if (photo.hotelDomain) {
+        hotelDomain = photo.hotelDomain;
+      } else if (photo.hotel) {
+        // Converter código do hotel para domínio
+        const hotelCode = photo.hotel;
+        if (hotelCode === 'br') hotelDomain = 'com.br';
+        else if (hotelCode === 'tr') hotelDomain = 'com.tr';
+        else if (hotelCode === 'us' || hotelCode === 'com') hotelDomain = 'com';
+        else hotelDomain = hotelCode; // es, fr, de, it, nl, fi
+      }
+      
+      // Extrair uniqueId do usuário se disponível
+      if (photo.userUniqueId) {
+        userUniqueId = photo.userUniqueId;
+        console.log('[FriendsPhotoFeed] ✅ userUniqueId encontrado:', userUniqueId);
+      } else {
+        console.warn('[FriendsPhotoFeed] ⚠️ userUniqueId não encontrado no photo');
+      }
+    }
+    
+    // Se não encontrou hotelDomain no photo, usar o hotel padrão do feed
+    if (!hotelDomain) {
+      hotelDomain = hotel === 'br' ? 'com.br' : hotel === 'tr' ? 'com.tr' : hotel;
+    }
+    
+    console.log('[FriendsPhotoFeed] Navegando para perfil:', {
+      username,
+      hotelDomain,
+      userUniqueId
+    });
+    
+    onNavigateToProfile(username, hotelDomain, userUniqueId);
   };
 
   // Restaurar posição de scroll quando voltar ao feed
@@ -497,7 +563,8 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
                   roomId: photo.roomId ? String(photo.roomId) : undefined, // Garantir que seja string
                   timestamp: photo.timestamp,
                   hotelDomain: hotelDomain, // Passar hotelDomain para facilitar detecção
-                  hotel: hotel // Passar código do hotel como fallback
+                  hotel: hotel, // Passar código do hotel como fallback
+                  userUniqueId: photo.userUniqueId // Passar uniqueId do usuário para navegação
                 } as EnhancedPhoto}
                 onUserClick={handleNavigateToProfile}
                 onLikesClick={() => {}}

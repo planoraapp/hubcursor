@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/contexts/I18nContext';
+import { useChatNotifications } from '@/contexts/ChatNotificationContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { HabboUserPanel } from '@/components/HabboUserPanel';
@@ -24,8 +25,19 @@ function CollapsibleAppSidebarComponent() {
   const location = useLocation();
   const { habboAccount, isLoggedIn } = useAuth();
   const { t } = useI18n();
+  const { hasNotifications, unreadCount } = useChatNotifications();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
+  
+  // Debug: log para verificar se hasNotifications está correto
+  React.useEffect(() => {
+    console.log('[SIDEBAR] Notification state:', {
+      hasNotifications,
+      unreadCount,
+      shouldShowNotification: unreadCount > 0,
+      iconPath: hasNotifications ? '/assets/2367_HabboFriendBarCom_icon_friendlist_notify_1_png.png' : '/assets/console/consoleoff.gif'
+    });
+  }, [hasNotifications, unreadCount]);
   const isMobileViewport = useIsMobile();
   const [isHeaderHidden, setIsHeaderHidden] = React.useState(false);
   const lastScrollY = React.useRef(0);
@@ -73,9 +85,22 @@ function CollapsibleAppSidebarComponent() {
       .replace(/[Ç]/g, 'C');
   };
 
+  // Calcular ícone do console baseado no estado de notificações
+  const consoleIcon = React.useMemo(() => {
+    const iconPath = hasNotifications 
+      ? '/assets/2367_HabboFriendBarCom_icon_friendlist_notify_1_png.png' 
+      : '/assets/console/consoleoff.gif';
+    console.log('[SIDEBAR] Computing console icon:', { hasNotifications, unreadCount, iconPath });
+    return iconPath;
+  }, [hasNotifications, unreadCount]);
+
   const menuItems = [
     { nameKey: 'nav.home', path: '/', icon: '/assets/buttons/homebutton.png' },
-    { nameKey: 'nav.console', path: '/console', icon: '/assets/console/consoleoff.gif' },
+    { 
+      nameKey: 'nav.console', 
+      path: '/console', 
+      icon: consoleIcon
+    },
     { nameKey: 'nav.homes', path: '/homes', icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home.gif' },
     { nameKey: 'nav.journal', path: '/journal', icon: '/assets/journal/news.png' },
     { nameKey: 'nav.tools', path: '/ferramentas', icon: '/assets/ferramentas.png' },
@@ -477,5 +502,6 @@ function CollapsibleAppSidebarComponent() {
   );
 }
 
-export const CollapsibleAppSidebar = React.memo(CollapsibleAppSidebarComponent);
+// Removido React.memo para garantir que atualizações do contexto sejam refletidas imediatamente
+export const CollapsibleAppSidebar = CollapsibleAppSidebarComponent;
 CollapsibleAppSidebar.displayName = 'CollapsibleAppSidebar';

@@ -1,15 +1,15 @@
 "use client";
 import {
   require_react
-} from "./chunk-FXJVXTVJ.js";
+} from "./chunk-2CLD7BNN.js";
 import {
   __toESM
-} from "./chunk-4B2QHNJT.js";
+} from "./chunk-WOOG5QLI.js";
 
 // node_modules/@vercel/analytics/dist/react/index.mjs
 var import_react = __toESM(require_react(), 1);
 var name = "@vercel/analytics";
-var version = "1.5.0";
+var version = "1.6.1";
 var initQueue = () => {
   if (window.va) return;
   window.va = function a(...params) {

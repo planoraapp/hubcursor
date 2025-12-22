@@ -4,34 +4,32 @@ import {
 } from "./chunk-TCQMTAGU.js";
 import {
   useDirection
-} from "./chunk-I6WTOLMB.js";
+} from "./chunk-EKGCHGPX.js";
 import {
   Presence
-} from "./chunk-FPYOFELJ.js";
+} from "./chunk-7DUBBY2X.js";
 import {
-  composeEventHandlers
-} from "./chunk-XY4SNB44.js";
+  Primitive,
+  composeEventHandlers,
+  createContextScope
+} from "./chunk-45LAH33U.js";
 import {
-  createContextScope,
   useCallbackRef,
   useLayoutEffect2
-} from "./chunk-TOL7XQBR.js";
-import {
-  Primitive
-} from "./chunk-X27JR763.js";
+} from "./chunk-2LTPHA6P.js";
 import {
   useComposedRefs
-} from "./chunk-S4MXMZ6H.js";
+} from "./chunk-PF6AD44X.js";
 import {
   require_jsx_runtime
-} from "./chunk-G7Y47P27.js";
-import "./chunk-UR7M4CTY.js";
+} from "./chunk-67WGWSRF.js";
+import "./chunk-GZTOERBL.js";
 import {
   require_react
-} from "./chunk-FXJVXTVJ.js";
+} from "./chunk-2CLD7BNN.js";
 import {
   __toESM
-} from "./chunk-4B2QHNJT.js";
+} from "./chunk-WOOG5QLI.js";
 
 // node_modules/@radix-ui/react-scroll-area/dist/index.mjs
 var React2 = __toESM(require_react(), 1);
@@ -111,7 +109,7 @@ ScrollArea.displayName = SCROLL_AREA_NAME;
 var VIEWPORT_NAME = "ScrollAreaViewport";
 var ScrollAreaViewport = React2.forwardRef(
   (props, forwardedRef) => {
-    const { __scopeScrollArea, children, asChild, nonce, ...viewportProps } = props;
+    const { __scopeScrollArea, children, nonce, ...viewportProps } = props;
     const context = useScrollAreaContext(VIEWPORT_NAME, __scopeScrollArea);
     const ref = React2.useRef(null);
     const composedRefs = useComposedRefs(forwardedRef, ref, context.onViewportChange);
@@ -120,24 +118,7 @@ var ScrollAreaViewport = React2.forwardRef(
         "style",
         {
           dangerouslySetInnerHTML: {
-            __html: `
-[data-radix-scroll-area-viewport] {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  -webkit-overflow-scrolling: touch;
-}
-[data-radix-scroll-area-viewport]::-webkit-scrollbar {
-  display: none;
-}
-:where([data-radix-scroll-area-viewport]) {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
-:where([data-radix-scroll-area-content]) {
-  flex-grow: 1;
-}
-`
+            __html: `[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}`
           },
           nonce
         }
@@ -147,7 +128,6 @@ var ScrollAreaViewport = React2.forwardRef(
         {
           "data-radix-scroll-area-viewport": "",
           ...viewportProps,
-          asChild,
           ref: composedRefs,
           style: {
             /**
@@ -165,15 +145,7 @@ var ScrollAreaViewport = React2.forwardRef(
             overflowY: context.scrollbarYEnabled ? "scroll" : "hidden",
             ...props.style
           },
-          children: getSubtree({ asChild, children }, (children2) => (0, import_jsx_runtime.jsx)(
-            "div",
-            {
-              "data-radix-scroll-area-content": "",
-              ref: context.onContentChange,
-              style: { minWidth: context.scrollbarXEnabled ? "fit-content" : void 0 },
-              children: children2
-            }
-          ))
+          children: (0, import_jsx_runtime.jsx)("div", { ref: context.onContentChange, style: { minWidth: "100%", display: "table" }, children })
         }
       )
     ] });
@@ -588,7 +560,7 @@ var ScrollAreaThumbImpl = React2.forwardRef(
       forwardedRef,
       (node) => scrollbarContext.onThumbChange(node)
     );
-    const removeUnlinkedScrollListenerRef = React2.useRef();
+    const removeUnlinkedScrollListenerRef = React2.useRef(void 0);
     const debounceScrollEnd = useDebounceCallback(() => {
       if (removeUnlinkedScrollListenerRef.current) {
         removeUnlinkedScrollListenerRef.current();
@@ -765,14 +737,6 @@ function useResizeObserver(element, onResize) {
       };
     }
   }, [element, handleResize]);
-}
-function getSubtree(options, content) {
-  const { asChild, children } = options;
-  if (!asChild) return typeof content === "function" ? content(children) : content;
-  const firstChild = React2.Children.only(children);
-  return React2.cloneElement(firstChild, {
-    children: typeof content === "function" ? content(firstChild.props.children) : content
-  });
 }
 var Root = ScrollArea;
 var Viewport = ScrollAreaViewport;

@@ -24,8 +24,8 @@ export const useKeepOnline = () => {
     const updateOnlineStatus = async () => {
       try {
         // Verificar se userId existe antes de tentar atualizar
-        if (!userId) {
-          console.log('[KEEP ONLINE] No userId available, skipping update');
+        if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+          console.log('[KEEP ONLINE] No valid userId available, skipping update');
           return;
         }
 
@@ -40,18 +40,29 @@ export const useKeepOnline = () => {
         // Usar Edge Function para atualizar estado online (bypass de RLS)
         const { error } = await supabase.functions.invoke('keep-online', {
           body: {
-            userId: userId,
+            userId: userId.trim(),
             isOnline: true // Sempre true quando o hook atualiza (pois só roda se preferência for true)
           }
         });
 
         if (error) {
-          console.error('[KEEP ONLINE] Error updating online status:', error);
+          // Se for erro 400, pode ser problema de validação na Edge Function
+          // Não fazer log de erro repetitivo para não poluir o console
+          if (error.message?.includes('400') || error.status === 400) {
+            console.debug('[KEEP ONLINE] Edge Function returned 400 (possível problema de validação):', error.message);
+          } else {
+            console.error('[KEEP ONLINE] Error updating online status:', error);
+          }
         } else {
           console.log('[KEEP ONLINE] Online status updated');
         }
-      } catch (error) {
-        console.error('[KEEP ONLINE] Error:', error);
+      } catch (error: any) {
+        // Tratar erros de forma silenciosa para não poluir o console
+        if (error?.message?.includes('400') || error?.status === 400) {
+          console.debug('[KEEP ONLINE] Error 400 (silenciado):', error.message);
+        } else {
+          console.error('[KEEP ONLINE] Error:', error);
+        }
       }
     };
 

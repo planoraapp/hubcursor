@@ -1,7 +1,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useCompleteProfile } from './useCompleteProfile';
 
 export interface FriendPhoto {
   id: string;
@@ -9,6 +8,7 @@ export interface FriendPhoto {
   date: string;
   likes: number;
   userName: string;
+  userUniqueId?: string; // uniqueId do usuário que postou a foto
   userAvatar: string;
   timestamp?: number;
   caption?: string;
@@ -16,45 +16,72 @@ export interface FriendPhoto {
   roomId?: string | number; // ID do quarto quando disponível
 }
 
-export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') => {
+export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br', uniqueId?: string) => {
   // Normalizar hotel: 'ptbr' -> 'br' (o backend espera 'br')
   const normalizedHotel = hotel === 'ptbr' ? 'br' : hotel;
   
-  // Get complete profile to access friends list
-  const { data: completeProfile, isLoading: profileLoading } = useCompleteProfile(currentUserName, normalizedHotel === 'br' ? 'com.br' : normalizedHotel);
+  // Validar username: não buscar se estiver vazio ou for "Beebop"
+  // IMPORTANTE: Garantir que sempre retorne um boolean
+  const isValidUsername = Boolean(
+    currentUserName && 
+    currentUserName.trim() && 
+    currentUserName.toLowerCase() !== 'beebop' &&
+    currentUserName.toLowerCase() !== ''
+  );
+  
+  // REMOVIDO: Não precisamos buscar completeProfile aqui
+  // A Edge Function 'habbo-optimized-friends-photos' já busca o perfil do usuário
+  // e a lista de amigos internamente, então não precisamos dessa dependência
+  // Isso evita problemas de carregamento e dependências circulares
   
   return useQuery({
-    queryKey: ['friends-photos', currentUserName, normalizedHotel, completeProfile?.data?.friends?.length],
+    queryKey: ['friends-photos', currentUserName, normalizedHotel, uniqueId],
     queryFn: async (): Promise<FriendPhoto[]> => {
-      if (!currentUserName) {
-        throw new Error('Username is required');
+      if (!isValidUsername) {
+        throw new Error('Username is required and must be valid');
       }
 
-      if (!completeProfile?.data?.friends?.length) {
-        return [];
-      }
+      console.log(`[useFriendsPhotos] Buscando fotos para: ${currentUserName} (hotel: ${normalizedHotel})`);
 
       const { data, error } = await supabase.functions.invoke('habbo-optimized-friends-photos', {
         body: { 
           username: currentUserName, 
-          hotel: normalizedHotel, // Usar hotel normalizado
-          limit: 50, // Limite inicial de 50 fotos
+          hotel: normalizedHotel,
+          limit: 300, // Aumentar limite para buscar mais fotos (a Edge Function processa todos os amigos)
           offset: 0
         }
       });
 
       if (error) {
+        console.error('[useFriendsPhotos] Erro na Edge Function:', error);
         throw new Error(error.message || 'Failed to fetch friends photos');
       }
 
       if (!data || data.error) {
+        console.warn('[useFriendsPhotos] Nenhuma foto retornada:', data?.error || 'Sem dados');
         return [];
       }
 
       // A função habbo-optimized-friends-photos retorna { photos, hasMore, nextOffset }
       const photos = Array.isArray(data) ? data : (data.photos || []);
       
-      console.log(`[✅ FRIENDS PHOTOS] Successfully fetched ${photos.length} photos (limit 50)`);
+      console.log(`[✅ FRIENDS PHOTOS] Successfully fetched ${photos.length} photos`);
+      
+      // Debug: verificar se userUniqueId está presente nas fotos
+      if (photos.length > 0) {
+        const firstPhoto = photos[0];
+        console.log('[useFriendsPhotos] Primeira foto (amostra):', {
+          userName: firstPhoto.userName,
+          userUniqueId: firstPhoto.userUniqueId,
+          hasUserUniqueId: 'userUniqueId' in firstPhoto,
+          allKeys: Object.keys(firstPhoto)
+        });
+      }
+      
+      if (photos.length === 0) {
+        console.warn('[useFriendsPhotos] Nenhuma foto encontrada para os amigos');
+        return [];
+      }
       if (photos.length > 0) {
         const first3 = photos.slice(0, 3);
         console.log(`[📸 FRIENDS PHOTOS] First 3 photos from backend:`, first3.map((p, i) => ({
@@ -85,11 +112,14 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
           console.log(`[📊 FRIENDS PHOTOS] Are timestamps descending (recent first)? ${isDescending}`);
         }
       }
-      // Processar todas as fotos SEM FILTRO DE DATA
+      // Processar todas as fotos
       const validPhotos = photos
         .filter(photo => {
           // Validar apenas dados obrigatórios
           const isValid = photo.imageUrl && photo.userName && (photo.timestamp || photo.date);
+          if (!isValid) {
+            console.warn('[useFriendsPhotos] Foto inválida ignorada:', photo);
+          }
           return isValid;
         })
         .map(photo => {
@@ -113,8 +143,18 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
             year: 'numeric'
           });
           
+          // Debug: verificar se userUniqueId está presente
+          if (photo.userName === 'Beebop' || photo.userName?.toLowerCase() === 'beebop') {
+            console.log('[useFriendsPhotos] Foto do Beebop:', {
+              userName: photo.userName,
+              userUniqueId: photo.userUniqueId,
+              hasUserUniqueId: 'userUniqueId' in photo,
+              photoKeys: Object.keys(photo)
+            });
+          }
+          
           return {
-            ...photo,
+            ...photo, // Preservar todos os campos, incluindo userUniqueId
             timestamp: finalTimestamp,
             date: formattedDate,
             caption: photo.caption || '',
@@ -150,13 +190,15 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
 
       return sortedPhotos;
     },
-    enabled: !!currentUserName && !profileLoading && !!completeProfile?.data?.friends?.length,
-    staleTime: 5 * 60 * 1000, // Cache local por 5 minutos - bem otimizado
+    // CORRIGIDO: Habilitar apenas se tiver username válido
+    // Não depende mais de completeProfile - a Edge Function busca tudo internamente
+    enabled: isValidUsername,
+    staleTime: 5 * 60 * 1000, // Cache por 5 minutos
     gcTime: 30 * 60 * 1000, // Mantém no cache por 30 minutos
     refetchOnWindowFocus: false, // Não atualiza ao focar
     refetchOnReconnect: false, // Não atualiza ao reconectar
-    refetchOnMount: false, // SEMPRE usa cache ao abrir a aba (rápido!)
-    retry: 1
+    refetchOnMount: true, // CORRIGIDO: Buscar ao montar para garantir dados atualizados
+    retry: 2 // Aumentar retries para melhor confiabilidade
   });
 };
 

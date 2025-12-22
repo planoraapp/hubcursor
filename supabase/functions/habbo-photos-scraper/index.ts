@@ -14,6 +14,7 @@ interface HabboPhoto {
   likes: number;
   timestamp?: number;
   roomName?: string;
+  roomId?: string | number;
 }
 
 serve(async (req) => {
@@ -144,6 +145,17 @@ serve(async (req) => {
         year: 'numeric'
       });
       
+      // Tentar obter room_id de diferentes fontes (priorizar room_id com underscore como na API global)
+      let roomId: string | number | null = photo.room_id || photo.roomId || photo.room?.id || photo.room?.room_id || null;
+      
+      // Converter para string se existir
+      if (roomId !== null && roomId !== undefined) {
+        roomId = String(roomId);
+      }
+      
+      // Formatar roomName: se houver room_id, usar "Room {room_id}", senão usar roomName original ou fallback
+      const roomName = roomId ? `Room ${roomId}` : (photo.roomName || photo.room?.name || 'Quarto do jogo');
+      
       return {
         id: photo.id || `photo-${Date.now()}-${Math.random()}`,
         photo_id: photo.id || photo.photoId || '',
@@ -151,7 +163,8 @@ serve(async (req) => {
         date: formattedDate,
         likes: photo.likesCount || photo.likes || 0,
         timestamp: timestamp,
-        roomName: photo.roomName || photo.room?.name || 'Quarto do jogo'
+        roomName: roomName,
+        roomId: roomId // Incluir roomId como string se disponível
       };
     });
 

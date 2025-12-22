@@ -172,7 +172,9 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
       
     } catch (error: any) {
       console.error('Erro ao enviar comentário:', error);
-      toast.error(t('toast.commentError'));
+      // Exibir mensagem de erro específica se disponível (filtros anti-spam, rate limit, etc)
+      const errorMessage = error?.message || t('toast.commentError');
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -296,11 +298,17 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
           } else {
             setRoomDisplayName(photo.roomName); // Fallback para roomName original
           }
+        } else if (response.status === 404) {
+          // 404 é esperado se o quarto não existir mais - não fazer log de erro
+          setRoomDisplayName(photo.roomName); // Fallback para roomName original
         } else {
+          // Outros erros (500, etc) - logar apenas em modo debug
+          console.debug(`[EnhancedPhotoCard] Erro ${response.status} ao buscar quarto ${roomId}:`, response.statusText);
           setRoomDisplayName(photo.roomName); // Fallback para roomName original
         }
       } catch (error) {
-        console.error('Erro ao buscar nome do quarto:', error);
+        // Erros de rede - logar apenas em modo debug para não poluir console
+        console.debug('[EnhancedPhotoCard] Erro de rede ao buscar nome do quarto:', error);
         setRoomDisplayName(photo.roomName); // Fallback para roomName original
       }
     };

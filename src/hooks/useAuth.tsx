@@ -22,7 +22,7 @@ interface AuthContextType {
   isLoggedIn: boolean;
   loading: boolean;
   isAdmin: () => boolean;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (username: string, password: string, hotel?: string) => Promise<boolean>;
   logout: () => Promise<void>;
   refreshAccount: () => Promise<void>;
 }
@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initializeAuth();
   }, []);
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const login = async (username: string, password: string, hotel?: string): Promise<boolean> => {
     try {
       setLoading(true);
       
@@ -83,7 +83,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         body: {
           action: 'login',
           habbo_name: username.trim(),
-          password: password
+          password: password,
+          hotel: hotel || undefined // Passar hotel se fornecido
         }
       });
 
