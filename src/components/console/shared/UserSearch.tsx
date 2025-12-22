@@ -137,8 +137,9 @@ export const UserSearch: React.FC<UserSearchProps> = ({
         <button
           onClick={handleSearch}
           disabled={isSearching}
-          className="px-2 py-1 text-white/80 hover:text-white disabled:text-white/40 transition-colors flex items-center justify-center h-full"
+          className="px-2 py-1 text-white/80 hover:text-white disabled:text-white/40 transition-colors flex items-center justify-center h-full flex-shrink-0"
           title="Buscar"
+          style={{ minWidth: '32px' }}
         >
           {isSearching ? (
             <Loader2 className="w-3 h-3 animate-spin" />
@@ -146,7 +147,7 @@ export const UserSearch: React.FC<UserSearchProps> = ({
             <img 
               src="/assets/console/search.png" 
               alt="Buscar" 
-              className="w-auto h-auto"
+              className="w-5 h-5"
               style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
             />
           )}

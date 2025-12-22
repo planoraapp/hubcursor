@@ -1401,8 +1401,8 @@ const FeedTab: React.FC<any> = ({
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
-  // Hook para controlar sticky header
-  const { isHeaderVisible, isHeaderFixed } = useStickyHeader(scrollContainerRef);
+  // Hook para controlar sticky header (FeedTab tem scroll em elemento filho)
+  const { isHeaderVisible, isHeaderFixed } = useStickyHeader(scrollContainerRef, 50, '[class*="overflow-y-auto"]');
   
   // Handler para quando usuário é selecionado na busca
   const handleUserSelect = (username: string, hotelDomain: string, uniqueId?: string) => {
@@ -1436,55 +1436,29 @@ const FeedTab: React.FC<any> = ({
   if (isViewingOtherUser) {
     return (
       <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
-        {/* Botões de navegação */}
+        {/* Botão de navegação */}
         {(onBackToPhotosFeed || onNavigateBack) && (
-          <div className="px-4 pt-3 flex gap-2">
-            {/* Botão para voltar ao perfil anterior (quando navegado via modal) */}
-            {onNavigateBack && (
-              <button
-                onClick={onNavigateBack}
-                className="inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold rounded-lg border border-white/30 bg-transparent hover:bg-white hover:text-gray-800 transition-colors"
+          <div className="px-4 pt-3">
+            <button
+              onClick={onNavigateBack || onBackToPhotosFeed}
+              className="inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold rounded-lg border border-white/30 bg-transparent hover:bg-white hover:text-gray-800 transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-3 h-3"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-3 h-3"
-                >
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-                <span className="truncate">Voltar</span>
-              </button>
-            )}
-            {/* Botão opcional para voltar ao feed do hotel (usado na aba Photos) */}
-            {onBackToPhotosFeed && (
-              <button
-                onClick={onBackToPhotosFeed}
-                className="inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold rounded-lg border border-white/30 bg-transparent hover:bg-white hover:text-gray-800 transition-colors"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-3 h-3"
-                >
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-                <span className="truncate">Voltar ao feed do hotel</span>
-              </button>
-            )}
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+              <span className="truncate">Voltar</span>
+            </button>
           </div>
         )}
 
@@ -1802,8 +1776,8 @@ const FeedTab: React.FC<any> = ({
       {/* Campo de Busca */}
       <div 
         className={cn(
-          "p-4 transition-all duration-300 ease-in-out",
-          isHeaderVisible ? "translate-y-0" : "-translate-y-full pointer-events-none h-0 p-0 overflow-hidden"
+          "p-4 flex-shrink-0 transition-all duration-300 ease-in-out",
+          isHeaderVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none h-0 p-0 overflow-hidden"
         )}
         style={getSearchHeaderStyles(isHeaderFixed)}
       >
@@ -1894,7 +1868,7 @@ const PhotosTab: React.FC<any> = ({ isLoading, onUserClickFromFeed, refreshTrigg
         <div 
           className={cn(
             "p-4 flex-shrink-0 transition-all duration-300 ease-in-out",
-            isHeaderVisible ? "translate-y-0" : "-translate-y-full pointer-events-none h-0 p-0 overflow-hidden"
+            isHeaderVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none h-0 p-0 overflow-hidden"
           )}
           style={getSearchHeaderStyles(isHeaderFixed)}
         >

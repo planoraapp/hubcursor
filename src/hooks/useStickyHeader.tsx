@@ -16,6 +16,8 @@ export const useStickyHeader = (
   const lastScrollTopRef = useRef(0);
   const rafIdRef = useRef<number | null>(null);
   const scrollableElementRef = useRef<HTMLElement | null>(null);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isScrollingDownRef = useRef(false);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -45,6 +47,12 @@ export const useStickyHeader = (
         cancelAnimationFrame(rafIdRef.current);
       }
 
+      // Limpar timeout anterior
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
+
       // Usar requestAnimationFrame para melhor performance
       rafIdRef.current = requestAnimationFrame(() => {
         const element = scrollableElementRef.current;
@@ -52,19 +60,31 @@ export const useStickyHeader = (
 
         const currentScrollTop = element.scrollTop;
         const lastScrollTop = lastScrollTopRef.current;
+        const scrollDelta = currentScrollTop - lastScrollTop;
 
         // Sempre mostrar quando está no topo (não fixo)
-        if (currentScrollTop === 0) {
+        if (currentScrollTop <= 10) {
           setIsHeaderVisible(true);
           setIsHeaderFixed(false);
-        } 
-        // Esconder ao rolar para baixo (após threshold)
-        else if (currentScrollTop > lastScrollTop && currentScrollTop > hideThreshold) {
-          setIsHeaderVisible(false);
-          setIsHeaderFixed(false);
-        } 
-        // Mostrar fixo no topo ao rolar para cima (mas não está no topo)
-        else if (currentScrollTop < lastScrollTop && currentScrollTop > 0) {
+          isScrollingDownRef.current = false;
+          lastScrollTopRef.current = currentScrollTop;
+          return;
+        }
+
+        // Detectar direção do scroll com threshold mínimo para evitar flicker
+        const isScrollingDown = scrollDelta > 2;
+        const isScrollingUp = scrollDelta < -2;
+
+        if (isScrollingDown && currentScrollTop > hideThreshold) {
+          isScrollingDownRef.current = true;
+          // Adicionar pequeno delay antes de esconder para evitar flicker
+          hideTimeoutRef.current = setTimeout(() => {
+            setIsHeaderVisible(false);
+            setIsHeaderFixed(false);
+          }, 100);
+        } else if (isScrollingUp) {
+          isScrollingDownRef.current = false;
+          // Mostrar imediatamente ao rolar para cima
           setIsHeaderVisible(true);
           setIsHeaderFixed(true);
         }
@@ -76,10 +96,17 @@ export const useStickyHeader = (
     // Usar um pequeno delay para garantir que o elemento está renderizado (especialmente para PhotosTab)
     const timeoutId = setTimeout(() => {
       scrollableElement?.addEventListener('scroll', handleScroll, { passive: true });
+      // Inicializar com o valor atual do scroll
+      if (scrollableElement) {
+        lastScrollTopRef.current = scrollableElement.scrollTop;
+      }
     }, 100);
 
     return () => {
       clearTimeout(timeoutId);
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
       scrollableElement?.removeEventListener('scroll', handleScroll);
       if (rafIdRef.current) {
         cancelAnimationFrame(rafIdRef.current);
