@@ -22,94 +22,16 @@ import { PhotoLikesCounter } from '@/components/console/PhotoLikesCounter';
 import { PhotoCommentsCounter } from '@/components/console/PhotoCommentsCounter';
 import { toast } from 'sonner';
 import { useStickyHeader } from '@/hooks/useStickyHeader';
+import { getHotelFlag, hotelCodeToDomain } from '@/utils/hotelHelpers';
+import { UserSearch } from './shared/UserSearch';
+import { CountryDropdown } from './shared/CountryDropdown';
+import { useProfileNavigation } from '@/hooks/useProfileNavigation';
 
 const FriendsPhotoFeed = lazy(() => import('./FriendsPhotoFeed').then(module => ({ default: module.FriendsPhotoFeed })));
-const FindPhotoFeedColumn = lazy(() => import('@/components/console/FindPhotoFeedColumn').then(module => ({ default: module.FindPhotoFeedColumn })));
 const GlobalPhotoFeedColumn = lazy(() => import('@/components/console/GlobalPhotoFeedColumn'));
 
 
 // Componentes de ícones pixelizados no estilo Habbo
-
-// Função para mapear hotel para flag
-const getHotelFlag = (hotel?: string) => {
-  const hotelFlags: { [key: string]: string } = {
-    'com': '/flags/flagcom.png',      // USA/UK
-    'com.br': '/flags/flagbrazil.png',    // Brasil/Portugal
-    'br': '/flags/flagbrazil.png',    // Brasil/Portugal
-    'de': '/flags/flagdeus.png',      // Alemanha
-    'fr': '/flags/flagfrance.png',    // França
-    'it': '/flags/flagitaly.png',     // Itália
-    'es': '/flags/flagspain.png',     // Espanha
-    'nl': '/flags/flagnetl.png',      // Holanda
-    'tr': '/flags/flagtrky.png',      // Turquia
-    'com.tr': '/flags/flagtrky.png',  // Turquia
-    'fi': '/flags/flafinland.png',    // Finlândia
-  };
-  return hotelFlags[hotel || ''] || '/flags/flagcom.png'; // Default para com
-};
-
-// Função para buscar usuários globalmente em todos os hotéis
-const searchUsersGlobally = async (username: string): Promise<any[]> => {
-  const HOTEL_DOMAINS = [
-    'com.br', // Brazil
-    'com',    // International/US
-    'es',     // Spain
-    'fr',     // France
-    'de',     // Germany
-    'it',     // Italy
-    'nl',     // Netherlands
-    'fi',     // Finland
-    'com.tr'  // Turkey
-  ];
-
-  // Buscar em todos os hotéis simultaneamente
-  const searchPromises = HOTEL_DOMAINS.map(async (domain) => {
-    try {
-      const url = `https://www.habbo.${domain}/api/public/users?name=${encodeURIComponent(username)}`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'HabboHub/1.0',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        // A API pode retornar um objeto ou array
-        const user = Array.isArray(data) ? data[0] : data;
-        
-        // Verificar correspondência exata do nome (case-insensitive)
-        // Isso permite que nomes similares em diferentes países sejam retornados corretamente
-        if (user && user.name && user.name.toLowerCase().trim() === username.toLowerCase().trim()) {
-          // Converter domínio para código de hotel para a flag e navegação
-          let hotelCode = domain;
-          if (domain === 'com.br') hotelCode = 'br';
-          else if (domain === 'com.tr') hotelCode = 'tr';
-          else if (domain === 'com' || domain === 'us') hotelCode = 'com';
-          // Outros domínios (es, fr, de, it, nl, fi) já são o código
-          
-          return {
-            name: user.name, // Nome exato retornado pela API (preserva capitalização original)
-            motto: user.motto || '',
-            online: user.online || false,
-            figureString: user.figureString || user.figure || '',
-            uniqueId: user.uniqueId || user.id,
-            hotelDomain: domain, // Manter domínio completo para API (com.br, com.tr, etc)
-            hotelCode: hotelCode // Código do hotel para flag e identificação (br, tr, com, etc)
-          };
-        }
-      }
-    } catch (error) {
-      // Ignorar erros e continuar
-    }
-    return null;
-  });
-
-  const results = await Promise.all(searchPromises);
-  // Filtrar resultados nulos e retornar apenas usuários válidos
-  return results.filter((user): user is any => user !== null);
-};
 
 const PixelSearchIcon = ({ className }: { className?: string }) => (
   <svg width="40" height="40" viewBox="0 0 40 40" className={className} style={{ imageRendering: 'pixelated' }}>
@@ -173,9 +95,17 @@ const getTabs = (t: (key: string) => string): TabButton[] => [
 export const FunctionalConsole: React.FC = () => {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<TabType>('account');
-  const [viewingUser, setViewingUser] = useState<string | null>(null); // Estado para usuário sendo visualizado
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null); // Foto selecionada para o modal
   const [activeModal, setActiveModal] = useState<string | null>(null); // Estado global para modais
+  
+  // Hook para gerenciar navegação de perfis
+  const {
+    state: { viewingUser, viewingUserUniqueId, photosProfileUser, photosProfileHotel, photosProfileHistory },
+    navigateToProfile: navigateToProfileHook,
+    navigateToProfileFromPhotos: navigateToProfileFromPhotosHook,
+    navigateBackFromPhotos,
+    clearProfile
+  } = useProfileNavigation();
   
   // Modal states for photo interactions
   const [showLikesModal, setShowLikesModal] = useState(false);
@@ -243,13 +173,13 @@ export const FunctionalConsole: React.FC = () => {
     likes: number;
     roomName?: string;
     roomId?: string;
+    hotel?: string;
+    hotelDomain?: string;
+    caption?: string;
+    timestamp?: number;
   } | null>(null);
 
-  // Estado para perfil aberto a partir do feed de Photos (hotel)
-  const [photosProfileUser, setPhotosProfileUser] = useState<string | null>(null);
-  const [photosProfileHotel, setPhotosProfileHotel] = useState<string | null>(null);
-  // Histórico de navegação de perfis na aba Photos (para botão voltar)
-  const [photosProfileHistory, setPhotosProfileHistory] = useState<Array<{ username: string; hotel: string }>>([]);
+  // Estados de navegação agora gerenciados pelo hook useProfileNavigation
   // Trigger para refresh do feed Photos (incrementa para forçar refresh)
   const [photosRefreshTrigger, setPhotosRefreshTrigger] = useState(0);
   // Cooldown para evitar múltiplos refreshes (última vez que fez refresh)
@@ -267,16 +197,38 @@ export const FunctionalConsole: React.FC = () => {
     console.log('📸 Foto clicada:', {
       photo_id: photo.photo_id || photo.id,
       photoId,
-      imageUrl: photo.imageUrl || photo.s3_url || photo.url
+      imageUrl: photo.imageUrl || photo.s3_url || photo.url,
+      hotelDomain: photo.hotelDomain,
+      hotel: photo.hotel
     });
+    
+    // Extrair hotelDomain do photo ou usar o hotel padrão do perfil
+    let hotelDomain = photo.hotelDomain;
+    if (!hotelDomain && photo.hotel) {
+      // Converter código do hotel para domínio
+      const hotelCode = photo.hotel;
+      if (hotelCode === 'br') hotelDomain = 'com.br';
+      else if (hotelCode === 'tr') hotelDomain = 'com.tr';
+      else if (hotelCode === 'us' || hotelCode === 'com') hotelDomain = 'com';
+      else hotelDomain = hotelCode; // es, fr, de, it, nl, fi
+    }
+    // Se ainda não tiver hotelDomain, usar o hotel do perfil atual
+    if (!hotelDomain) {
+      const effectiveHotel = photosProfileHotel || habboAccount?.hotel || 'com.br';
+      hotelDomain = effectiveHotel === 'br' ? 'com.br' : effectiveHotel === 'tr' ? 'com.tr' : effectiveHotel === 'us' ? 'com' : effectiveHotel;
+    }
     
     const photoData = {
       id: photoId, // Usar o ID real da foto do Habbo
-      imageUrl: photo.imageUrl || photo.url || `https://habbo-stories-content.s3.amazonaws.com/servercamera/purchased/hhbr/p-464837-${1755308009079 + index}.png`,
+      imageUrl: photo.imageUrl || photo.url || photo.s3_url || `https://habbo-stories-content.s3.amazonaws.com/servercamera/purchased/hhbr/p-464837-${1755308009079 + index}.png`,
       date: photo.date || new Date().toLocaleDateString('pt-BR'),
-      likes: photo.likes || 0,
+      likes: photo.likes || photo.likesCount || 0,
       roomName: photo.roomName || undefined,
-      roomId: photo.roomId ? String(photo.roomId) : undefined
+      roomId: photo.roomId ? String(photo.roomId) : undefined,
+      hotel: photo.hotel || (hotelDomain === 'com.br' ? 'br' : hotelDomain === 'com.tr' ? 'tr' : hotelDomain === 'com' ? 'com' : hotelDomain),
+      hotelDomain: hotelDomain,
+      caption: photo.caption || undefined,
+      timestamp: photo.timestamp || (photo.date ? new Date(photo.date).getTime() : undefined)
     };
     
     setSelectedIndividualPhoto(photoData);
@@ -645,14 +597,29 @@ export const FunctionalConsole: React.FC = () => {
   
   // Modal state tracking
   // PhotoModal temporariamente removido
-  const { habboAccount, isLoggedIn } = useAuth();
+  const { habboAccount, isLoggedIn, loading: authLoading } = useAuth();
   const { getPhotoInteractions, toggleLike, addComment } = usePhotoInteractions();
   
   // Usar o usuário logado como padrão, ou o usuário sendo visualizado
-  // IMPORTANTE: Só usar habboAccount se estiver realmente disponível e carregado
+  // IMPORTANTE: Usar habboAccount quando disponível, mas aguardar carregamento
   const currentUser = habboAccount?.habbo_name;
-  // Só definir username se houver um valor válido - não usar fallback "Beebop"
-  const username = viewingUser || (currentUser && currentUser.trim() ? currentUser : undefined);
+  // Definir username: priorizar viewingUser, depois currentUser se válido
+  // NUNCA usar fallback "Beebop" - se não houver usuário válido, deixar undefined
+  const username = viewingUser || (currentUser && currentUser.trim() ? currentUser.trim() : undefined);
+  
+  // Debug temporário para verificar valores
+  React.useEffect(() => {
+    if (habboAccount || viewingUser) {
+      console.log('[CONSOLE DEBUG] Valores de perfil:', {
+        habboAccount: habboAccount ? { habbo_name: habboAccount.habbo_name, hotel: habboAccount.hotel } : null,
+        currentUser,
+        viewingUser,
+        username,
+        isLoggedIn,
+        authLoading
+      });
+    }
+  }, [habboAccount, currentUser, viewingUser, username, isLoggedIn, authLoading]);
   
   // Definir hotel efetivo para busca de perfil/fotos
   // Normalizar para formato de domínio (com.br, com, es, fr, etc.)
@@ -672,16 +639,31 @@ export const FunctionalConsole: React.FC = () => {
       : (habboAccount?.hotel || 'br');
 
   // Buscar dados reais usando useCompleteProfile / useUnifiedPhotoSystem
-  // Só buscar se houver um username válido (não usar fallback "Beebop")
+  // Se temos habbo_id no habboAccount, usar como uniqueId (mais confiável que username)
+  // O habbo_id está no formato "hhbr-..." ou similar, que é o uniqueId do Habbo
+  // O habbo_id já está no formato correto (hhbr-{uniqueId}) conforme visto em habbo-complete-auth
+  const habboUniqueId = habboAccount?.habbo_id || undefined;
+  
+  // Debug: verificar se temos uniqueId disponível
+  React.useEffect(() => {
+    if (habboUniqueId && !viewingUser) {
+      console.log('[CONSOLE DEBUG] Usando habbo_id como uniqueId:', habboUniqueId);
+    }
+  }, [habboUniqueId, viewingUser]);
+  
+  // Estratégia: Usar username como prioridade (mais confiável na API do Habbo)
+  // uniqueId será usado apenas como fallback se username não funcionar
   const { data: completeProfile, isLoading, error: profileError } = useCompleteProfile(
     username || '', // Passar string vazia se não houver username - a query será desabilitada
     effectiveHotelForProfile,
+    // Priorizar uniqueId do usuário sendo visualizado, depois uniqueId do usuário logado
+    viewingUserUniqueId || (!viewingUser && habboUniqueId ? habboUniqueId : undefined)
   );
   const photosHotel =
     completeProfile?.hotelCode || baseHotelForPhotos;
 
   const { photos: photosData, isLoading: photosLoading } = useUnifiedPhotoSystem(
-    username,
+    username || undefined, // Passar undefined se não houver username (hook já trata isso)
     photosHotel,
     {
       // Sempre que possível, passar o uniqueId já resolvido para a Edge Function
@@ -738,31 +720,84 @@ export const FunctionalConsole: React.FC = () => {
     }
   }, [viewingUser, completeProfile]);
 
+  // Para a aba Friends, sempre buscar amigos do usuário logado (não do viewingUser)
+  // Criar uma busca separada para os amigos do usuário logado
+  const loggedUserUsername = habboAccount?.habbo_name || '';
+  const loggedUserHotel = (() => {
+    const hotel = habboAccount?.hotel || 'com.br';
+    if (hotel === 'br') return 'com.br';
+    if (hotel === 'tr') return 'com.tr';
+    if (hotel === 'us') return 'com';
+    return hotel;
+  })();
+  const loggedUserUniqueId = habboAccount?.habbo_id || undefined;
+  
+  // Buscar perfil completo do usuário logado para obter seus amigos
+  // Esta busca só é habilitada se temos username ou uniqueId do usuário logado
+  const { data: loggedUserProfile, isLoading: isLoadingLoggedUserFriends } = useCompleteProfile(
+    loggedUserUsername || '',
+    loggedUserHotel,
+    loggedUserUniqueId
+  );
+  
+  // Usar amigos do usuário logado quando estiver na aba Friends
+  // Caso contrário, usar amigos do perfil sendo visualizado (se houver)
+  const friends = activeTab === 'friends' 
+    ? (loggedUserProfile?.data?.friends || [])
+    : (completeProfile?.data?.friends || []);
+  
   const badges = completeProfile?.data?.badges || [];
-  const friends = completeProfile?.data?.friends || [];
   const rooms = completeProfile?.data?.rooms || [];
   const groups = completeProfile?.data?.groups || [];
   const photos = photosData || [];
   
+  // Debug: verificar amigos do usuário logado quando estiver na aba Friends
+  React.useEffect(() => {
+    if (activeTab === 'friends') {
+      console.log('[FRIENDS TAB DEBUG]', {
+        activeTab,
+        loggedUserUsername,
+        loggedUserUniqueId,
+        loggedUserProfile: loggedUserProfile ? {
+          name: loggedUserProfile.name,
+          uniqueId: loggedUserProfile.uniqueId,
+          friendsCount: loggedUserProfile.data?.friends?.length || 0
+        } : null,
+        friendsCount: friends.length,
+        isLoadingLoggedUserFriends,
+        habboAccount: habboAccount ? { habbo_name: habboAccount.habbo_name, hotel: habboAccount.hotel } : null
+      });
+    }
+  }, [activeTab, loggedUserProfile, loggedUserUsername, loggedUserUniqueId, friends.length, isLoadingLoggedUserFriends, habboAccount]);
+  
+  // Debug: verificar amigos do usuário logado
+  React.useEffect(() => {
+    if (activeTab === 'friends' && loggedUserProfile) {
+      console.log('[FRIENDS TAB] Amigos do usuário logado:', {
+        username: loggedUserUsername,
+        uniqueId: loggedUserUniqueId,
+        friendsCount: loggedUserProfile?.data?.friends?.length || 0,
+        friends: loggedUserProfile?.data?.friends
+      });
+    }
+  }, [activeTab, loggedUserProfile, loggedUserUsername, loggedUserUniqueId]);
+  
   const error = profileError?.message || null;
   
   // Função para navegar para perfil de outro usuário (vai para aba Account)
-  const navigateToProfile = (targetUsername: string, hotelDomain?: string) => {
+  // Wrapper para navigateToProfile que integra com o hook e gerencia tabs
+  const handleNavigateToProfile = (targetUsername: string, hotelDomain?: string, uniqueId?: string) => {
     const cleanedUsername = (targetUsername || '').trim();
     
     // Se estiver na aba Photos, usar navigateToProfileFromPhotos para manter histórico
     if (activeTab === 'photos' && hotelDomain) {
-      navigateToProfileFromPhotos(cleanedUsername, hotelDomain);
+      navigateToProfileFromPhotosHook(cleanedUsername, hotelDomain);
       setActiveTab('account'); // Mas vai para account para ver perfil completo
       return;
     }
     
-    // Definir usuário e hotel para perfil
-    setViewingUser(cleanedUsername);
-    if (hotelDomain) {
-      setPhotosProfileHotel(hotelDomain);
-    }
-    
+    // Usar hook para navegação
+    navigateToProfileHook(cleanedUsername, hotelDomain, uniqueId);
     setActiveTab('account'); // Vai para a aba Account para ver perfil completo
     
     // Fecha qualquer modal que esteja aberto
@@ -771,14 +806,8 @@ export const FunctionalConsole: React.FC = () => {
     }
   };
 
-  // Função para navegar para perfil mantendo na aba Photos (com histórico)
-  const navigateToProfileFromPhotos = (targetUsername: string, targetHotelOrUniqueId?: string) => {
-    // Se já estamos visualizando um perfil, adicionar ao histórico antes de navegar
-    if (photosProfileUser && viewingUser === photosProfileUser) {
-      const currentHotel = photosProfileHotel || 'com.br';
-      setPhotosProfileHistory(prev => [...prev, { username: photosProfileUser, hotel: currentHotel }]);
-    }
-
+  // Wrapper para navigateToProfileFromPhotos que integra com o hook
+  const handleNavigateToProfileFromPhotos = (targetUsername: string, targetHotelOrUniqueId?: string) => {
     const cleanedUsername = (targetUsername || '').trim();
     
     // Extrair hotel do uniqueID se fornecido (formato: hhXX-... onde XX é o código do hotel)
@@ -805,10 +834,8 @@ export const FunctionalConsole: React.FC = () => {
       }
     }
     
-    setViewingUser(cleanedUsername);
-    setPhotosProfileUser(cleanedUsername);
-    setPhotosProfileHotel(hotelDomain);
-    // Manter na aba Photos
+    // Usar hook para navegação
+    navigateToProfileFromPhotosHook(cleanedUsername, hotelDomain);
     
     // Fecha qualquer modal que esteja aberto
     if (activeModal) {
@@ -817,21 +844,9 @@ export const FunctionalConsole: React.FC = () => {
   };
 
   // Função para voltar ao perfil anterior na navegação de Photos
+  // Função de navegação para trás agora usa o hook
   const navigateBackInPhotosHistory = () => {
-    if (photosProfileHistory.length > 0) {
-      const previousProfile = photosProfileHistory[photosProfileHistory.length - 1];
-      const newHistory = photosProfileHistory.slice(0, -1);
-      
-      setPhotosProfileHistory(newHistory);
-      setViewingUser(previousProfile.username);
-      setPhotosProfileUser(previousProfile.username);
-      setPhotosProfileHotel(previousProfile.hotel);
-    } else {
-      // Se não há histórico, voltar ao feed
-      setPhotosProfileUser(null);
-      setViewingUser(null);
-      setPhotosProfileHotel(null);
-    }
+    navigateBackFromPhotos();
   };
 
   // Abrir perfil a partir do feed de Photos (hotel), mantendo a aba Photos
@@ -887,15 +902,13 @@ export const FunctionalConsole: React.FC = () => {
       }
     }
 
-    // Definir o hotel para o perfil (ou null para busca global)
+    // Usar hook para navegação
     if (hotelDomain) {
-      setPhotosProfileHotel(hotelDomain);
+      navigateToProfileFromPhotosHook(cleanedUsername, hotelDomain);
     } else {
-      setPhotosProfileHotel(null);
+      // Se não houver hotelDomain, limpar perfil de photos
+      clearProfile();
     }
-
-    setViewingUser(cleanedUsername);
-    setPhotosProfileUser(cleanedUsername);
     setActiveTab('photos');
 
     if (activeModal) {
@@ -905,9 +918,7 @@ export const FunctionalConsole: React.FC = () => {
 
   // Função para voltar ao próprio perfil
   const backToMyProfile = () => {
-    setViewingUser(null);
-    setPhotosProfileUser(null);
-    setPhotosProfileHotel(null); // CRÍTICO: Limpar hotel para usar o hotel do usuário logado
+    clearProfile(); // Usar hook para limpar
     setActiveTab('account');
   };
   
@@ -930,7 +941,7 @@ export const FunctionalConsole: React.FC = () => {
           friends={friends} 
           photos={photos} 
           isLoading={isLoadingData}
-          onNavigateToProfile={navigateToProfile}
+          onNavigateToProfile={handleNavigateToProfile}
           isViewingOtherUser={!!viewingUser}
           handlePhotoClick={handlePhotoClick}
           viewingUsername={viewingUser}
@@ -955,6 +966,9 @@ export const FunctionalConsole: React.FC = () => {
           viewingUser={viewingUser}
         />;
       case 'friends':
+        // Usar FeedTab para mostrar feed de fotos dos amigos com campo de pesquisa no topo
+        // O FeedTab já tem a configuração correta com campo de pesquisa (similar à aba Photos)
+        // IMPORTANTE: Sempre usar o usuário logado (currentUser), não o viewingUser
         return <FeedTab 
           user={userData}
           badges={badges} 
@@ -963,16 +977,17 @@ export const FunctionalConsole: React.FC = () => {
           friends={friends} 
           photos={photos}
           isLoading={isLoadingData}
-          onNavigateToProfile={navigateToProfile}
-          isViewingOtherUser={!!viewingUser}
-          viewingUsername={viewingUser}
-          currentUser={currentUser}
+          onNavigateToProfile={handleNavigateToProfile}
+          isViewingOtherUser={false} // Sempre false na aba Friends (sempre mostra amigos do usuário logado)
+          viewingUsername={undefined} // Sempre undefined na aba Friends
+          currentUser={currentUser} // Sempre usar o usuário logado
           getPhotoInteractions={getPhotoInteractions}
           setSelectedPhoto={setSelectedPhoto}
           toggleLike={toggleLike}
           addComment={addComment}
           habboAccount={habboAccount}
-          username={username}
+          username={currentUser || ''} // Sempre usar o usuário logado
+          setActiveTab={setActiveTab}
           activeModal={activeModal}
           setActiveModal={setActiveModal}
           handleShowLikesModal={handleShowLikesModal}
@@ -986,14 +1001,13 @@ export const FunctionalConsole: React.FC = () => {
           hiddenPhotos={hiddenPhotos}
           togglePhotoVisibility={togglePhotoVisibility}
           handleShowCommentsModal={handleShowCommentsModal}
-          setActiveTab={setActiveTab}
-          viewingUser={viewingUser}
+          viewingUser={undefined} // Sempre undefined na aba Friends
           friendsRefreshTrigger={friendsRefreshTrigger}
         />;
       case 'chat':
         return <ChatInterface 
           friends={friends}
-          onNavigateToProfile={navigateToProfile}
+          onNavigateToProfile={handleNavigateToProfile}
         />;
       case 'photos':
         if (photosProfileUser && viewingUser === photosProfileUser) {
@@ -1006,7 +1020,7 @@ export const FunctionalConsole: React.FC = () => {
             friends={friends} 
             photos={photos} 
             isLoading={isLoadingData}
-            onNavigateToProfile={navigateToProfileFromPhotos}
+            onNavigateToProfile={handleNavigateToProfileFromPhotos}
             isViewingOtherUser={!!viewingUser}
             viewingUsername={viewingUser}
             currentUser={currentUser}
@@ -1032,8 +1046,9 @@ export const FunctionalConsole: React.FC = () => {
             setActiveTab={setActiveTab}
             viewingUser={viewingUser}
             onBackToPhotosFeed={() => {
-              setPhotosProfileUser(null);
+              navigateBackFromPhotos();
             }}
+            onNavigateBack={navigateBackFromPhotos}
           />;
         }
 
@@ -1172,12 +1187,11 @@ export const FunctionalConsole: React.FC = () => {
                   } else if (tab.id === 'account' && !viewingUser) {
                     // CRÍTICO: Se clicou em "My Info" e não está visualizando outro usuário,
                     // garantir que estamos usando o hotel do usuário logado
-                    setPhotosProfileHotel(null);
-                    setPhotosProfileUser(null);
+                    clearProfile(); // Usar hook para limpar
                     setActiveTab(tab.id);
                   } else if (tab.id === 'friends' && viewingUser) {
                     // Se clicou em "Friends" e está visualizando outro usuário, volta ao feed normal
-                    setViewingUser(null);
+                    clearProfile(); // Usar hook para limpar
                     setActiveTab('friends');
                     // Scroll ao topo - será feito quando a aba mudar e o componente renderizar
                     requestAnimationFrame(() => {
@@ -1311,7 +1325,7 @@ export const FunctionalConsole: React.FC = () => {
         onClose={() => setActiveModal(null)}
         badges={badges || []}
         userName={userData?.name || 'Usuário'}
-        onNavigateToProfile={activeTab === 'photos' && photosProfileUser ? navigateToProfileFromPhotos : navigateToProfile}
+        onNavigateToProfile={activeTab === 'photos' && photosProfileUser ? handleNavigateToProfileFromPhotos : handleNavigateToProfile}
       />
       
       <FriendsModal 
@@ -1319,7 +1333,7 @@ export const FunctionalConsole: React.FC = () => {
         onClose={() => setActiveModal(null)}
         friends={friends || []}
         userName={userData?.name || 'Usuário'}
-        onNavigateToProfile={activeTab === 'photos' && photosProfileUser ? navigateToProfileFromPhotos : navigateToProfile}
+        onNavigateToProfile={activeTab === 'photos' && photosProfileUser ? handleNavigateToProfileFromPhotos : handleNavigateToProfile}
       />
       
       <GroupsModal 
@@ -1327,7 +1341,7 @@ export const FunctionalConsole: React.FC = () => {
         onClose={() => setActiveModal(null)}
         groups={groups || []}
         userName={userData?.name || 'Usuário'}
-        onNavigateToProfile={activeTab === 'photos' && photosProfileUser ? navigateToProfileFromPhotos : navigateToProfile}
+        onNavigateToProfile={activeTab === 'photos' && photosProfileUser ? handleNavigateToProfileFromPhotos : handleNavigateToProfile}
       />
       
       <RoomsModal 
@@ -1335,7 +1349,7 @@ export const FunctionalConsole: React.FC = () => {
         onClose={() => setActiveModal(null)}
         rooms={rooms || []}
         userName={userData?.name || 'Usuário'}
-        onNavigateToProfile={activeTab === 'photos' && photosProfileUser ? navigateToProfileFromPhotos : navigateToProfile}
+        onNavigateToProfile={activeTab === 'photos' && photosProfileUser ? handleNavigateToProfileFromPhotos : handleNavigateToProfile}
       />
     </div>
   );
@@ -1366,83 +1380,16 @@ const FeedTab: React.FC<any> = ({
   friendsRefreshTrigger = 0
 }) => {
   const { t } = useI18n();
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
-  // Ref para o container do dropdown de busca
-  const searchDropdownRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   // Hook para controlar sticky header
   const { isHeaderVisible, isHeaderFixed } = useStickyHeader(scrollContainerRef);
   
-  // Fechar dropdown de países quando clicar fora
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.country-dropdown')) {
-        setShowCountryDropdown(false);
-      }
-    };
-    
-    if (showCountryDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showCountryDropdown]);
-  
-  // Fechar dropdown de resultados de busca quando clicar fora
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchDropdownRef.current && !searchDropdownRef.current.contains(event.target as Node)) {
-        setSearchResults([]);
-        setSearchTerm(''); // Limpar também o termo de busca para ocultar a mensagem "nenhum resultado"
-      }
-    };
-    
-    // Mostrar dropdown se houver resultados OU se houver termo de busca (incluindo mensagem "nenhum resultado")
-    const shouldShowDropdown = searchResults.length > 0 || (searchTerm.trim().length > 0 && !isSearching);
-    if (shouldShowDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [searchResults.length, searchTerm, isSearching]);
-  
-  
-  // Mapeamento dos países disponíveis
-  const countries = [
-    { code: 'com', name: 'USA/UK', flag: '/flags/flagcom.png' },
-    { code: 'br', name: 'Brasil/Portugal', flag: '/flags/flagbrazil.png' },
-    { code: 'de', name: 'Alemanha', flag: '/flags/flagdeus.png' },
-    { code: 'fr', name: 'França', flag: '/flags/flagfrance.png' },
-    { code: 'it', name: 'Itália', flag: '/flags/flagitaly.png' },
-    { code: 'es', name: 'Espanha', flag: '/flags/flagspain.png' },
-    { code: 'nl', name: 'Holanda', flag: '/flags/flagnetl.png' },
-    { code: 'tr', name: 'Turquia', flag: '/flags/flagtrky.png' },
-    { code: 'fi', name: 'Finlândia', flag: '/flags/flafinland.png' }
-  ];
-  
-  // Função para buscar usuários globalmente
-  const handleSearch = async () => {
-    if (!searchTerm.trim()) return;
-    
-    setIsSearching(true);
-    try {
-      const results = await searchUsersGlobally(searchTerm.trim());
-      setSearchResults(results);
-    } catch (error) {
-      console.error('Error searching user:', error);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
+  // Handler para quando usuário é selecionado na busca
+  const handleUserSelect = (username: string, hotelDomain: string, uniqueId?: string) => {
+    if (onNavigateToProfile) {
+      onNavigateToProfile(username, hotelDomain, uniqueId);
     }
   };
   
@@ -1843,195 +1790,20 @@ const FeedTab: React.FC<any> = ({
         style={getSearchHeaderStyles(isHeaderFixed)}
       >
         <div className="flex items-center gap-2 rounded" style={{ backgroundColor: '#3a3a3a' }}>
-          {/* Campo de busca com dropdown integrado */}
-          <div className="flex-1 relative" style={{ zIndex: 100 }} ref={searchDropdownRef}>
-                {/* Dropdown de resultados - posicionado relativamente ao container completo */}
-                {((searchResults.length > 0) || (searchTerm.trim().length > 0 && !isSearching && searchResults.length === 0)) && (
-                  <div className="absolute top-full left-0 right-0 mt-1 border border-white/20 rounded shadow-lg overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent" style={{ maxHeight: '224px', backgroundColor: '#3a3a3a', zIndex: 1000 }}>
-                    {searchResults.length > 0 ? (
-                      searchResults.map((user, index) => {
-                        const hotelDomain = user.hotelDomain || 'com.br';
-                        const hotelCode = user.hotelCode || (hotelDomain === 'com.br' ? 'br' : hotelDomain === 'com.tr' ? 'tr' : hotelDomain);
-                        const figureString = user.figureString || '';
-                        const avatarUrl = figureString 
-                          ? `https://www.habbo.${hotelDomain}/habbo-imaging/avatarimage?figure=${encodeURIComponent(figureString)}&size=m&head_direction=3&headonly=1`
-                          : `https://www.habbo.${hotelDomain}/habbo-imaging/avatarimage?user=${encodeURIComponent(user.name)}&size=m&head_direction=3&headonly=1`;
-                        
-                        return (
-                          <div
-                            key={`${user.uniqueId}-${index}`}
-                            className="flex items-center gap-3 p-2 bg-transparent hover:bg-white/5 border-b border-white/10 last:border-b-0 transition-colors cursor-pointer"
-                            onClick={() => {
-                              const hotelDomain = user.hotelDomain || 'com.br';
-                              onNavigateToProfile(user.name, hotelDomain);
-                              setSearchResults([]);
-                              setSearchTerm('');
-                            }}
-                          >
-                            <img
-                              src={getHotelFlag(hotelCode)}
-                              alt={hotelCode}
-                              className="w-6 h-6 object-contain flex-shrink-0"
-                              style={{ imageRendering: 'pixelated' }}
-                            />
-                            <div className="w-[52px] h-[52px] flex-shrink-0 overflow-hidden">
-                              <img
-                                src={avatarUrl}
-                                alt={user.name}
-                                className="w-full h-full object-cover"
-                                style={{ imageRendering: 'pixelated' }}
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = `https://www.habbo.${hotelDomain}/habbo-imaging/avatarimage?user=${encodeURIComponent(user.name)}&size=m&head_direction=3&headonly=1`;
-                                }}
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-white text-sm truncate">{user.name}</div>
-                              <div className="text-xs text-white/60 truncate">{user.motto || ''}</div>
-                            </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <div className={`w-2 h-2 rounded-full ${user.online ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="flex items-center justify-center gap-3 p-4 bg-transparent">
-                        <div className="text-white/60 text-sm">Nenhum resultado encontrado</div>
-                      </div>
-                    )}
-                  </div>
-                )}
-            
-            <div className="flex items-center bg-white/10 border border-white/30 rounded focus-within:border-white/70 transition-colors h-8">
-              {/* Dropdown de países */}
-              <div className="relative country-dropdown z-10">
-                <button
-                  onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                  className={`flex items-center justify-center transition-colors border-r border-white/30 relative z-20 h-full ${
-                    selectedCountry 
-                      ? 'px-1 min-w-[50px]' 
-                      : 'px-2 min-w-[35px] text-white hover:bg-white/10'
-                  }`}
-                  title={selectedCountry ? countries.find(c => c.code === selectedCountry)?.name : 'Selecionar país'}
-                >
-                  {selectedCountry ? (
-                    <img
-                      src={countries.find(c => c.code === selectedCountry)?.flag}
-                      alt=""
-                      className="h-5 w-auto object-contain"
-                      style={{ imageRendering: 'pixelated' }}
-                    />
-                  ) : (
-                    <img
-                      src="/assets/console/hotelfilter.png"
-                      alt="Filtro"
-                      className="h-6 w-auto object-contain"
-                      style={{ imageRendering: 'pixelated' }}
-                    />
-                  )}
-                </button>
-                
-                {/* Dropdown menu */}
-                {showCountryDropdown && (
-                  <div 
-                    className="absolute top-full left-0 mt-1 border border-black rounded-lg shadow-lg z-50 min-w-[200px] overflow-hidden"
-                    style={{
-                      backgroundImage: 'repeating-linear-gradient(0deg, #333333, #333333 1px, #222222 1px, #222222 2px)',
-                      backgroundSize: '100% 2px'
-                    }}
-                  >
-                    {/* Borda superior amarela com textura pontilhada */}
-                    <div className="bg-yellow-400 border-b border-black relative overflow-hidden" style={{
-                      backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px)',
-                      backgroundSize: '8px 8px'
-                    }}>
-                      <div className="pixel-pattern absolute inset-0 opacity-20"></div>
-                      <div className="p-2 relative z-10">
-                        <div className="text-white font-bold text-sm" style={{
-                          textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
-                        }}>
-                          Selecionar País
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="py-1">
-                      <button
-                        onClick={() => {
-                          setSelectedCountry(null);
-                          setShowCountryDropdown(false);
-                        }}
-                        className="w-full px-3 py-2 text-left text-white hover:bg-white/10 flex items-center transition-colors"
-                      >
-                        <img
-                          src="/assets/console/hotelfilter.png"
-                          alt="Filtro"
-                          className="h-6 w-auto object-contain mr-2"
-                          style={{ imageRendering: 'pixelated' }}
-                        />
-                        <span className="text-sm">Todos os países</span>
-                      </button>
-                      {countries.map((country) => (
-                        <button
-                          key={country.code}
-                          onClick={() => {
-                            setSelectedCountry(country.code);
-                            setShowCountryDropdown(false);
-                          }}
-                          className="w-full px-3 py-2 text-left text-white hover:bg-white/10 flex items-center transition-colors"
-                        >
-                          <div className="w-10 h-8 flex items-center justify-center mr-2">
-                          <img
-                            src={country.flag}
-                            alt=""
-                              className="h-8 w-auto object-contain"
-                            style={{ imageRendering: 'pixelated' }}
-                          />
-                          </div>
-                          <span className="text-sm">{country.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              {/* Input de texto */}
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  placeholder={t('pages.console.searchUser')}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  className="w-full px-3 py-1 bg-transparent text-white placeholder-white/70 focus:outline-none text-sm h-full"
-                />
-              </div>
-              
-              {/* Botão de busca integrado */}
-              <button
-                onClick={handleSearch}
-                disabled={isSearching || !searchTerm.trim()}
-                className="px-2 py-1 text-white/80 hover:text-white disabled:text-white/40 transition-colors flex items-center justify-center h-full"
-                title="Buscar"
-              >
-                {isSearching ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : (
-                              <img 
-                                src="/assets/console/search.png" 
-                    alt="Buscar" 
-                    className="w-auto h-auto"
-                    style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
-                  />
-                )}
-              </button>
-            </div>
-          </div>
+          {/* Dropdown de países */}
+          <CountryDropdown
+            selectedCountry={selectedCountry}
+            onCountrySelect={setSelectedCountry}
+            className="h-8"
+          />
+          
+          {/* Componente de busca compartilhado */}
+          <UserSearch
+            onUserSelect={handleUserSelect}
+            placeholder={t('pages.console.searchUser')}
+            className="flex-1"
+          />
         </div>
-        
       </div>
       
       {/* Feed de Fotos dos Amigos */}
@@ -2045,9 +1817,9 @@ const FeedTab: React.FC<any> = ({
           </div>
         }>
           <FriendsPhotoFeed
-            currentUserName={currentUser || ''}
+            currentUserName={habboAccount?.habbo_name || currentUser || ''}
             hotel={habboAccount?.hotel || 'br'}
-            onNavigateToProfile={onNavigateToProfile}
+            onNavigateToProfile={onNavigateToProfile || handleNavigateToProfile}
             refreshTrigger={friendsRefreshTrigger}
             isHeaderVisible={isHeaderVisible}
           />
@@ -2061,11 +1833,7 @@ const FeedTab: React.FC<any> = ({
 // Componente da aba Photos (Feed Global)
 const PhotosTab: React.FC<any> = ({ isLoading, onUserClickFromFeed, refreshTrigger = 0 }) => {
   const { t } = useI18n();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState(null);
-  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [localRefreshTrigger, setLocalRefreshTrigger] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   // Ref para o container scrollável
@@ -2074,35 +1842,10 @@ const PhotosTab: React.FC<any> = ({ isLoading, onUserClickFromFeed, refreshTrigg
   // Hook para controlar sticky header (PhotosTab tem scroll em elemento filho)
   const { isHeaderVisible, isHeaderFixed } = useStickyHeader(scrollContainerRef, 50, '[class*="overflow-y-auto"]');
 
-  const countries = [
-    { code: 'com', name: 'USA/UK', flag: '/flags/flagcom.png' },
-    { code: 'br', name: 'Brasil/Portugal', flag: '/flags/flagbrazil.png' },
-    { code: 'de', name: 'Alemanha', flag: '/flags/flagdeus.png' },
-    { code: 'fr', name: 'França', flag: '/flags/flagfrance.png' },
-    { code: 'it', name: 'Itália', flag: '/flags/flagitaly.png' },
-    { code: 'es', name: 'Espanha', flag: '/flags/flagspain.png' },
-    { code: 'nl', name: 'Holanda', flag: '/flags/flagnetl.png' },
-    { code: 'tr', name: 'Turquia', flag: '/flags/flagtrky.png' },
-    { code: 'fi', name: 'Finlândia', flag: '/flags/flafinland.png' },
-  ];
-
-  const handleSearch = async () => {
-    if (!searchTerm.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    
-    setIsSearching(true);
-    try {
-      const results = await searchUsersGlobally(searchTerm.trim());
-      setSearchResults(results);
-    } catch (error) {
-      console.error('Error searching users globally:', error);
-      toast.error(t('messages.errorSearch'));
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
+  // Handler para quando usuário é selecionado na busca
+  const handleUserSelect = (username: string, hotelDomain: string, uniqueId?: string) => {
+    const hotelCode = hotelDomain === 'com.br' ? 'br' : hotelDomain === 'com.tr' ? 'tr' : hotelDomain === 'com' ? 'com' : hotelDomain;
+    onUserClickFromFeed(username, { hotelDomain, hotelCode });
   };
 
   const handleRefresh = async () => {
@@ -2117,29 +1860,6 @@ const PhotosTab: React.FC<any> = ({ isLoading, onUserClickFromFeed, refreshTrigg
       }, 500);
     }
   };
-
-  // Ref para o container do dropdown de busca
-  const searchDropdownRef = useRef<HTMLDivElement>(null);
-  
-  // Fechar dropdown de resultados de busca quando clicar fora
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchDropdownRef.current && !searchDropdownRef.current.contains(event.target as Node)) {
-        setSearchResults([]);
-        setSearchTerm(''); // Limpar também o termo de busca para ocultar a mensagem "nenhum resultado"
-      }
-    };
-    
-    // Mostrar dropdown se houver resultados OU se houver termo de busca (incluindo mensagem "nenhum resultado")
-    const shouldShowDropdown = searchResults.length > 0 || (searchTerm.trim().length > 0 && !isSearching);
-    if (shouldShowDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [searchResults.length, searchTerm, isSearching]);
   
 
   return (
@@ -2160,195 +1880,22 @@ const PhotosTab: React.FC<any> = ({ isLoading, onUserClickFromFeed, refreshTrigg
           )}
           style={getSearchHeaderStyles(isHeaderFixed)}
         >
-            <div className="flex items-center gap-2">
-              {/* Campo de busca com dropdown integrado */}
-              <div className="flex-1 relative" style={{ zIndex: 100 }} ref={searchDropdownRef}>
-                {/* Dropdown de resultados - posicionado relativamente ao container completo */}
-                {((searchResults.length > 0) || (searchTerm.trim().length > 0 && !isSearching && searchResults.length === 0)) && (
-                  <div className="absolute top-full left-0 right-0 mt-1 border border-white/20 rounded shadow-lg overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent" style={{ maxHeight: '224px', backgroundColor: '#3a3a3a', zIndex: 1000 }}>
-                    {searchResults.length > 0 ? (
-                      searchResults.map((user, index) => {
-                        const hotelDomain = user.hotelDomain || 'com.br';
-                        const hotelCode = user.hotelCode || (hotelDomain === 'com.br' ? 'br' : hotelDomain === 'com.tr' ? 'tr' : hotelDomain);
-                        const figureString = user.figureString || '';
-                        const avatarUrl = figureString 
-                          ? `https://www.habbo.${hotelDomain}/habbo-imaging/avatarimage?figure=${encodeURIComponent(figureString)}&size=m&head_direction=3&headonly=1`
-                          : `https://www.habbo.${hotelDomain}/habbo-imaging/avatarimage?user=${encodeURIComponent(user.name)}&size=m&head_direction=3&headonly=1`;
-                        
-                        return (
-                          <div
-                            key={`${user.uniqueId}-${index}`}
-                            className="flex items-center gap-3 p-2 bg-transparent hover:bg-white/5 border-b border-white/10 last:border-b-0 transition-colors cursor-pointer"
-                            onClick={() => {
-                              onUserClickFromFeed(user.name, { hotelDomain, hotelCode });
-                              setSearchResults([]);
-                              setSearchTerm('');
-                            }}
-                          >
-                            <img
-                              src={getHotelFlag(hotelCode)}
-                              alt={hotelCode}
-                              className="w-6 h-6 object-contain flex-shrink-0"
-                              style={{ imageRendering: 'pixelated' }}
-                            />
-                            <div className="w-[52px] h-[52px] flex-shrink-0 overflow-hidden">
-                              <img
-                                src={avatarUrl}
-                                alt={user.name}
-                                className="w-full h-full object-cover"
-                                style={{ imageRendering: 'pixelated' }}
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = `https://www.habbo.${hotelDomain}/habbo-imaging/avatarimage?user=${encodeURIComponent(user.name)}&size=m&head_direction=3&headonly=1`;
-                                }}
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-white text-sm truncate">{user.name}</div>
-                              <div className="text-xs text-white/60 truncate">{user.motto || ''}</div>
-                            </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <div className={`w-2 h-2 rounded-full ${user.online ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="flex items-center justify-center gap-3 p-4 bg-transparent">
-                        <div className="text-white/60 text-sm">Nenhum resultado encontrado</div>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                <div className="flex items-center bg-white/10 border border-white/30 rounded focus-within:border-white/70 transition-colors h-8">
-                  {/* Dropdown de países */}
-                  <div className="relative country-dropdown z-10">
-                    <button
-                      onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                      className={`flex items-center justify-center transition-colors border-r border-white/30 relative z-20 h-full ${
-                        selectedCountry 
-                          ? 'px-1 min-w-[50px]' 
-                          : 'px-2 min-w-[35px] text-white hover:bg-white/10'
-                      }`}
-                      title={selectedCountry ? countries.find(c => c.code === selectedCountry)?.name : 'Selecionar país'}
-                    >
-                      {selectedCountry ? (
-                        <img
-                          src={countries.find(c => c.code === selectedCountry)?.flag}
-                          alt=""
-                          className="h-5 w-auto object-contain"
-                          style={{ imageRendering: 'pixelated' }}
-                        />
-                      ) : (
-                        <img
-                          src="/assets/console/hotelfilter.png"
-                          alt="Filtro"
-                          className="h-6 w-auto object-contain"
-                          style={{ imageRendering: 'pixelated' }}
-                        />
-                      )}
-                    </button>
-                    
-                    {/* Dropdown menu */}
-                    {showCountryDropdown && (
-                      <div 
-                        className="absolute top-full left-0 mt-1 border border-black rounded-lg shadow-lg z-50 min-w-[200px] overflow-hidden"
-                        style={{
-                          backgroundImage: 'repeating-linear-gradient(0deg, #333333, #333333 1px, #222222 1px, #222222 2px)',
-                          backgroundSize: '100% 2px'
-                        }}
-                      >
-                        {/* Borda superior amarela com textura pontilhada */}
-                        <div className="bg-yellow-400 border-b border-black relative overflow-hidden" style={{
-                          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px)',
-                          backgroundSize: '8px 8px'
-                        }}>
-                          <div className="pixel-pattern absolute inset-0 opacity-20"></div>
-                          <div className="p-2 relative z-10">
-                            <div className="text-white font-bold text-sm" style={{
-                              textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
-                            }}>
-                              Selecionar País
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="py-1">
-                          <button
-                            onClick={() => {
-                              setSelectedCountry(null);
-                              setShowCountryDropdown(false);
-                            }}
-                            className="w-full px-3 py-2 text-left text-white hover:bg-white/10 flex items-center transition-colors"
-                          >
-                            <img
-                              src="/assets/console/hotelfilter.png"
-                              alt="Filtro"
-                              className="h-6 w-auto object-contain mr-2"
-                              style={{ imageRendering: 'pixelated' }}
-                            />
-                            <span className="text-sm">Todos os países</span>
-                          </button>
-                          {countries.map((country) => (
-                            <button
-                              key={country.code}
-                              onClick={() => {
-                                setSelectedCountry(country.code);
-                                setShowCountryDropdown(false);
-                              }}
-                              className="w-full px-3 py-2 text-left text-white hover:bg-white/10 flex items-center transition-colors"
-                            >
-                              <div className="w-10 h-8 flex items-center justify-center mr-2">
-                                <img
-                                  src={country.flag}
-                                  alt=""
-                                  className="h-8 w-auto object-contain"
-                                  style={{ imageRendering: 'pixelated' }}
-                                />
-                              </div>
-                              <span className="text-sm">{country.name}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Input de texto */}
-                  <div className="flex-1 relative">
-                    <input
-                      type="text"
-                      placeholder={t('pages.console.searchUser')}
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                      className="w-full px-3 py-1 bg-transparent text-white placeholder-white/70 focus:outline-none text-sm h-full"
-                    />
-                  </div>
-                  
-                  {/* Botão de busca integrado */}
-                  <button
-                    onClick={handleSearch}
-                    disabled={isSearching || !searchTerm.trim()}
-                    className="px-2 py-1 text-white/80 hover:text-white disabled:text-white/40 transition-colors flex items-center justify-center h-full"
-                    title="Buscar"
-                  >
-                    {isSearching ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                  <img 
-                    src="/assets/console/search.png" 
-                        alt="Buscar" 
-                        className="w-auto h-auto"
-                        style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
-                      />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
+            {/* Dropdown de países */}
+            <CountryDropdown
+              selectedCountry={selectedCountry}
+              onCountrySelect={setSelectedCountry}
+              className="h-8"
+            />
+            
+            {/* Componente de busca compartilhado */}
+            <UserSearch
+              onUserSelect={handleUserSelect}
+              placeholder={t('pages.console.searchUser')}
+              className="flex-1"
+            />
           </div>
+        </div>
 
         {/* Título do feed - Fixo */}
         <div 
@@ -2402,6 +1949,16 @@ const PhotosTab: React.FC<any> = ({ isLoading, onUserClickFromFeed, refreshTrigg
 // Componente da aba Friends
 const FriendsTab: React.FC<any> = ({ friends, isLoading, onNavigateToProfile }) => {
   const { t } = useI18n();
+  
+  // Debug: verificar dados de friends
+  React.useEffect(() => {
+    console.log('[FriendsTab] Dados recebidos:', {
+      friendsCount: friends?.length || 0,
+      friends: friends,
+      isLoading
+    });
+  }, [friends, isLoading]);
+  
   if (isLoading) {
     return (
       <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
@@ -2448,8 +2005,8 @@ const FriendsTab: React.FC<any> = ({ friends, isLoading, onNavigateToProfile }) 
                 )}></div>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-bold text-white truncate">{friend.name}</div>
-                <div className="text-white/60 text-sm truncate">"{friend.motto}"</div>
+                <div className="font-bold text-white truncate">{friend.name || 'Nome não disponível'}</div>
+                <div className="text-white/60 text-sm truncate">"{friend.motto || 'Sem motto'}"</div>
                 <div className="text-white/40 text-xs">
                   {friend.online ? '🟢 Online' : '🔴 Offline'}
                 </div>
