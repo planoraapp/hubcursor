@@ -20,12 +20,11 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br', 
   // Normalizar hotel: 'ptbr' -> 'br' (o backend espera 'br')
   const normalizedHotel = hotel === 'ptbr' ? 'br' : hotel;
   
-  // Validar username: não buscar se estiver vazio ou for "Beebop"
+  // Validar username: não buscar se estiver vazio
   // IMPORTANTE: Garantir que sempre retorne um boolean
   const isValidUsername = Boolean(
     currentUserName && 
     currentUserName.trim() && 
-    currentUserName.toLowerCase() !== 'beebop' &&
     currentUserName.toLowerCase() !== ''
   );
   
@@ -144,8 +143,8 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br', 
           });
           
           // Debug: verificar se userUniqueId está presente
-          if (photo.userName === 'Beebop' || photo.userName?.toLowerCase() === 'beebop') {
-            console.log('[useFriendsPhotos] Foto do Beebop:', {
+          if (photo.userName && photo.userUniqueId) {
+            console.log('[useFriendsPhotos] Foto com uniqueId:', {
               userName: photo.userName,
               userUniqueId: photo.userUniqueId,
               hasUserUniqueId: 'userUniqueId' in photo,

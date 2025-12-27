@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { RoomDetailsModal } from './modals/RoomDetailsModal';
 import { getPhotoId, getPhotoUserName } from '@/utils/photoNormalizer';
 import { getAvatarHeadUrl, getAvatarFallbackUrl } from '@/utils/avatarHelpers';
+import { getHotelFlag, hotelDomainToCode, HOTEL_COUNTRIES } from '@/utils/hotelHelpers';
 
 export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   photo,
@@ -259,6 +260,39 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
     return 'com.br';
   };
 
+  /**
+   * Obtém o código do hotel para exibir a flag
+   * Retorna o código do hotel (br, com, es, fr, etc.) baseado na foto
+   */
+  const getPhotoHotelCode = (): string => {
+    // 1. Tentar extrair da URL da foto (fonte de verdade)
+    const photoUrl = photo.s3_url || photo.imageUrl || photo.preview_url;
+    const hotelCodeFromUrl = extractHotelFromPhotoUrl(photoUrl);
+    if (hotelCodeFromUrl) {
+      return hotelCodeFromUrl;
+    }
+    
+    // 2. Tentar usar hotelDomain anotado na foto
+    const hotelDomainFromPhoto = (photo as any).hotelDomain as string | undefined;
+    if (hotelDomainFromPhoto) {
+      // Se já contém ponto, converter domínio para código
+      if (hotelDomainFromPhoto.includes('.')) {
+        return hotelDomainToCode(hotelDomainFromPhoto);
+      }
+      // Caso contrário, já é um código
+      return hotelDomainFromPhoto;
+    }
+    
+    // 3. Tentar usar código do hotel anotado na foto
+    const hotelCodeFromPhoto = (photo as any).hotel as string | undefined;
+    if (hotelCodeFromPhoto) {
+      return hotelCodeFromPhoto;
+    }
+    
+    // 4. Fallback padrão
+    return 'br';
+  };
+
   // Buscar nome do quarto quando houver roomName
   useEffect(() => {
     if (!photo.roomName) {
@@ -500,6 +534,10 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   const recentLikers = getRecentLikers();
   const hasMoreLikes = likesCount > recentLikers.length;
 
+  // Obter código do hotel e flag para exibição
+  const photoHotelCode = React.useMemo(() => getPhotoHotelCode(), [photo.s3_url, photo.imageUrl, photo.preview_url, photo.hotelDomain, photo.hotel]);
+  const countryData = React.useMemo(() => HOTEL_COUNTRIES.find(c => c.code === photoHotelCode) || HOTEL_COUNTRIES.find(c => c.code === 'com'), [photoHotelCode]);
+
   return (
     <div className={cn("space-y-3 relative", className)}>
       {/* User Info */}
@@ -534,9 +572,19 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
               )}
             </div>
           </div>
-          <button className="text-white/60 hover:text-white transition-colors">
-            <MoreHorizontal className="w-5 h-5" />
-          </button>
+          <div className="flex items-center">
+            {/* Flag do país de origem da foto */}
+            <img
+              src={getHotelFlag(photoHotelCode)}
+              alt=""
+              className="w-auto object-contain mr-2"
+              style={{ imageRendering: 'pixelated', height: 'auto', maxHeight: 'none' }}
+              title={countryData ? `Origem: ${countryData.name}` : `Origem: ${photoHotelCode.toUpperCase()}`}
+            />
+            <button className="text-white/60 hover:text-white transition-colors">
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
 

@@ -52,9 +52,26 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br', u
       if (!normalizedUsername && !uniqueId) throw new Error('Username or uniqueId is required');
       
       try {
+        // Validar que hotel não é um uniqueId
+        const isValidHotelDomain = (domain: string): boolean => {
+          if (!domain) return false;
+          // Rejeitar uniqueIds (muito longos, começam com hh seguido de código e hífen)
+          if (domain.length > 20) return false;
+          if (domain.match(/^hh[a-z]{2}-/)) return false;
+          return true;
+        };
+        
+        // Normalizar hotel para domínio, validando que não é um uniqueId
+        let preferredDomain: string;
+        if (!isValidHotelDomain(hotel)) {
+          console.warn(`[useCompleteProfile] Hotel inválido detectado (possível uniqueId): ${hotel}, usando fallback 'com.br'`);
+          preferredDomain = 'com.br';
+        } else {
+          preferredDomain = hotel === 'br' ? 'com.br' : hotel;
+        }
+        
         // Se temos uniqueId, usar diretamente (mais confiável)
         let multiUser;
-        const preferredDomain = hotel === 'br' ? 'com.br' : hotel;
         
         // Debug: verificar parâmetros recebidos
         console.log('[useCompleteProfile] Parâmetros:', {
@@ -66,7 +83,7 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br', u
         // Estratégia: Tentar por username primeiro (mais confiável), depois por uniqueId
         // Isso porque a busca por username geralmente funciona melhor na API do Habbo
         
-        if (normalizedUsername && normalizedUsername.toLowerCase() !== 'beebop' && normalizedUsername.trim() !== '') {
+        if (normalizedUsername && normalizedUsername.trim() !== '') {
           // Prioridade 1: Buscar por username (mais confiável)
           console.log(`[useCompleteProfile] Tentando buscar por username primeiro: ${normalizedUsername}`);
           multiUser = await getUserByNameMultiHotel(normalizedUsername, preferredDomain);

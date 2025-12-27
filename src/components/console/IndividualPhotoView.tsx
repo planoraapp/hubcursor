@@ -12,6 +12,7 @@ import { getAvatarHeadUrl, getAvatarFallbackUrl } from '@/utils/avatarHelpers';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { RoomDetailsModal } from './modals/RoomDetailsModal';
+import { useCompleteProfile } from '@/hooks/useCompleteProfile';
 
 interface IndividualPhotoViewProps {
   photo: {
@@ -99,25 +100,50 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
   };
 
   /**
+   * Valida se uma string é um domínio válido (não é um uniqueId)
+   */
+  const isValidHotelDomain = (domain: string | undefined): boolean => {
+    if (!domain) return false;
+    // UniqueId geralmente começa com 'hh' seguido de código de hotel e hífen, e tem muitos caracteres
+    // Domínios válidos são: com.br, com.tr, com, es, fr, de, it, nl, fi
+    // Rejeitar se parecer um uniqueId (muito longo, tem hífens no meio, começa com hh seguido de código e hífen)
+    if (domain.length > 20) return false; // UniqueId geralmente é muito longo
+    if (domain.match(/^hh[a-z]{2}-/)) return false; // Começa com hhXX- (formato de uniqueId como hhbr-xxx)
+    
+    // Aceitar domínios válidos
+    const validDomains = ['com.br', 'com.tr', 'com', 'es', 'fr', 'de', 'it', 'nl', 'fi', 'tr', 'br', 'us'];
+    if (validDomains.includes(domain)) return true;
+    // Aceitar domínios com ponto (com.br, com.tr, etc)
+    if (domain.includes('.') && (domain.endsWith('.br') || domain.endsWith('.tr') || domain.endsWith('.com'))) return true;
+    
+    return false;
+  };
+
+  /**
    * Obtém o domínio do hotel da foto
-   * Prioridade: 1) hotelDomain do photo, 2) hotel do photo (convertido), 3) URL da foto, 4) fallback
+   * Prioridade: 1) URL da foto (fonte de verdade), 2) hotelDomain do photo (validado), 3) hotel do photo (convertido), 4) fallback
    */
   const getPhotoHotelDomain = (): string => {
-    // Prioridade 1: Usar hotelDomain direto do photo
-    if (photo.hotelDomain) {
-      return photo.hotelDomain;
-    }
-    
-    // Prioridade 2: Converter hotel (código) para domínio
-    if (photo.hotel) {
-      return hotelCodeToDomain(photo.hotel);
-    }
-    
-    // Prioridade 3: Tentar extrair da URL da foto (fonte de verdade)
+    // Prioridade 1: Tentar extrair da URL da foto (fonte de verdade, mais confiável)
     const photoUrl = photo.imageUrl || photo.s3_url || photo.preview_url;
     const hotelCodeFromUrl = extractHotelFromPhotoUrl(photoUrl);
     if (hotelCodeFromUrl) {
       return hotelCodeToDomain(hotelCodeFromUrl);
+    }
+    
+    // Prioridade 2: Usar hotelDomain do photo, mas validar que não é um uniqueId
+    if (photo.hotelDomain && isValidHotelDomain(photo.hotelDomain)) {
+      // Se já contém ponto, já é um domínio completo
+      if (photo.hotelDomain.includes('.')) {
+        return photo.hotelDomain;
+      }
+      // Caso contrário, converter código para domínio
+      return hotelCodeToDomain(photo.hotelDomain);
+    }
+    
+    // Prioridade 3: Converter hotel (código) para domínio
+    if (photo.hotel && isValidHotelDomain(photo.hotel)) {
+      return hotelCodeToDomain(photo.hotel);
     }
     
     // Fallback padrão
@@ -206,10 +232,16 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
     fetchRoomName();
   }, [photo.roomName, photo.roomId, photo.imageUrl]);
 
+  // Buscar perfil completo do usuário para obter figureString
+  const hotelDomainForProfile = getPhotoHotelDomain();
+  const { data: userProfile } = useCompleteProfile(userName, hotelDomainForProfile);
+  const userFigureString = userProfile?.figureString;
+
   // Helper para URL de avatar do usuário da foto
   const getPhotoUserAvatarUrl = (userName: string) => {
     const domain = getPhotoHotelDomain();
-    return getAvatarHeadUrl(userName, domain, undefined, 'l');
+    // Usar figureString se disponível, caso contrário usar userName
+    return getAvatarHeadUrl(userName, domain, userFigureString, 'l');
   };
   
   const handleLikesClick = () => {

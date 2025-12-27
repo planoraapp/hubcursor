@@ -233,7 +233,7 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
           habbo_name: habboAccount.habbo_name,
           hotel: habboAccount.hotel
         } : null,
-        isValid: currentUserName && currentUserName.trim() && currentUserName.toLowerCase() !== 'beebop'
+        isValid: currentUserName && currentUserName.trim()
       });
     }
   }, [currentUserName, hotel, habboUniqueId, habboAccount]);

@@ -29,7 +29,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ username }) => {
   // Usar o username do usuário logado se não for especificado
   // useMemo para estabilizar o valor e evitar recarregamentos desnecessários
   const targetUsername = useMemo(() => {
-    return username || habboAccount?.habbo_name || 'Beebop';
+    return username || habboAccount?.habbo_name || undefined;
   }, [username, habboAccount?.habbo_name]);
   
   const { userData, badges, rooms, groups, friends, photos, isLoading, error, refreshData, refreshBadges, refreshRooms, refreshGroups, refreshFriends } = useHabboPublicAPI(targetUsername);
@@ -340,8 +340,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ username }) => {
   );
 };
 
-// Componente específico para Beebop (mantido para compatibilidade)
-export const BeebopProfile: React.FC = () => {
-  return <UserProfile username="Beebop" />;
-};
+// Componente removido - não deve ser usado diretamente
+// Use UserProfile com username específico se necessário
 

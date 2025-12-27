@@ -4,12 +4,37 @@
  */
 
 /**
+ * Valida se uma string é um domínio/hotel válido (não é um uniqueId)
+ */
+function isValidHotelDomain(hotel: string): boolean {
+  if (!hotel) return false;
+  // UniqueId geralmente começa com 'hh' seguido de código de hotel e hífen, e tem muitos caracteres
+  // Rejeitar se parecer um uniqueId (muito longo, começa com hh seguido de código e hífen)
+  if (hotel.length > 20) return false; // UniqueId geralmente é muito longo
+  if (hotel.match(/^hh[a-z]{2}-/)) return false; // Começa com hhXX- (formato de uniqueId como hhbr-xxx)
+  
+  return true;
+}
+
+/**
  * Normaliza o código do hotel para o domínio correto
  */
 function normalizeHotelDomain(hotel: string): string {
+  // Validar que não é um uniqueId
+  if (!isValidHotelDomain(hotel)) {
+    console.warn(`[normalizeHotelDomain] Valor inválido detectado (possível uniqueId): ${hotel}, usando fallback 'com.br'`);
+    return 'com.br'; // Fallback seguro
+  }
+  
   if (hotel === 'br') return 'com.br';
   if (hotel === 'tr') return 'com.tr';
   if (hotel === 'us' || hotel === 'com') return 'com';
+  
+  // Se já é um domínio completo (com.br, com.tr, etc), retornar como está
+  if (hotel.includes('.')) {
+    return hotel;
+  }
+  
   return hotel; // es, fr, de, it, nl, fi já são domínios corretos
 }
 

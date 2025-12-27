@@ -274,7 +274,13 @@ export const FunctionalConsole: React.FC = () => {
     const hasNoPhotos = (photos?.length || 0) === 0;
     const isPrivateProfile = user?.profileVisible === false;
     
-    const isOwnProfile = !isViewingOtherUser || viewingUsername === currentUser;
+    // Determinar se é o próprio perfil: só é true se não estiver visualizando outro usuário E for o próprio usuário logado
+    // Se estiver visualizando habbohub, nunca é o próprio perfil (mesmo que o usuário logado tenha esse nome)
+    // isOwnProfile deve ser true apenas quando: não está visualizando outro usuário E está logado E username é o mesmo do usuário logado E não é habbohub
+    const isOwnProfile = !isViewingOtherUser && !!habboAccount && currentUser && username === currentUser && username !== 'habbohub';
+    
+    // Verificar se está visualizando o perfil do habbohub enquanto logado
+    const isViewingHabbohubWhileLoggedIn = !!habboAccount && username === 'habbohub' && currentUser && currentUser !== 'habbohub';
 
     if (isLoading) {
       return (
@@ -304,6 +310,15 @@ export const FunctionalConsole: React.FC = () => {
 
     return (
       <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
+        {/* Mensagem quando logado mas visualizando habbohub */}
+        {isViewingHabbohubWhileLoggedIn && (
+          <div className="p-3 bg-yellow-500/20 border-b border-yellow-500/30">
+            <p className="text-white text-sm text-center volter-font">
+              {t('pages.console.loginToViewInfo')}
+            </p>
+          </div>
+        )}
+        
         {/* Header do usuário com borda inferior */}
         <div className="p-4 border-b border-white/20 relative">
           {/* Bandeira no extremo superior direito */}
@@ -621,9 +636,9 @@ export const FunctionalConsole: React.FC = () => {
   // Usar o usuário logado como padrão, ou o usuário sendo visualizado
   // IMPORTANTE: Usar habboAccount quando disponível, mas aguardar carregamento
   const currentUser = habboAccount?.habbo_name;
-  // Definir username: priorizar viewingUser, depois currentUser se válido
-  // NUNCA usar fallback "Beebop" - se não houver usuário válido, deixar undefined
-  const username = viewingUser || (currentUser && currentUser.trim() ? currentUser.trim() : undefined);
+  // Definir username: priorizar viewingUser, depois currentUser se válido, ou 'habbohub' se não logado
+  // Quando não logado, mostrar perfil do habbohub (habbo.com.br) como padrão
+  const username = viewingUser || (currentUser && currentUser.trim() ? currentUser.trim() : (!isLoggedIn ? 'habbohub' : undefined));
   
   // Debug temporário para verificar valores
   React.useEffect(() => {
@@ -642,6 +657,8 @@ export const FunctionalConsole: React.FC = () => {
   // Definir hotel efetivo para busca de perfil/fotos
   // Normalizar para formato de domínio (com.br, com, es, fr, etc.)
   const effectiveHotelForProfile = (() => {
+    // Se for habbohub, sempre usar com.br
+    if (username === 'habbohub') return 'com.br';
     const hotel = photosProfileHotel || habboAccount?.hotel || 'com.br';
     // Se for 'br', converter para 'com.br'; se for 'tr', converter para 'com.tr'; se for 'us', converter para 'com'
     if (hotel === 'br') return 'com.br';

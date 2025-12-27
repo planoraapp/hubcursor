@@ -76,7 +76,7 @@ export const HanditemToolFixed: React.FC = () => {
   const { toast } = useToast();
   const { habboAccount } = useAuth();
 
-  const defaultHabboName = habboAccount?.habbo_username || "Beebop";
+  const defaultHabboName = habboAccount?.habbo_username || "";
 
   // Funções do Sistema de Trax
   const handlePlayPause = () => {

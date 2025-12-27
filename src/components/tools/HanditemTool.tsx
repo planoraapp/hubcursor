@@ -2119,7 +2119,7 @@ const HanditemToolFixed: React.FC = () => {
   // Sistema de Itens Rastreados
   const { trackedItems, trackItem, untrackItem, isTracked } = useTrackedItems('br');
 
-  const defaultHabboName = habboAccount?.habbo_name || "Beebop";
+  const defaultHabboName = habboAccount?.habbo_name || "";
 
   // Funções do Sistema de Trax
   const handlePlayPause = () => {
