@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getUserByName as getUserByNameMultiHotel, getUserById as getUserByIdMultiHotel } from '@/services/habboApiMultiHotel';
@@ -42,14 +43,30 @@ export interface CompleteProfile {
 
 export const useCompleteProfile = (username: string, hotel: string = 'com.br', uniqueId?: string) => {
   // Normalizar username: se for string vazia ou apenas espaços, tratar como inválido
-  const normalizedUsername = username?.trim() || '';
-  // Query é válida se temos username OU uniqueId
+  // IMPORTANTE: Se username for string vazia, normalizar para '' mas ainda permitir busca por uniqueId
+  const normalizedUsername = (username && typeof username === 'string') ? username.trim() : '';
+  // Query é válida se temos username OU uniqueId (conforme documentação)
   const isValidUsername = normalizedUsername !== '' || !!uniqueId;
+  
+  // #region agent log
+  React.useEffect(() => {
+    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useCompleteProfile.tsx:hook-entry',message:'useCompleteProfile chamado',data:{username:username || 'undefined',usernameType:typeof username,hotel:hotel,uniqueId:uniqueId || 'undefined',normalizedUsername:normalizedUsername || 'undefined',isValidUsername:isValidUsername},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+  }, [username, hotel, uniqueId, normalizedUsername, isValidUsername]);
+  // #endregion
   
   return useQuery({
     queryKey: ['complete-profile', normalizedUsername, hotel, uniqueId],
     queryFn: async (): Promise<CompleteProfile> => {
-      if (!normalizedUsername && !uniqueId) throw new Error('Username or uniqueId is required');
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useCompleteProfile.tsx:queryFn-entry',message:'queryFn iniciado',data:{normalizedUsername:normalizedUsername || 'undefined',uniqueId:uniqueId || 'undefined',hotel:hotel},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
+      
+      if (!normalizedUsername && !uniqueId) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useCompleteProfile.tsx:queryFn-error',message:'Erro: sem username ou uniqueId',data:{normalizedUsername:normalizedUsername || 'undefined',uniqueId:uniqueId || 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
+        throw new Error('Username or uniqueId is required');
+      }
       
       try {
         // Validar que hotel não é um uniqueId
@@ -70,197 +87,107 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br', u
           preferredDomain = hotel === 'br' ? 'com.br' : hotel;
         }
         
-        // Se temos uniqueId, usar diretamente (mais confiável)
-        let multiUser;
+        // Determinar hotelCode para passar para Edge Function
+        const hotelCode = preferredDomain === 'com.br' ? 'br' : preferredDomain;
         
         // Debug: verificar parâmetros recebidos
         console.log('[useCompleteProfile] Parâmetros:', {
           normalizedUsername,
           uniqueId,
-          hotel: preferredDomain
+          hotel: preferredDomain,
+          hotelCode
         });
         
-        // Estratégia: Tentar por username primeiro (mais confiável), depois por uniqueId
-        // Isso porque a busca por username geralmente funciona melhor na API do Habbo
+        // SOLUÇÃO SIMPLIFICADA: Chamar Edge Function diretamente com username
+        // A Edge Function já faz a busca por username internamente (no servidor, sem problemas de CORS)
+        // Não precisamos fazer busca no navegador primeiro - isso estava falhando
         
-        if (normalizedUsername && normalizedUsername.trim() !== '') {
-          // Prioridade 1: Buscar por username (mais confiável)
-          console.log(`[useCompleteProfile] Tentando buscar por username primeiro: ${normalizedUsername}`);
-          multiUser = await getUserByNameMultiHotel(normalizedUsername, preferredDomain);
-          
-          if (multiUser) {
-            console.log(`[useCompleteProfile] ✅ Usuário encontrado por username: ${multiUser.name}`);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useCompleteProfile.tsx:queryFn:using-edge-function',message:'Chamando Edge Function diretamente com username',data:{normalizedUsername:normalizedUsername,hotel:hotelCode,uniqueIdParam:uniqueId || 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
+        
+        // Se não temos username mas temos uniqueId, ainda podemos tentar buscar
+        // A Edge Function agora aceita uniqueId como parâmetro alternativo
+        if ((!normalizedUsername || normalizedUsername.trim() === '') && !uniqueId) {
+          throw new Error('Username or uniqueId is required to fetch complete profile');
+        }
+        
+        // Usar Edge Function habbo-complete-profile que já existe e funciona
+        // Ela faz a busca por username no servidor (sem problemas de CORS)
+        // Agora também aceita uniqueId como parâmetro alternativo
+        // ESTRATÉGIA: Se temos username, SEMPRE buscar por username primeiro para obter o uniqueId correto
+        // Se não temos username mas temos uniqueId, usar o uniqueId diretamente
+        const { data: edgeFunctionData, error: edgeFunctionError } = await supabase.functions.invoke('habbo-complete-profile', {
+          body: {
+            username: normalizedUsername || undefined, // Usar username normalizado (ou undefined se não houver)
+            uniqueId: uniqueId || undefined, // Passar uniqueId também (se disponível)
+            hotel: hotelCode // Passar código do hotel (br, com, es, etc.)
           }
-        }
-        
-        // Se não encontrou por username e temos uniqueId, tentar por uniqueId
-        if (!multiUser && uniqueId) {
-          console.log(`[useCompleteProfile] Username não funcionou, tentando por uniqueId: ${uniqueId}`);
-          multiUser = await getUserByIdMultiHotel(uniqueId);
-          
-          if (multiUser) {
-            console.log(`[useCompleteProfile] ✅ Usuário encontrado por uniqueId: ${multiUser.name}`);
-          } else {
-            console.warn(`[useCompleteProfile] ⚠️ UniqueId também não funcionou: ${uniqueId}`);
-          }
-        }
-        
-        // Se ainda não encontrou e temos ambos, tentar buscar por username em todos os hotéis
-        if (!multiUser && normalizedUsername && normalizedUsername.toLowerCase() !== 'beebop' && normalizedUsername.trim() !== '') {
-          console.log(`[useCompleteProfile] Tentando buscar por username em todos os hotéis: ${normalizedUsername}`);
-          multiUser = await getUserByNameMultiHotel(normalizedUsername); // Sem preferredDomain para tentar todos
-        }
-
-        if (!multiUser) {
-          // Se temos uniqueId mas não encontramos, o problema pode ser o formato
-          if (uniqueId) {
-            throw new Error(`User with uniqueId '${uniqueId}' not found. The API may not accept this format.`);
-          }
-          const errorUsername = normalizedUsername || 'usuário';
-          throw new Error(`User '${errorUsername}' not found`);
-        }
-
-        const userData: any = multiUser;
-        let hotelDomain = (multiUser as any).hotelDomain || preferredDomain;
-        const hotelCode = hotelDomain === 'com.br' ? 'br' : hotelDomain;
-
-        // IMPORTANTE: Usar o uniqueId retornado pela API (não o que temos armazenado)
-        // A API pode retornar um formato diferente do que temos no banco
-        const resolvedUniqueId = userData.uniqueId;
-        
-        if (!resolvedUniqueId) {
-          throw new Error('UniqueId não encontrado na resposta da API');
-        }
-        
-        console.log(`[useCompleteProfile] Usando uniqueId da API: ${resolvedUniqueId} para buscar dados adicionais`);
-        
-        // Buscar dados adicionais em paralelo usando o uniqueId retornado pela API
-        // Tentar primeiro o endpoint /profile que pode ter dados mais completos
-        const [profileResponse, badgesResponse, friendsResponse, groupsResponse, roomsResponse] = await Promise.allSettled([
-          // Tentar endpoint /profile primeiro (pode ter dados mais completos)
-          fetch(`https://www.habbo.${hotelDomain}/api/public/users/${encodeURIComponent(resolvedUniqueId)}/profile`, {
-            headers: { 'Accept': 'application/json', 'User-Agent': 'HabboHub/1.0' }
-          }),
-          fetch(`https://www.habbo.${hotelDomain}/api/public/users/${encodeURIComponent(resolvedUniqueId)}/badges`, {
-            headers: { 'Accept': 'application/json', 'User-Agent': 'HabboHub/1.0' }
-          }),
-          fetch(`https://www.habbo.${hotelDomain}/api/public/users/${encodeURIComponent(resolvedUniqueId)}/friends`, {
-            headers: { 'Accept': 'application/json', 'User-Agent': 'HabboHub/1.0' }
-          }),
-          fetch(`https://www.habbo.${hotelDomain}/api/public/users/${encodeURIComponent(resolvedUniqueId)}/groups`, {
-            headers: { 'Accept': 'application/json', 'User-Agent': 'HabboHub/1.0' }
-          }),
-          fetch(`https://www.habbo.${hotelDomain}/api/public/users/${encodeURIComponent(resolvedUniqueId)}/rooms`, {
-            headers: { 'Accept': 'application/json', 'User-Agent': 'HabboHub/1.0' }
-          })
-        ]);
-        
-        // Tentar extrair dados do profile se disponível
-        let profileData: any = null;
-        if (profileResponse.status === 'fulfilled') {
-          const profileRes = profileResponse.value;
-          if (profileRes && typeof profileRes === 'object' && 'ok' in profileRes && profileRes.ok) {
-            try {
-              profileData = await profileRes.json();
-              console.log('[useCompleteProfile] ✅ Dados do /profile obtidos');
-            } catch (e) {
-              console.warn('[useCompleteProfile] Erro ao processar /profile:', e);
-            }
-          } else {
-            console.log('[useCompleteProfile] Endpoint /profile não disponível ou retornou erro');
-          }
-        }
-
-        // Processar respostas das APIs
-        const badges = badgesResponse.status === 'fulfilled' && badgesResponse.value.ok 
-          ? await badgesResponse.value.json().catch(() => []) 
-          : [];
-        let friends = [];
-        if (friendsResponse.status === 'fulfilled' && friendsResponse.value.ok) {
-          try {
-            friends = await friendsResponse.value.json();
-            console.log(`[useCompleteProfile] ✅ Friends obtidos: ${friends.length} amigos`);
-            if (friends.length > 0) {
-              console.log(`[useCompleteProfile] Primeiro amigo:`, friends[0]);
-            }
-          } catch (e) {
-            console.error('[useCompleteProfile] Erro ao processar friends:', e);
-            friends = [];
-          }
-        } else {
-          console.warn('[useCompleteProfile] ⚠️ Resposta de friends não foi bem-sucedida:', {
-            status: friendsResponse.status,
-            ok: friendsResponse.status === 'fulfilled' ? friendsResponse.value.ok : 'N/A'
-          });
-        }
-        const groups = groupsResponse.status === 'fulfilled' && groupsResponse.value.ok
-          ? await groupsResponse.value.json().catch(() => []) 
-          : [];
-        const rooms = roomsResponse.status === 'fulfilled' && roomsResponse.value.ok
-          ? await roomsResponse.value.json().catch(() => []) 
-          : [];
-        
-        console.log(`[useCompleteProfile] Dados obtidos:`, {
-          badges: badges.length,
-          friends: friends.length,
-          groups: groups.length,
-          rooms: rooms.length,
-          hasProfileData: !!profileData
         });
-
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useCompleteProfile.tsx:queryFn:edge-function-response',message:'Resposta da Edge Function recebida',data:{hasData:!!edgeFunctionData,hasError:!!edgeFunctionError,error:edgeFunctionError?.message || 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
+        
+        if (edgeFunctionError || !edgeFunctionData) {
+          throw new Error(edgeFunctionError?.message || 'Failed to fetch complete profile from Edge Function');
+        }
+        
+        // A Edge Function retorna os dados no formato esperado
+        const profileData = edgeFunctionData;
+        
         // Garantir que friends tenha todos os campos necessários
-        if (friends.length > 0) {
-          friends = friends.map(friend => ({
-            ...friend,
-            name: friend.name || friend.username || 'Nome não disponível',
-            uniqueId: friend.uniqueId || friend.id || '',
-            motto: friend.motto || '',
-            online: friend.online !== undefined ? friend.online : false,
-            figureString: friend.figureString || '',
-            profileVisible: friend.profileVisible == null ? true : friend.profileVisible // Default para true se não especificado
-          }));
-          
-          console.log(`[useCompleteProfile] Friends processados:`, {
-            total: friends.length,
-            sample: friends[0]
-          });
-        } else {
-          console.log('[useCompleteProfile] ⚠️ Nenhum amigo encontrado na resposta da API');
-        }
-
-        // Usar dados do /profile se disponível, senão usar dados básicos
-        const finalUserData = profileData || userData;
+        const friends = (profileData.friends || []).map((friend: any) => ({
+          ...friend,
+          name: friend.name || friend.username || 'Nome não disponível',
+          uniqueId: friend.uniqueId || friend.id || '',
+          motto: friend.motto || '',
+          online: friend.online !== undefined ? friend.online : false,
+          figureString: friend.figureString || '',
+          profileVisible: friend.profileVisible == null ? true : friend.profileVisible
+        }));
+        
+        // Determinar hotelDomain a partir dos dados retornados ou parâmetros
+        const hotelDomain = preferredDomain;
+        
+        console.log(`[useCompleteProfile] ✅ Dados obtidos da Edge Function:`, {
+          badges: (profileData.badges || []).length,
+          friends: friends.length,
+          groups: (profileData.groups || []).length,
+          rooms: (profileData.rooms || []).length,
+          uniqueId: profileData.uniqueId
+        });
         
         return {
-          uniqueId: resolvedUniqueId,
-          name: finalUserData.name || userData.name,
-          figureString: finalUserData.figureString || userData.figureString,
-          motto: finalUserData.motto || userData.motto || '',
-          online: finalUserData.online !== undefined ? finalUserData.online : (userData.online || false),
-          lastAccessTime: finalUserData.lastAccessTime || userData.lastAccessTime || '',
-          memberSince: finalUserData.memberSince || userData.memberSince || '',
-          profileVisible: finalUserData.profileVisible !== false && userData.profileVisible !== false,
+          uniqueId: profileData.uniqueId,
+          name: profileData.name,
+          figureString: profileData.figureString,
+          motto: profileData.motto || '',
+          online: profileData.online !== undefined ? profileData.online : false,
+          lastAccessTime: profileData.lastAccessTime || '',
+          memberSince: profileData.memberSince || '',
+          profileVisible: profileData.profileVisible !== false,
           stats: {
-            level: finalUserData.currentLevel || userData.currentLevel || userData.starGemCount || 0,
-            levelPercent: finalUserData.currentLevelCompletePercent || userData.currentLevelCompletePercent || 0,
-            experience: finalUserData.totalExperience || userData.totalExperience || 0,
-            starGems: finalUserData.starGemCount || userData.starGemCount || 0,
-            badgesCount: badges.length || 0,
-            friendsCount: friends.length || 0,
-            groupsCount: groups.length || 0,
-            roomsCount: rooms.length || 0,
+            level: profileData.stats?.level || 0,
+            levelPercent: profileData.stats?.levelPercent || 0,
+            experience: 0, // Não disponível na Edge Function atual
+            starGems: profileData.stats?.level || 0, // Usar level como aproximação
+            badgesCount: (profileData.badges || []).length,
+            friendsCount: friends.length,
+            groupsCount: (profileData.groups || []).length,
+            roomsCount: (profileData.rooms || []).length,
             photosCount: 0, // Será preenchido pelo useUnifiedPhotoSystem
             habboTickerCount: 0
           },
           hotelDomain,
           hotelCode,
           data: {
-            badges: badges,
+            badges: profileData.badges || [],
             friends: friends,
-            groups: groups,
-            rooms: rooms,
+            groups: profileData.groups || [],
+            rooms: profileData.rooms || [],
             photos: [], // Será preenchido pelo useUnifiedPhotoSystem
-            selectedBadges: finalUserData.selectedBadges || userData.selectedBadges || []
+            selectedBadges: profileData.selectedBadges || []
           }
         };
       } catch (error: any) {

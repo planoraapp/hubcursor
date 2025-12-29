@@ -17,6 +17,39 @@ interface HabboPhoto {
   roomId?: string | number;
 }
 
+// Função auxiliar para buscar nome do quarto via API
+async function getRoomName(roomId: string | number, hotelDomain: string): Promise<string | null> {
+  try {
+    const url = `https://www.habbo.${hotelDomain}/api/public/rooms/${roomId}`;
+    console.log(`[habbo-photos-scraper] 🔍 Buscando nome do quarto ${roomId} no hotel ${hotelDomain}`);
+    
+    const response = await fetch(url, {
+      headers: { 
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) HabboHubBot/1.0'
+      }
+    });
+    
+    if (response.ok) {
+      const roomData = await response.json();
+      if (roomData && roomData.name) {
+        console.log(`[habbo-photos-scraper] ✅ Nome do quarto ${roomId} encontrado: "${roomData.name}"`);
+        return roomData.name;
+      } else {
+        console.log(`[habbo-photos-scraper] ⚠️ Quarto ${roomId} retornou sem nome`);
+      }
+    } else if (response.status === 404) {
+      // Quarto não existe mais - retornar null para usar fallback
+      console.log(`[habbo-photos-scraper] ⚠️ Quarto ${roomId} não encontrado (404)`);
+    } else {
+      console.log(`[habbo-photos-scraper] ❌ Erro ${response.status} ao buscar quarto ${roomId}: ${response.statusText}`);
+    }
+  } catch (error) {
+    console.error(`[habbo-photos-scraper] ❌ Erro de rede ao buscar quarto ${roomId}:`, error);
+  }
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -105,8 +138,8 @@ serve(async (req) => {
     console.log(`[habbo-photos-scraper] Raw photos data (first 2):`, photosData.slice(0, 2));
     console.log(`[habbo-photos-scraper] Total photos: ${photosData.length}`);
 
-    // Step 3: Transform photos to our format
-    const photos: HabboPhoto[] = photosData.map((photo: any) => {
+    // Step 3: Transform photos to our format (primeiro mapear sem buscar nomes de quartos)
+    const photosWithRoomIds: Array<HabboPhoto & { _roomIdToFetch?: string | number; _hotelDomain: string }> = photosData.map((photo: any) => {
       // Determinar o timestamp correto da foto
       let timestamp = Date.now();
       
@@ -164,9 +197,45 @@ serve(async (req) => {
         likes: photo.likesCount || photo.likes || 0,
         timestamp: timestamp,
         roomName: roomName,
-        roomId: roomId // Incluir roomId como string se disponível
+        roomId: roomId, // Incluir roomId como string se disponível
+        _roomIdToFetch: roomId || undefined, // Para busca posterior
+        _hotelDomain: hotelDomain // Para busca posterior
       };
     });
+
+    // Step 4: Buscar nomes dos quartos em paralelo (limitando concorrência)
+    console.log(`[habbo-photos-scraper] Buscando nomes de quartos para ${photosWithRoomIds.length} fotos...`);
+    const CONCURRENT_ROOM_FETCHES = 5;
+    const roomFetchPromises: Promise<void>[] = [];
+    let roomsFound = 0;
+    let roomsNotFound = 0;
+    let roomsError = 0;
+    
+    for (let i = 0; i < photosWithRoomIds.length; i += CONCURRENT_ROOM_FETCHES) {
+      const batch = photosWithRoomIds.slice(i, i + CONCURRENT_ROOM_FETCHES);
+      const batchPromises = batch.map(async (photo) => {
+        if (photo._roomIdToFetch && photo._hotelDomain) {
+          const roomName = await getRoomName(photo._roomIdToFetch, photo._hotelDomain);
+          if (roomName) {
+            photo.roomName = roomName;
+            roomsFound++;
+          } else {
+            roomsNotFound++;
+          }
+        } else {
+          roomsError++;
+        }
+      });
+      roomFetchPromises.push(...batchPromises);
+    }
+    
+    // Aguardar todas as buscas de nomes de quartos
+    await Promise.allSettled(roomFetchPromises);
+    
+    console.log(`[habbo-photos-scraper] Resultado da busca de nomes: ${roomsFound} encontrados, ${roomsNotFound} não encontrados, ${roomsError} sem roomId`);
+    
+    // Remover campos auxiliares antes de retornar
+    const photos: HabboPhoto[] = photosWithRoomIds.map(({ _roomIdToFetch, _hotelDomain, ...photo }) => photo);
 
     console.log(`[habbo-photos-scraper] ====== SUCCESS ======`);
     console.log(`[habbo-photos-scraper] Processed ${photos.length} photos for ${username}`);

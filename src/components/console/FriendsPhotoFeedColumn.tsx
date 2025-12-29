@@ -27,6 +27,17 @@ const FriendsPhotoFeedContent: React.FC = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const [openRoomModalId, setOpenRoomModalId] = useState<string | null>(null);
+
+  // Handler para quando um modal de quarto é aberto
+  const handleRoomModalOpen = useCallback((photoId: string) => {
+    // Fechar modal anterior se houver
+    if (openRoomModalId && openRoomModalId !== photoId) {
+      setOpenRoomModalId(null);
+    }
+    // Marcar o novo modal como aberto
+    setOpenRoomModalId(photoId);
+  }, [openRoomModalId]);
   
   // Só carrega fotos se há conta habbo válida
   const shouldLoadPhotos = !!habboAccount?.habbo_name && !!habboAccount?.hotel;
@@ -77,6 +88,38 @@ const FriendsPhotoFeedContent: React.FC = () => {
 
   const handleCloseModal = useCallback(() => {
     setSelectedPhoto(null);
+  }, []);
+
+  // Função para centralizar suavemente uma foto no feed
+  const handleRoomClick = useCallback((cardRef: React.RefObject<HTMLElement>, photoId: string) => {
+    if (!cardRef.current || !scrollAreaRef.current) return;
+
+    // Encontrar o container scrollável dentro do ScrollArea
+    const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
+    if (!scrollContainer) return;
+
+    // Calcular posição para centralizar a foto
+    const cardRect = cardRef.current.getBoundingClientRect();
+    const parentRect = scrollContainer.getBoundingClientRect();
+    
+    // Posição atual do scroll
+    const currentScrollTop = scrollContainer.scrollTop;
+    
+    // Posição do card relativa ao container scrollável
+    const cardTopRelativeToParent = cardRect.top - parentRect.top + currentScrollTop;
+    
+    // Altura visível do container
+    const visibleHeight = parentRect.height;
+    
+    // Calcular scroll para centralizar (metade da altura visível menos metade da altura do card)
+    const cardHeight = cardRect.height;
+    const targetScrollTop = cardTopRelativeToParent - (visibleHeight / 2) + (cardHeight / 2);
+
+    // Scroll suave
+    scrollContainer.scrollTo({
+      top: targetScrollTop,
+      behavior: 'smooth'
+    });
   }, []);
 
   // Se não há conta habbo, mostra mensagem informativa
@@ -171,6 +214,9 @@ const FriendsPhotoFeedContent: React.FC = () => {
                           onUserClick={() => {}}
                           onLikesClick={() => {}}
                           onCommentsClick={() => {}}
+                          onRoomClick={(cardRef, photoId) => handleRoomClick(cardRef, photoId)}
+                          onRoomModalOpen={handleRoomModalOpen}
+                          isRoomModalOpen={openRoomModalId === photo.id}
                           showDivider={index < friendsPhotos.length - 1}
                         />
                       </div>

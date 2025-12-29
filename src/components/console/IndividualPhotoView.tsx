@@ -152,19 +152,18 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
   };
 
   // Buscar perfil completo do usuário para obter figureString e quartos (ANTES do useEffect para evitar erro de inicialização)
+  // Usar userName da prop, mas se não estiver disponível, tentar extrair do photo (como EnhancedPhotoCard faz)
+  const effectiveUserName = userName || (photo as any).userName || '';
   const hotelDomainForProfile = getPhotoHotelDomain();
-  const { data: userProfile } = useCompleteProfile(userName, hotelDomainForProfile);
+  const { data: userProfile } = useCompleteProfile(effectiveUserName, hotelDomainForProfile);
   const userFigureString = userProfile?.figureString;
   const userRooms = useMemo(() => userProfile?.data?.rooms || [], [userProfile?.data?.rooms]);
 
-  // Buscar nome do quarto quando houver roomName (mesma lógica do EnhancedPhotoCard)
+  // Usar diretamente o roomName fornecido pelas Edge Functions (já vem correto)
   useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:useEffect:entry',message:'useEffect roomName - entrada',data:{roomName:photo.roomName,roomId:photo.roomId,hotelDomain:photo.hotelDomain,hotel:photo.hotel,userRoomsCount:userRooms.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
-    
     if (!photo.roomName) {
       setRoomDisplayName(null);
+      setExtractedRoomId(null);
       return;
     }
     
@@ -172,27 +171,17 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
     let roomId: string | null = null;
     
     if (photo.roomId) {
-      // Usar roomId direto se disponível
       roomId = String(photo.roomId);
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:useEffect:roomId-direct',message:'RoomId direto encontrado',data:{roomId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
     } else {
       // Tentar extrair do formato "Room XXXXX"
       const roomIdMatch = photo.roomName.match(/Room\s+(\d+)/i);
       if (roomIdMatch) {
         roomId = roomIdMatch[1];
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:useEffect:roomId-extracted',message:'RoomId extraído do roomName',data:{roomId,roomName:photo.roomName},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
       } else {
         // Tentar extrair qualquer número do roomName (última tentativa)
         const numberMatch = photo.roomName.match(/(\d+)/);
         if (numberMatch) {
           roomId = numberMatch[1];
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:useEffect:roomId-number-extracted',message:'RoomId extraído de número',data:{roomId,roomName:photo.roomName},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-          // #endregion
         }
       }
     }
@@ -201,68 +190,14 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
     // Isso é útil quando roomName é "Quarto do jogo" mas o usuário tem apenas um quarto
     if (!roomId && userRooms.length === 1) {
       roomId = String(userRooms[0].id);
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:useEffect:roomId-from-userRooms',message:'RoomId obtido do único quarto do usuário',data:{roomId,roomName:photo.roomName},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-    }
-    
-    if (!roomId) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:useEffect:no-roomId',message:'Nenhum roomId encontrado, usando roomName original',data:{roomName:photo.roomName,userRoomsCount:userRooms.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-      setExtractedRoomId(null); // Limpar roomId extraído
-      setRoomDisplayName(photo.roomName); // Se não conseguir extrair ID, usar o roomName original
-      return;
     }
     
     // Armazenar roomId extraído para usar na renderização
     setExtractedRoomId(roomId);
     
-    // Buscar nome do quarto da API
-    const fetchRoomName = async () => {
-      const hotelDomain = getPhotoHotelDomain();
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:fetchRoomName:before-fetch',message:'Antes de buscar quarto da API',data:{roomId,hotelDomain},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
-      try {
-        const response = await fetch(`https://www.habbo.${hotelDomain}/api/public/rooms/${roomId}`, {
-          headers: { 'Accept': 'application/json' }
-        });
-        
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:fetchRoomName:response',message:'Resposta da API de quartos',data:{status:response.status,statusText:response.statusText,ok:response.ok,roomId,hotelDomain},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
-        
-        if (response.ok) {
-          const roomData = await response.json();
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:fetchRoomName:roomData',message:'Dados do quarto recebidos',data:{roomName:roomData.name,roomId,hotelDomain},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-          // #endregion
-          if (roomData.name) {
-            setRoomDisplayName(roomData.name);
-          } else {
-            setRoomDisplayName(photo.roomName); // Fallback para roomName original
-          }
-        } else if (response.status === 404) {
-          // 404 é esperado se o quarto não existir mais - não fazer log de erro
-          setRoomDisplayName(photo.roomName); // Fallback para roomName original
-        } else {
-          // Outros erros (500, etc) - logar apenas em modo debug
-          console.debug(`[IndividualPhotoView] Erro ${response.status} ao buscar quarto ${roomId}:`, response.statusText);
-          setRoomDisplayName(photo.roomName); // Fallback para roomName original
-        }
-      } catch (error) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:fetchRoomName:error',message:'Erro ao buscar quarto',data:{error:error instanceof Error ? error.message : String(error),roomId,hotelDomain},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
-        // Erros de rede - logar apenas em modo debug para não poluir console
-        console.debug('[IndividualPhotoView] Erro de rede ao buscar nome do quarto:', error);
-        setRoomDisplayName(photo.roomName); // Fallback para roomName original
-      }
-    };
-    
-    fetchRoomName();
-  }, [photo.roomName, photo.roomId, photo.s3_url, photo.imageUrl, photo.preview_url, photo.hotelDomain, photo.hotel, userRooms]);
+    // Usar diretamente o roomName fornecido pelas Edge Functions (já vem com o nome correto)
+    setRoomDisplayName(photo.roomName);
+  }, [photo.roomName, photo.roomId, userRooms]);
 
   // Helper para URL de avatar do usuário da foto
   const getPhotoUserAvatarUrl = (userName: string) => {
@@ -620,13 +555,38 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
             {photo.roomName && (
               <div className="space-y-1 pt-2 pb-3">
                 {(() => {
-                  // Usar extractedRoomId do estado (já determinado no useEffect, que considera fallback de userRooms)
+                  // Usar roomId extraído do useEffect (que já considera fallback de userRooms)
+                  // Se não houver, tentar extrair diretamente do photo (mesma lógica do EnhancedPhotoCard)
+                  let roomId: string | null = extractedRoomId;
+                  
+                  if (!roomId && photo.roomId) {
+                    // Usar roomId direto se disponível
+                    roomId = String(photo.roomId);
+                  } else if (!roomId) {
+                    // Tentar extrair do formato "Room XXXXX" como fallback
+                    const roomIdMatch = photo.roomName.match(/Room\s+(\d+)/i);
+                    if (roomIdMatch) {
+                      roomId = roomIdMatch[1];
+                    } else {
+                      // Tentar extrair qualquer número do roomName (última tentativa)
+                      const numberMatch = photo.roomName.match(/(\d+)/);
+                      if (numberMatch) {
+                        roomId = numberMatch[1];
+                      }
+                    }
+                  }
+                  
+                  // Se ainda não temos roomId e temos quartos do usuário, tentar encontrar o quarto correspondente
+                  if (!roomId && userRooms.length === 1) {
+                    roomId = String(userRooms[0].id);
+                  }
+                  
                   const hotelDomain = getPhotoHotelDomain();
                   
                   // Usar nome do quarto se disponível, senão usar roomName original
                   const displayText = roomDisplayName || photo.roomName;
                   
-                  if (!extractedRoomId) {
+                  if (!roomId) {
                     // Sem roomId, não é clicável (ex: "Quarto do jogo")
                     return (
                       <div className="flex items-center gap-1 text-xs text-white/60">
@@ -644,7 +604,7 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        setSelectedRoomId(extractedRoomId);
+                        setSelectedRoomId(roomId!);
                         setSelectedRoomHotel(hotelDomain);
                         setShowRoomDetails(true);
                       }}

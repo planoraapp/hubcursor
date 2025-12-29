@@ -180,4 +180,7 @@ export interface PhotoCardProps {
   onCommentsClick: (photoId: string) => void;
   showDivider?: boolean;
   className?: string;
+  onRoomClick?: (elementRef: React.RefObject<HTMLElement>, photoId: string) => void;
+  onRoomModalOpen?: (photoId: string) => void;
+  isRoomModalOpen?: boolean;
 }

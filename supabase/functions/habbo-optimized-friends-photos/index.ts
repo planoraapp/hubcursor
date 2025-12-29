@@ -5,6 +5,39 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Função auxiliar para buscar nome do quarto via API
+async function getRoomName(roomId: string | number, hotelDomain: string): Promise<string | null> {
+  try {
+    const url = `https://www.habbo.${hotelDomain}/api/public/rooms/${roomId}`;
+    console.log(`[habbo-optimized-friends-photos] 🔍 Buscando nome do quarto ${roomId} no hotel ${hotelDomain}`);
+    
+    const response = await fetch(url, {
+      headers: { 
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) HabboHubBot/1.0'
+      }
+    });
+    
+    if (response.ok) {
+      const roomData = await response.json();
+      if (roomData && roomData.name) {
+        console.log(`[habbo-optimized-friends-photos] ✅ Nome do quarto ${roomId} encontrado: "${roomData.name}"`);
+        return roomData.name;
+      } else {
+        console.log(`[habbo-optimized-friends-photos] ⚠️ Quarto ${roomId} retornou sem nome`);
+      }
+    } else if (response.status === 404) {
+      // Quarto não existe mais - retornar null para usar fallback
+      console.log(`[habbo-optimized-friends-photos] ⚠️ Quarto ${roomId} não encontrado (404)`);
+    } else {
+      console.log(`[habbo-optimized-friends-photos] ❌ Erro ${response.status} ao buscar quarto ${roomId}: ${response.statusText}`);
+    }
+  } catch (error) {
+    console.error(`[habbo-optimized-friends-photos] ❌ Erro de rede ao buscar quarto ${roomId}:`, error);
+  }
+  return null;
+}
+
 if (import.meta.main) {
   serve(async (req) => {
     if (req.method === "OPTIONS") {
@@ -200,8 +233,8 @@ if (import.meta.main) {
       
       console.log(`[habbo-optimized-friends-photos] Pagination: showing photos ${startIndex} to ${endIndex} of ${photosToShow.length}`);
       
-      // 8. Converter para formato final
-      const finalPhotos = paginatedPhotos.map((item, index) => {
+      // 8. Converter para formato final (primeiro mapear sem buscar nomes de quartos)
+      const photosWithRoomIds = paginatedPhotos.map((item, index) => {
         const { photo, friend, realTimestamp } = item;
         
         // DEBUG: Log primeiro objeto photo para ver estrutura
@@ -247,6 +280,8 @@ if (import.meta.main) {
           }
         }
         
+        const hotelDomain = normalizedHotel === "br" ? "com.br" : normalizedHotel;
+        
         return {
           id: photo.id,
           photo_id: photo.id,
@@ -255,13 +290,49 @@ if (import.meta.main) {
           likes: photo.likesCount || 0,
           userName: friend.name,
           userUniqueId: userUniqueId, // Incluir uniqueId do usuário para navegação (com fallback)
-          userAvatar: `https://www.habbo.${normalizedHotel === "br" ? "com.br" : normalizedHotel}/habbo-imaging/avatarimage?figure=${friend.figureString}&size=s&direction=2&head_direction=3&action=std`,
+          userAvatar: `https://www.habbo.${hotelDomain}/habbo-imaging/avatarimage?figure=${friend.figureString}&size=s&direction=2&head_direction=3&action=std`,
           timestamp: realTimestamp,
           roomName: roomName,
           roomId: roomId, // Incluir roomId como string se disponível
-          caption: photo.caption || ""
+          caption: photo.caption || "",
+          _roomIdToFetch: roomId || undefined, // Para busca posterior
+          _hotelDomain: hotelDomain // Para busca posterior
         };
       });
+
+      // 9. Buscar nomes dos quartos em paralelo (limitando concorrência)
+      console.log(`[habbo-optimized-friends-photos] Buscando nomes de quartos para ${photosWithRoomIds.length} fotos...`);
+      const CONCURRENT_ROOM_FETCHES = 5;
+      const roomFetchPromises: Promise<void>[] = [];
+      let roomsFound = 0;
+      let roomsNotFound = 0;
+      let roomsError = 0;
+      
+      for (let i = 0; i < photosWithRoomIds.length; i += CONCURRENT_ROOM_FETCHES) {
+        const batch = photosWithRoomIds.slice(i, i + CONCURRENT_ROOM_FETCHES);
+        const batchPromises = batch.map(async (photo: any) => {
+          if (photo._roomIdToFetch && photo._hotelDomain) {
+            const roomName = await getRoomName(photo._roomIdToFetch, photo._hotelDomain);
+            if (roomName) {
+              photo.roomName = roomName;
+              roomsFound++;
+            } else {
+              roomsNotFound++;
+            }
+          } else {
+            roomsError++;
+          }
+        });
+        roomFetchPromises.push(...batchPromises);
+      }
+      
+      // Aguardar todas as buscas de nomes de quartos
+      await Promise.allSettled(roomFetchPromises);
+      
+      console.log(`[habbo-optimized-friends-photos] Resultado da busca de nomes: ${roomsFound} encontrados, ${roomsNotFound} não encontrados, ${roomsError} sem roomId`);
+      
+      // Remover campos auxiliares antes de retornar
+      const finalPhotos = photosWithRoomIds.map(({ _roomIdToFetch, _hotelDomain, ...photo }) => photo);
 
       const hasMore = endIndex < photosToShow.length;
       const nextOffset = hasMore ? endIndex : 0;

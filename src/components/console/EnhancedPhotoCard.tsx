@@ -22,7 +22,10 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   onLikesClick,
   onCommentsClick,
   showDivider = false,
-  className = ''
+  className = '',
+  onRoomClick,
+  onRoomModalOpen,
+  isRoomModalOpen = false
 }) => {
   const { t, language } = useI18n();
   const { habboAccount } = useAuth();
@@ -36,6 +39,7 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   const [roomDisplayName, setRoomDisplayName] = useState<string | null>(null);
   const [extractedRoomId, setExtractedRoomId] = useState<string | null>(null);
   const photoImageRef = React.useRef<HTMLImageElement>(null);
+  const cardRef = React.useRef<HTMLDivElement>(null);
   const [photoWidth, setPhotoWidth] = useState<number | null>(null);
   const commentFormRef = React.useRef<HTMLDivElement>(null);
   const [modalPosition, setModalPosition] = useState<{ top: number; left: number; width: number } | null>(null);
@@ -301,10 +305,12 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   const { data: userProfile } = useCompleteProfile(photoUserName, hotelDomainForProfile);
   const userRooms = useMemo(() => userProfile?.data?.rooms || [], [userProfile?.data?.rooms]);
 
-  // Buscar nome do quarto quando houver roomName
+  // Usar roomName que vem das Edge Functions (já busca o nome real no servidor)
+  // Se ainda vier como "Room {número}", significa que a Edge Function não conseguiu buscar
   useEffect(() => {
     if (!photo.roomName) {
       setRoomDisplayName(null);
+      setExtractedRoomId(null);
       return;
     }
     
@@ -333,47 +339,23 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
       roomId = String(userRooms[0].id);
     }
     
-    if (!roomId) {
-      setExtractedRoomId(null); // Limpar roomId extraído
-      setRoomDisplayName(photo.roomName); // Se não conseguir extrair ID, usar o roomName original
-      return;
-    }
-    
     // Armazenar roomId extraído para usar na renderização
     setExtractedRoomId(roomId);
     
-    // Buscar nome do quarto da API
-    const fetchRoomName = async () => {
-      const hotelDomain = getPhotoHotelDomain();
-      try {
-        const response = await fetch(`https://www.habbo.${hotelDomain}/api/public/rooms/${roomId}`, {
-          headers: { 'Accept': 'application/json' }
-        });
-        
-        if (response.ok) {
-          const roomData = await response.json();
-          if (roomData.name) {
-            setRoomDisplayName(roomData.name);
-          } else {
-            setRoomDisplayName(photo.roomName); // Fallback para roomName original
-          }
-        } else if (response.status === 404) {
-          // 404 é esperado se o quarto não existir mais - não fazer log de erro
-          setRoomDisplayName(photo.roomName); // Fallback para roomName original
-        } else {
-          // Outros erros (500, etc) - logar apenas em modo debug
-          console.debug(`[EnhancedPhotoCard] Erro ${response.status} ao buscar quarto ${roomId}:`, response.statusText);
-          setRoomDisplayName(photo.roomName); // Fallback para roomName original
-        }
-      } catch (error) {
-        // Erros de rede - logar apenas em modo debug para não poluir console
-        console.debug('[EnhancedPhotoCard] Erro de rede ao buscar nome do quarto:', error);
-        setRoomDisplayName(photo.roomName); // Fallback para roomName original
-      }
-    };
-    
-    fetchRoomName();
-  }, [photo.roomName, photo.roomId, photo.s3_url, photo.imageUrl, photo.preview_url, photo.hotelDomain, photo.hotel, userRooms]);
+    // Usar diretamente o roomName que vem das Edge Functions
+    // Se a Edge Function conseguiu buscar o nome real, ele já estará aqui
+    // Se não conseguiu, será "Room {número}" e usaremos como fallback
+    setRoomDisplayName(photo.roomName);
+  }, [photo.roomName, photo.roomId, photo.hotelDomain, photo.hotel, userRooms]);
+
+  // Fechar modal se outro modal foi aberto (controlado externamente)
+  useEffect(() => {
+    if (!isRoomModalOpen && showRoomDetails) {
+      setShowRoomDetails(false);
+      setSelectedRoomId(null);
+      setSelectedRoomHotel('');
+    }
+  }, [isRoomModalOpen, showRoomDetails]);
 
   const getPhotoOwnerAvatarUrl = (userName: string, preferredDomain?: string): string => {
     const domain = preferredDomain ? hotelCodeToDomain(preferredDomain) : getPhotoHotelDomain();
@@ -564,7 +546,7 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   const countryData = React.useMemo(() => HOTEL_COUNTRIES.find(c => c.code === photoHotelCode) || HOTEL_COUNTRIES.find(c => c.code === 'com'), [photoHotelCode]);
 
   return (
-    <div className={cn("space-y-3 relative", className)}>
+    <div ref={cardRef} className={cn("space-y-3 relative", className)}>
       {/* User Info */}
       <div className="px-1 py-2 bg-transparent">
         <div className="flex items-center gap-3">
@@ -949,9 +931,17 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  // Notificar que um modal está sendo aberto (para fechar outros)
+                  if (onRoomModalOpen) {
+                    onRoomModalOpen(photo.id || photo.photo_id);
+                  }
                   setSelectedRoomId(roomId!);
                   setSelectedRoomHotel(hotelDomain);
                   setShowRoomDetails(true);
+                  // Chamar callback para centralizar a foto no feed
+                  if (onRoomClick && cardRef.current) {
+                    onRoomClick(cardRef, photo.id || photo.photo_id);
+                  }
                 }}
               >
                 <MapPin className="w-3 h-3" />

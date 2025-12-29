@@ -28,7 +28,7 @@ const CommentsModal: React.FC<CommentsModalProps> = ({ photo, onClose }) => {
     canDeleteComment,
     isAddingComment,
     isDeletingComment
-  } = usePhotoComments(photo.photo_id || photo.id, photo.user || photo.userName);
+  } = usePhotoComments(photo.photo_id || photo.id, photo.userName);
 
   const [commentText, setCommentText] = useState('');
 
@@ -83,7 +83,7 @@ const CommentsModal: React.FC<CommentsModalProps> = ({ photo, onClose }) => {
               <div key={comment.id} className="flex items-start gap-3 p-2 hover:bg-white/5 rounded transition-colors">
                 <div className="w-10 h-10 flex-shrink-0 overflow-hidden">
                   <img
-                    src={getAvatarHeadUrl(comment.habbo_name, comment.hotel || 'br', undefined, 's')}
+                    src={getAvatarHeadUrl(comment.habbo_name, (comment as any).hotel || 'br', undefined, 's')}
                     alt={comment.habbo_name}
                     className="w-full h-full object-cover"
                     style={{ imageRendering: 'pixelated' }}
@@ -249,6 +249,17 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
 
   const [commentsModalPhoto, setCommentsModalPhoto] = useState<EnhancedPhoto | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [openRoomModalId, setOpenRoomModalId] = useState<string | null>(null);
+
+  // Handler para quando um modal de quarto é aberto
+  const handleRoomModalOpen = (photoId: string) => {
+    // Fechar modal anterior se houver
+    if (openRoomModalId && openRoomModalId !== photoId) {
+      setOpenRoomModalId(null);
+    }
+    // Marcar o novo modal como aberto
+    setOpenRoomModalId(photoId);
+  };
 
   // Calcular largura da foto quando o modal abrir
   useEffect(() => {
@@ -321,6 +332,38 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
       parent = parent.parentElement;
     }
     return null;
+  };
+
+  // Função para centralizar suavemente uma foto no feed
+  const handleRoomClick = (cardRef: React.RefObject<HTMLElement>, photoId: string) => {
+    if (!cardRef.current) return;
+
+    // Encontrar o container scrollável
+    const scrollableParent = findScrollableParent(cardRef.current);
+    if (!scrollableParent) return;
+
+    // Calcular posição para centralizar a foto
+    const cardRect = cardRef.current.getBoundingClientRect();
+    const parentRect = scrollableParent.getBoundingClientRect();
+    
+    // Posição atual do scroll
+    const currentScrollTop = scrollableParent.scrollTop;
+    
+    // Posição do card relativa ao container scrollável
+    const cardTopRelativeToParent = cardRect.top - parentRect.top + currentScrollTop;
+    
+    // Altura visível do container
+    const visibleHeight = parentRect.height;
+    
+    // Calcular scroll para centralizar (metade da altura visível menos metade da altura do card)
+    const cardHeight = cardRect.height;
+    const targetScrollTop = cardTopRelativeToParent - (visibleHeight / 2) + (cardHeight / 2);
+
+    // Scroll suave
+    scrollableParent.scrollTo({
+      top: targetScrollTop,
+      behavior: 'smooth'
+    });
   };
 
   // Salvar posição de scroll quando navegar para perfil
@@ -596,6 +639,9 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
                   hotelDomain: hotelDomain,
                   hotel: hotel
                 } as EnhancedPhoto)}
+                onRoomClick={(cardRef, photoId) => handleRoomClick(cardRef, photoId)}
+                onRoomModalOpen={handleRoomModalOpen}
+                isRoomModalOpen={openRoomModalId === photo.id}
                 showDivider={index < photos.length - 1}
               />
               );

@@ -5,6 +5,7 @@ import { Home, Star, Copy, Check } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface HabboRoom {
   id: string;
@@ -47,6 +48,7 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
   const [modalStyle, setModalStyle] = useState<React.CSSProperties>({});
   const modalRef = useRef<HTMLDivElement>(null);
   const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isScrollingProgrammaticallyRef = useRef(false);
 
   // Extrair código do hotel do domínio (ex: com.br -> br, com.tr -> tr)
   const getHotelCode = (domain: string): string => {
@@ -97,9 +99,11 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
       const modalWidth = photoRect.width * 0.9;
       const modalHeight = photoRect.height * 0.9;
       
-      // Posição centralizada começando da borda inferior da foto e sobrepondo para cima
+      // Posição centralizada horizontalmente e verticalmente, levemente abaixo do centro
       const left = photoRect.left + (photoRect.width - modalWidth) / 2;
-      const top = photoRect.bottom - modalHeight; // Começando na borda inferior e sobrepondo a foto para cima
+      // Centralizar verticalmente e deslocar levemente para baixo (5% abaixo do centro)
+      const verticalCenter = photoRect.top + (photoRect.height - modalHeight) / 2;
+      const top = verticalCenter + (modalHeight * 0.05); // 5% abaixo do centro vertical (levemente abaixo)
 
       setModalStyle({
         position: 'fixed',
@@ -107,7 +111,7 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
         top: `${top}px`,
         width: `${modalWidth}px`,
         maxHeight: `${modalHeight}px`,
-        zIndex: 1 // Mesmo z-index da foto, sobreposto mas atrás de outros elementos do console
+        zIndex: 1 // Abaixo de todos os headers (z-index 10, 99, 100) - não sobrepõe background dos headers
       });
     };
 
@@ -129,7 +133,9 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
       const modalWidth = photoRect.width * 0.9;
       const modalHeight = photoRect.height * 0.9;
       const left = photoRect.left + (photoRect.width - modalWidth) / 2;
-      const top = photoRect.bottom - modalHeight;
+      // Centralizar verticalmente e deslocar levemente para baixo (5% abaixo do centro)
+      const verticalCenter = photoRect.top + (photoRect.height - modalHeight) / 2;
+      const top = verticalCenter + (modalHeight * 0.05); // 5% abaixo do centro vertical (levemente abaixo)
 
       setModalStyle({
         position: 'fixed',
@@ -137,7 +143,7 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
         top: `${top}px`,
         width: `${modalWidth}px`,
         maxHeight: `${modalHeight}px`,
-        zIndex: 1
+        zIndex: 1 // Abaixo de todos os headers (z-index 10, 99, 100) - não sobrepõe background dos headers
       });
     };
     
@@ -153,7 +159,7 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
     };
   }, [isOpen, photoImageRef]);
 
-  // Buscar detalhes do quarto quando o modal abrir
+  // Buscar detalhes do quarto quando o modal abrir (usando Edge Function para evitar CORS)
   useEffect(() => {
     if (!isOpen || !roomId) {
       setRoom(null);
@@ -163,13 +169,22 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
     const fetchRoomDetails = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`https://www.habbo.${hotelDomain}/api/public/rooms/${roomId}`, {
-          headers: { 'Accept': 'application/json' }
+        const { data, error } = await supabase.functions.invoke('habbo-room-details', {
+          body: {
+            roomId: roomId,
+            hotelDomain: hotelDomain
+          }
         });
 
-        if (response.ok) {
-          const roomData = await response.json();
-          setRoom(roomData);
+        if (error) {
+          console.error('Erro ao buscar detalhes do quarto:', error);
+          toast.error(t('messages.error'));
+          onClose();
+          return;
+        }
+
+        if (data) {
+          setRoom(data as HabboRoom);
           
           // Tentar carregar thumbnail
           const thumbnailUrls = getRoomThumbnailUrls(roomId, hotelCode);
@@ -187,7 +202,7 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
     };
 
     fetchRoomDetails();
-  }, [isOpen, roomId, hotelDomain, hotelCode, onClose]);
+  }, [isOpen, roomId, hotelDomain, hotelCode, onClose, t]);
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '';
@@ -227,6 +242,111 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
     };
   }, []);
 
+  // Listener para fechar modal ao clicar fora (sem bloquear scroll)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      
+      // Não fechar se o clique foi no modal ou em seus filhos
+      if (modalRef.current && modalRef.current.contains(target)) {
+        return;
+      }
+
+      // Não fechar se o clique foi na foto (photoImageRef)
+      if (photoImageRef?.current && photoImageRef.current.contains(target)) {
+        return;
+      }
+
+      // Fechar o modal
+      onClose();
+    };
+
+    // Adicionar listener com delay para não interferir com cliques no modal
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose, photoImageRef]);
+
+  // Listener para fechar modal ao fazer scroll (como no feed de fotos)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let lastScrollTime = Date.now();
+    let scrollTimeout: NodeJS.Timeout;
+
+    const handleScroll = () => {
+      // Não fechar se o scroll foi causado programaticamente (centralização da foto)
+      if (isScrollingProgrammaticallyRef.current) {
+        return;
+      }
+
+      // Verificar se o scroll foi manual (usuário interagiu recentemente)
+      const now = Date.now();
+      const timeSinceLastScroll = now - lastScrollTime;
+      
+      // Se o scroll aconteceu muito rápido após o modal abrir, provavelmente é programático
+      if (timeSinceLastScroll < 1200) {
+        return;
+      }
+
+      // Fechar o modal quando o usuário faz scroll manual
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        onClose();
+      }, 50); // Pequeno delay para evitar múltiplos fechamentos
+      
+      lastScrollTime = now;
+    };
+
+    // Delay antes de ativar o listener para evitar fechar durante scroll programático inicial
+    const activationTimeout = setTimeout(() => {
+      // Adicionar listener de scroll em todos os elementos scrolláveis
+      const scrollableElements = document.querySelectorAll('[class*="overflow-y-auto"], [class*="overflow-auto"], [class*="overflow-scroll"]');
+      
+      scrollableElements.forEach((element) => {
+        element.addEventListener('scroll', handleScroll, { passive: true });
+      });
+
+      // Também adicionar no window para capturar scroll da página
+      window.addEventListener('scroll', handleScroll, { passive: true });
+    }, 1200); // Delay de 1.2 segundos para permitir scroll programático completar
+
+    return () => {
+      clearTimeout(activationTimeout);
+      clearTimeout(scrollTimeout);
+      const scrollableElements = document.querySelectorAll('[class*="overflow-y-auto"], [class*="overflow-auto"], [class*="overflow-scroll"]');
+      scrollableElements.forEach((element) => {
+        element.removeEventListener('scroll', handleScroll);
+      });
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [isOpen, onClose]);
+
+  // Marcar quando o scroll programático está acontecendo (para evitar fechar o modal)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Quando o modal abre, marcar que vamos fazer scroll programático
+    isScrollingProgrammaticallyRef.current = true;
+    
+    // Após o scroll programático terminar (tempo suficiente para animação suave)
+    const timeout = setTimeout(() => {
+      isScrollingProgrammaticallyRef.current = false;
+    }, 1200); // Tempo suficiente para scroll suave completar
+
+    return () => {
+      clearTimeout(timeout);
+      isScrollingProgrammaticallyRef.current = false;
+    };
+  }, [isOpen]);
+
   const handleThumbnailError = () => {
     const thumbnailUrls = getRoomThumbnailUrls(roomId, hotelCode);
     const currentIndex = thumbnailUrls.indexOf(thumbnailUrl);
@@ -254,12 +374,6 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
 
   return (
     <>
-      {/* Overlay para fechar ao clicar fora - apenas atrás do modal */}
-      <div
-        className="fixed inset-0 bg-transparent"
-        onClick={onClose}
-        style={{ pointerEvents: 'auto', zIndex: 0 }}
-      />
       
       {/* Modal renderizado dentro do container da foto */}
       <div
@@ -378,11 +492,11 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
 
                 {/* Nome e Descrição - compacto (recolhido quando thumbnail expandido, mas sempre visível quando descrição expandida) */}
                 <div className={cn(
-                  "space-y-1 transition-all duration-300 overflow-hidden",
-                  isThumbnailExpanded ? "max-h-0 opacity-0" : isDescriptionExpanded ? "max-h-[500px] opacity-100" : "max-h-40 opacity-100"
+                  "space-y-1 transition-all duration-300",
+                  isThumbnailExpanded ? "max-h-0 opacity-0 overflow-hidden" : isDescriptionExpanded ? "max-h-[500px] opacity-100" : "max-h-40 opacity-100 overflow-hidden"
                 )}>
                   <div className="flex items-start justify-between gap-2 relative">
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <h3 
                         className={cn(
                           "font-semibold text-sm text-white leading-tight cursor-pointer hover:text-white/90 transition-colors",
@@ -396,18 +510,27 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
                         }}
                       >{room.name}</h3>
                       {room.description && (
-                        <p 
+                        <div 
                           className={cn(
-                            "text-xs text-white/60 mt-0.5 cursor-pointer hover:text-white/80 transition-colors",
-                            isDescriptionExpanded ? "" : "line-clamp-1"
+                            "mt-0.5 transition-all duration-300",
+                            isDescriptionExpanded 
+                              ? "max-h-[400px] overflow-y-auto pr-1 custom-scrollbar" 
+                              : "overflow-hidden"
                           )}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsDescriptionExpanded(!isDescriptionExpanded);
-                          }}
                         >
-                          {room.description}
-                        </p>
+                          <p 
+                            className={cn(
+                              "text-xs text-white/60 cursor-pointer hover:text-white/80 transition-colors break-words",
+                              isDescriptionExpanded ? "" : "line-clamp-1"
+                            )}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsDescriptionExpanded(!isDescriptionExpanded);
+                            }}
+                          >
+                            {room.description}
+                          </p>
+                        </div>
                       )}
                     </div>
                     {/* Botão de copiar - expandível para a esquerda */}

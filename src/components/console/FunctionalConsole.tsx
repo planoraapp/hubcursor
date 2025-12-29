@@ -8,6 +8,7 @@ import { useCompleteProfile } from '@/hooks/useCompleteProfile';
 import { useUnifiedPhotoSystem } from '@/hooks/useUnifiedPhotoSystem';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/contexts/I18nContext';
+import { supabase } from '@/integrations/supabase/client';
 import { PixelFrame } from './PixelFrame';
 import { cn } from '@/lib/utils';
 import { BadgesModal } from '@/components/profile/modals/BadgesModal';
@@ -93,6 +94,17 @@ const getTabs = (t: (key: string) => string): TabButton[] => [
   }
 ];
 
+// Função helper centralizada para determinar se é o próprio perfil
+// Retorna true apenas quando: não está visualizando outro usuário E está logado E username é o mesmo do usuário logado E não é habbohub
+const calculateIsOwnProfile = (
+  viewingUser: string | null | undefined,
+  habboAccount: any,
+  currentUser: string | null | undefined,
+  username: string | null | undefined
+): boolean => {
+  return !viewingUser && !!habboAccount && !!currentUser && !!username && username === currentUser && username !== 'habbohub';
+};
+
 export const FunctionalConsole: React.FC = () => {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<TabType>('account');
@@ -158,7 +170,8 @@ export const FunctionalConsole: React.FC = () => {
     });
   };
 
-  const togglePhotoVisibility = (photoId: string) => {
+  const togglePhotoVisibility = async (photoId: string) => {
+    // Esta função será atualizada após habboAccount ser declarado
     setHiddenPhotos((prev) =>
       prev.includes(photoId)
         ? prev.filter((id) => id !== photoId)
@@ -244,10 +257,6 @@ export const FunctionalConsole: React.FC = () => {
       }
     }
     
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FunctionalConsole.tsx:handlePhotoClick:roomId-extracted',message:'RoomId extraído',data:{originalRoomId:photo.roomId || 'undefined',extractedRoomId:roomId || 'undefined',originalRoomName:photo.roomName,hotelDomain,hasRoomId:!!photo.roomId,hasExtractedRoomId:!!roomId,roomNameMatchResult:photo.roomName ? photo.roomName.match(/Room\s+(\d+)/i) : null,numberMatchResult:photo.roomName ? photo.roomName.match(/(\d+)/) : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    
     // Determinar userName: usar do photo, depois do username atual, depois do viewingUser
     const photoUserName = photo.userName || username || viewingUser;
     
@@ -259,7 +268,7 @@ export const FunctionalConsole: React.FC = () => {
       date: photo.date || new Date().toLocaleDateString('pt-BR'),
       likes: photo.likes || photo.likesCount || 0,
       roomName: photo.roomName || undefined,
-      roomId: roomId, // Usar roomId extraído da mesma forma que EnhancedPhotoCard
+      roomId: roomId, // Passar roomId extraído (pode ser undefined se não foi possível extrair)
       hotel: photo.hotel || (hotelDomain === 'com.br' ? 'br' : hotelDomain === 'com.tr' ? 'tr' : hotelDomain === 'com' ? 'com' : hotelDomain),
       hotelDomain: hotelDomain,
       caption: photo.caption || undefined,
@@ -287,8 +296,60 @@ export const FunctionalConsole: React.FC = () => {
     getPhotoInteractions, setSelectedPhoto, toggleLike, addComment, habboAccount, username, setActiveTab,
     activeModal, setActiveModal, handlePhotoClick,
     isEditMode, toggleEditMode, bodyDirection, headDirection, rotateBody, rotateHead,
-    hiddenPhotos, togglePhotoVisibility, viewingUser
+    hiddenPhotos, togglePhotoVisibility: togglePhotoVisibilityWithSave, viewingUser
   }) => {
+    // Ref para o container scrollável
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const previousScrollPositionRef = useRef<number>(0);
+
+    // Preservar posição de scroll quando hiddenPhotos muda durante edição
+    useEffect(() => {
+      if (isEditMode && scrollContainerRef.current && previousScrollPositionRef.current > 0) {
+        // Restaurar posição quando hiddenPhotos muda durante edição
+        const savedPosition = previousScrollPositionRef.current;
+        // Usar múltiplos requestAnimationFrame para garantir que o DOM foi atualizado
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (scrollContainerRef.current) {
+              scrollContainerRef.current.scrollTop = savedPosition;
+            }
+          });
+        });
+      }
+    }, [hiddenPhotos, isEditMode]);
+
+    // Salvar posição de scroll continuamente durante edição
+    const prevEditModeRef = useRef(isEditMode);
+    useEffect(() => {
+      if (isEditMode && scrollContainerRef.current) {
+        const handleScroll = () => {
+          if (scrollContainerRef.current) {
+            previousScrollPositionRef.current = scrollContainerRef.current.scrollTop;
+          }
+        };
+        
+        const container = scrollContainerRef.current;
+        container.addEventListener('scroll', handleScroll, { passive: true });
+        
+        // Salvar posição inicial
+        previousScrollPositionRef.current = container.scrollTop;
+        
+        return () => {
+          container.removeEventListener('scroll', handleScroll);
+        };
+      } else if (prevEditModeRef.current && !isEditMode) {
+        // Ao sair do modo de edição (salvar), resetar scroll ao topo
+        if (scrollContainerRef.current) {
+          requestAnimationFrame(() => {
+            if (scrollContainerRef.current) {
+              scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          });
+        }
+      }
+      prevEditModeRef.current = isEditMode;
+    }, [isEditMode]);
+
     // Detectar perfil privado APENAS se a API indicar explicitamente
     const isProfilePrivate = isViewingOtherUser && user?.profileVisible === false;
     
@@ -296,10 +357,13 @@ export const FunctionalConsole: React.FC = () => {
     const hasNoPhotos = (photos?.length || 0) === 0;
     const isPrivateProfile = user?.profileVisible === false;
     
-    // Determinar se é o próprio perfil: só é true se não estiver visualizando outro usuário E for o próprio usuário logado
-    // Se estiver visualizando habbohub, nunca é o próprio perfil (mesmo que o usuário logado tenha esse nome)
-    // isOwnProfile deve ser true apenas quando: não está visualizando outro usuário E está logado E username é o mesmo do usuário logado E não é habbohub
-    const isOwnProfile = !isViewingOtherUser && !!habboAccount && currentUser && username === currentUser && username !== 'habbohub';
+    // Determinar se é o próprio perfil usando função helper centralizada
+    const isOwnProfile = calculateIsOwnProfile(
+      isViewingOtherUser ? viewingUsername : null,
+      habboAccount,
+      currentUser,
+      username
+    );
     
     // Verificar se está visualizando o perfil do habbohub enquanto logado
     const isViewingHabbohubWhileLoggedIn = !!habboAccount && username === 'habbohub' && currentUser && currentUser !== 'habbohub';
@@ -424,7 +488,15 @@ export const FunctionalConsole: React.FC = () => {
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
               <div className="text-lg font-semibold text-white">
-                {isProfilePrivate ? '0' : (photos?.length || 0)}
+                {isProfilePrivate ? '0' : (
+                  // Contar apenas fotos visíveis (não ocultas quando não está em modo de edição)
+                  (photos || []).filter((photo, index) => {
+                    const photoId = photo.id || `photo-${index}`;
+                    const isHidden = (hiddenPhotos || []).includes(photoId);
+                    // Em modo de edição, mostra todas; fora dele, só as visíveis
+                    return isEditMode || !isHidden;
+                  }).length
+                )}
               </div>
               <div className="text-xs text-white/60">{t('pages.console.photos')}</div>
             </div>
@@ -443,7 +515,7 @@ export const FunctionalConsole: React.FC = () => {
         <div className="px-4">
           {isOwnProfile ? (
             <button onClick={toggleEditMode} className="w-full py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+              <img src="/assets/settings.gif" alt="⚙️" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
               {isEditMode ? t('pages.console.saveChanges') : t('pages.console.editProfile')}
             </button>
           ) : (
@@ -583,16 +655,29 @@ export const FunctionalConsole: React.FC = () => {
                   return (
                     <div 
                       key={photoId} 
-                      className={`relative group cursor-pointer ${isEditMode && isHidden ? 'opacity-30' : ''}`}
-                      onClick={() => {
-                        if (!isEditMode && handlePhotoClick) {
+                      className={`relative group ${isEditMode ? 'cursor-default' : 'cursor-pointer'} ${isEditMode && isHidden ? 'opacity-30' : ''}`}
+                      onClick={(e) => {
+                        // Em modo de edição, não fazer nada ao clicar no container
+                        if (isEditMode) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          return;
+                        }
+                        if (handlePhotoClick) {
                           // Chamar handlePhotoClick para abrir a foto ampliada
                           handlePhotoClick(photo, index);
                           setActiveTab('photo'); // Mudar para a aba de foto individual
                         }
                       }}
+                      onMouseDown={(e) => {
+                        // Em modo de edição, prevenir qualquer ação do container pai
+                        if (isEditMode) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }
+                      }}
                     >
-                    <div className="w-full aspect-square bg-gray-700 overflow-hidden">
+                    <div className="w-full aspect-square bg-gray-700 overflow-hidden relative">
                   <img 
                     src={photo.imageUrl || photo.url || `https://habbo-stories-content.s3.amazonaws.com/servercamera/purchased/hhbr/p-464837-${1755308009079 + index}.png`} 
                     alt={photo.caption || `Foto ${index + 1}`} 
@@ -602,21 +687,40 @@ export const FunctionalConsole: React.FC = () => {
                       target.src = '/placeholder.svg';
                     }}
                   />
-                      {isEditMode && (
+                      {isEditMode && isOwnProfile && (
                         <button 
-                          onClick={(e) => { e.stopPropagation(); togglePhotoVisibility(photoId); }}
-                          className={`absolute top-1 right-1 z-10 text-white p-1 rounded-full text-xs flex items-center justify-center w-6 h-6 transition-all ${
+                          onClick={(e) => { 
+                            e.preventDefault();
+                            e.stopPropagation(); 
+                            // Salvar posição de scroll antes de atualizar estado
+                            if (scrollContainerRef.current) {
+                              previousScrollPositionRef.current = scrollContainerRef.current.scrollTop;
+                            }
+                            togglePhotoVisibilityWithSave(photoId); 
+                          }}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          className={`absolute top-1 right-1 z-[100] text-white p-1 rounded-full text-xs flex items-center justify-center transition-all ${
                             isHidden 
                               ? 'bg-green-500 hover:bg-green-600 hover:scale-110' 
                               : 'bg-transparent'
                           }`}
+                          style={{ 
+                            filter: 'drop-shadow(2px 2px 2px rgba(128, 128, 128, 0.5))',
+                            transform: 'scale(1.2)',
+                            transformOrigin: 'center',
+                            pointerEvents: 'auto',
+                            zIndex: 100
+                          }}
                           title={isHidden ? t('pages.console.restorePhoto') : t('pages.console.hidePhoto')}
                         >
-                          {isHidden ? '↺' : <img src="/assets/console/minimize.png" alt="X" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />}
+                          {isHidden ? '↺' : <img src="/assets/console/minimize.png" alt="X" className="rounded-full border border-black" style={{ imageRendering: 'pixelated' }} />}
                         </button>
                       )}
                       {!isEditMode && (
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors">
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors" style={{ zIndex: 1 }}>
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-2 left-2 right-2">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
@@ -654,6 +758,126 @@ export const FunctionalConsole: React.FC = () => {
   // PhotoModal temporariamente removido
   const { habboAccount, isLoggedIn, loading: authLoading } = useAuth();
   const { getPhotoInteractions, toggleLike, addComment } = usePhotoInteractions();
+
+  // Carregar preferências de fotos ocultas do banco de dados
+  useEffect(() => {
+    const loadHiddenPhotos = async () => {
+      if (!habboAccount?.supabase_user_id || !habboAccount?.habbo_name) {
+        setHiddenPhotos([]);
+        return;
+      }
+
+      try {
+        // Buscar preferências via Edge Function (bypassa RLS)
+        const { data, error } = await supabase.functions.invoke('user-photo-preferences', {
+          body: {
+            action: 'get',
+            user_id: habboAccount.supabase_user_id,
+            habbo_name: habboAccount.habbo_name,
+            hotel: habboAccount.hotel || 'br'
+          }
+        });
+
+        if (error || !data?.success) {
+          console.error('Erro ao carregar preferências de fotos:', error || data?.error);
+          return;
+        }
+
+        if (data?.data) {
+          const hiddenPhotoIds = data.data.map((pref: any) => pref.photo_id);
+          setHiddenPhotos(hiddenPhotoIds);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar preferências de fotos:', error);
+      }
+    };
+
+    loadHiddenPhotos();
+  }, [habboAccount?.supabase_user_id, habboAccount?.habbo_name, habboAccount?.hotel]);
+
+  // Atualizar togglePhotoVisibility para salvar no banco
+  const togglePhotoVisibilityWithSave = async (photoId: string) => {
+    // Verificar se é o próprio perfil antes de permitir edição usando função helper centralizada
+    const isOwnProfileCheck = calculateIsOwnProfile(viewingUser, habboAccount, currentUser, username);
+    
+    if (!isOwnProfileCheck) {
+      console.warn('Tentativa de editar perfil que não é o próprio', {
+        viewingUser,
+        hasHabboAccount: !!habboAccount,
+        currentUser,
+        username,
+        isOwnProfile: isOwnProfileCheck
+      });
+      return;
+    }
+
+    if (!habboAccount?.supabase_user_id || !habboAccount?.habbo_name) {
+      // Se não estiver logado, apenas atualizar estado local
+      togglePhotoVisibility(photoId);
+      return;
+    }
+
+    const isCurrentlyHidden = hiddenPhotos.includes(photoId);
+    const newIsHidden = !isCurrentlyHidden;
+
+    // Atualizar estado local imediatamente
+    // A posição de scroll será preservada automaticamente pelo useEffect no AccountTab
+    setHiddenPhotos((prev) =>
+      isCurrentlyHidden
+        ? prev.filter((id) => id !== photoId)
+        : [...prev, photoId]
+    );
+
+    // Salvar no banco de dados via Edge Function (bypassa RLS)
+    try {
+      if (newIsHidden) {
+        // Inserir ou atualizar preferência para ocultar
+        const { data, error } = await supabase.functions.invoke('user-photo-preferences', {
+          body: {
+            action: 'upsert',
+            user_id: habboAccount.supabase_user_id,
+            habbo_name: habboAccount.habbo_name,
+            hotel: habboAccount.hotel || 'br',
+            photo_id: photoId,
+            is_hidden: true
+          }
+        });
+
+        if (error || !data?.success) {
+          console.error('Erro ao salvar preferência de foto oculta:', error || data?.error);
+          // Reverter estado local em caso de erro
+          setHiddenPhotos((prev) =>
+            isCurrentlyHidden ? [...prev, photoId] : prev.filter((id) => id !== photoId)
+          );
+        }
+      } else {
+        // Remover preferência (foto será visível)
+        const { data, error } = await supabase.functions.invoke('user-photo-preferences', {
+          body: {
+            action: 'delete',
+            user_id: habboAccount.supabase_user_id,
+            habbo_name: habboAccount.habbo_name,
+            hotel: habboAccount.hotel || 'br',
+            photo_id: photoId
+          }
+        });
+
+        if (error || !data?.success) {
+          console.error('Erro ao remover preferência de foto oculta:', error || data?.error);
+          // Reverter estado local em caso de erro
+          setHiddenPhotos((prev) =>
+            isCurrentlyHidden ? [...prev, photoId] : prev.filter((id) => id !== photoId)
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao salvar preferência de foto:', error);
+      // Reverter estado local em caso de erro
+      setHiddenPhotos((prev) =>
+        isCurrentlyHidden ? [...prev, photoId] : prev.filter((id) => id !== photoId)
+      );
+    }
+  };
   
   // Usar o usuário logado como padrão, ou o usuário sendo visualizado
   // IMPORTANTE: Usar habboAccount quando disponível, mas aguardar carregamento
@@ -710,12 +934,27 @@ export const FunctionalConsole: React.FC = () => {
   
   // Estratégia: Usar username como prioridade (mais confiável na API do Habbo)
   // uniqueId será usado apenas como fallback se username não funcionar
+  // IMPORTANTE: Se não temos username válido, passar undefined para que o hook use apenas uniqueId
+  const usernameForQuery = username && username.trim() !== '' ? username.trim() : undefined;
+  const uniqueIdForQuery = viewingUserUniqueId || (!viewingUser && habboUniqueId ? habboUniqueId : undefined);
+  
+  // #region agent log
+  React.useEffect(() => {
+    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FunctionalConsole.tsx:useCompleteProfile:params',message:'Parâmetros para useCompleteProfile',data:{username:username || 'undefined',usernameType:typeof username,usernameForQuery:usernameForQuery || 'undefined',effectiveHotelForProfile:effectiveHotelForProfile,uniqueIdForQuery:uniqueIdForQuery || 'undefined',viewingUser:viewingUser || 'undefined',viewingUserUniqueId:viewingUserUniqueId || 'undefined',habboUniqueId:habboUniqueId || 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  }, [username, usernameForQuery, effectiveHotelForProfile, uniqueIdForQuery, viewingUser, viewingUserUniqueId, habboUniqueId]);
+  // #endregion
+  
   const { data: completeProfile, isLoading, error: profileError } = useCompleteProfile(
-    username || '', // Passar string vazia se não houver username - a query será desabilitada
+    usernameForQuery || '', // Passar string vazia se não houver username - o hook habilita query se houver uniqueId
     effectiveHotelForProfile,
-    // Priorizar uniqueId do usuário sendo visualizado, depois uniqueId do usuário logado
-    viewingUserUniqueId || (!viewingUser && habboUniqueId ? habboUniqueId : undefined)
+    uniqueIdForQuery
   );
+  
+  // #region agent log
+  React.useEffect(() => {
+    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FunctionalConsole.tsx:useCompleteProfile:result',message:'Resultado de useCompleteProfile',data:{isLoading:isLoading,hasError:!!profileError,errorMessage:profileError?.message || 'undefined',hasData:!!completeProfile,profileName:completeProfile?.name || 'undefined',profileUniqueId:completeProfile?.uniqueId || 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+  }, [isLoading, profileError, completeProfile]);
+  // #endregion
   const photosHotel =
     completeProfile?.hotelCode || baseHotelForPhotos;
 
@@ -844,6 +1083,9 @@ export const FunctionalConsole: React.FC = () => {
   // Função para navegar para perfil de outro usuário (vai para aba Account)
   // Wrapper para navigateToProfile que integra com o hook e gerencia tabs
   const handleNavigateToProfile = (targetUsername: string, hotelDomain?: string, uniqueId?: string) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FunctionalConsole.tsx:handleNavigateToProfile:entry',message:'handleNavigateToProfile chamado',data:{targetUsername:targetUsername || 'undefined',targetUsernameType:typeof targetUsername,hotelDomain:hotelDomain || 'undefined',uniqueId:uniqueId || 'undefined',uniqueIdType:typeof uniqueId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     const cleanedUsername = (targetUsername || '').trim();
     
     // Se estiver na aba Photos, usar navigateToProfileFromPhotos para manter histórico
@@ -988,6 +1230,9 @@ export const FunctionalConsole: React.FC = () => {
 
     const isLoadingData = isLoading || photosLoading;
     
+    // Calcular isOwnProfile usando função helper centralizada
+    const isOwnProfile = calculateIsOwnProfile(viewingUser, habboAccount, currentUser, username);
+    
     switch (activeTab) {
       case 'account':
         return <AccountTab 
@@ -1002,6 +1247,7 @@ export const FunctionalConsole: React.FC = () => {
           isViewingOtherUser={!!viewingUser}
           handlePhotoClick={handlePhotoClick}
           viewingUsername={viewingUser}
+          isOwnProfile={isOwnProfile}
           currentUser={currentUser}
           getPhotoInteractions={getPhotoInteractions}
           setSelectedPhoto={setSelectedPhoto}
@@ -1019,7 +1265,7 @@ export const FunctionalConsole: React.FC = () => {
           rotateBody={rotateBody}
           rotateHead={rotateHead}
           hiddenPhotos={hiddenPhotos}
-          togglePhotoVisibility={togglePhotoVisibility}
+          togglePhotoVisibility={togglePhotoVisibilityWithSave}
           viewingUser={viewingUser}
         />;
       case 'friends':
@@ -1056,7 +1302,7 @@ export const FunctionalConsole: React.FC = () => {
           rotateBody={rotateBody}
           rotateHead={rotateHead}
           hiddenPhotos={hiddenPhotos}
-          togglePhotoVisibility={togglePhotoVisibility}
+          togglePhotoVisibility={togglePhotoVisibilityWithSave}
           handleShowCommentsModal={handleShowCommentsModal}
           viewingUser={undefined} // Sempre undefined na aba Friends
           friendsRefreshTrigger={friendsRefreshTrigger}
@@ -1099,7 +1345,7 @@ export const FunctionalConsole: React.FC = () => {
             rotateBody={rotateBody}
             rotateHead={rotateHead}
             hiddenPhotos={hiddenPhotos}
-            togglePhotoVisibility={togglePhotoVisibility}
+            togglePhotoVisibility={togglePhotoVisibilityWithSave}
             setActiveTab={setActiveTab}
             viewingUser={viewingUser}
             onBackToPhotosFeed={() => {
@@ -1463,7 +1709,14 @@ const FeedTab: React.FC<any> = ({
   const hasNoPhotos = (photos?.length || 0) === 0;
   const isPrivateProfile = user?.profileVisible === false;
   
-  const isOwnProfile = !isViewingOtherUser || viewingUsername === currentUser;
+  // Usar função helper centralizada para calcular isOwnProfile
+  // Nota: FeedTab recebe isViewingOtherUser como boolean, então convertemos para viewingUsername quando true
+  const isOwnProfile = calculateIsOwnProfile(
+    isViewingOtherUser ? viewingUsername : null,
+    habboAccount,
+    currentUser,
+    username
+  );
   if (isLoading) {
     return (
       <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
@@ -1609,7 +1862,7 @@ const FeedTab: React.FC<any> = ({
         <div className="px-4">
           {isOwnProfile ? (
             <button onClick={toggleEditMode} className="w-full py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+              <img src="/assets/settings.gif" alt="⚙️" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
               {isEditMode ? t('pages.console.saveChanges') : t('pages.console.editProfile')}
             </button>
           ) : (
@@ -1764,14 +2017,29 @@ const FeedTab: React.FC<any> = ({
                       />
                       {isEditMode && (
                         <button 
-                          onClick={(e) => { e.stopPropagation(); togglePhotoVisibility(photoId); }}
-                          className="absolute top-1 right-1 bg-transparent text-white p-1 rounded-full text-xs flex items-center justify-center w-5 h-5"
+                          onClick={(e) => { 
+                            e.preventDefault();
+                            e.stopPropagation(); 
+                            togglePhotoVisibility(photoId); 
+                          }}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          className="absolute top-1 right-1 z-[100] bg-transparent text-white p-1 rounded-full text-xs flex items-center justify-center"
+                          style={{ 
+                            filter: 'drop-shadow(2px 2px 2px rgba(128, 128, 128, 0.5))',
+                            transform: 'scale(1.2)',
+                            transformOrigin: 'center',
+                            pointerEvents: 'auto',
+                            zIndex: 100
+                          }}
                           title={isHidden ? t('pages.console.showPhoto') : t('pages.console.hidePhoto')}
                         >
-                          {isHidden ? '+' : <img src="/assets/console/minimize.png" alt="X" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />}
+                          {isHidden ? '+' : <img src="/assets/console/minimize.png" alt="X" className="rounded-full border border-black" style={{ imageRendering: 'pixelated' }} />}
                         </button>
                       )}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors">
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors" style={{ pointerEvents: isEditMode ? 'none' : 'auto', zIndex: 1 }}>
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-2 left-2 right-2">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -1856,7 +2124,7 @@ const FeedTab: React.FC<any> = ({
           <FriendsPhotoFeed
             currentUserName={habboAccount?.habbo_name || currentUser || ''}
             hotel={habboAccount?.hotel || 'br'}
-            onNavigateToProfile={onNavigateToProfile || handleNavigateToProfile}
+            onNavigateToProfile={onNavigateToProfile}
             refreshTrigger={friendsRefreshTrigger}
             isHeaderVisible={isHeaderVisible}
           />

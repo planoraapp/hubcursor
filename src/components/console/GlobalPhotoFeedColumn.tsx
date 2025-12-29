@@ -31,6 +31,17 @@ const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollRestoredRef = useRef(false);
   const [newPhotoIds, setNewPhotoIds] = useState<Set<string>>(new Set());
+  const [openRoomModalId, setOpenRoomModalId] = useState<string | null>(null);
+
+  // Handler para quando um modal de quarto é aberto
+  const handleRoomModalOpen = (photoId: string) => {
+    // Fechar modal anterior se houver
+    if (openRoomModalId && openRoomModalId !== photoId) {
+      setOpenRoomModalId(null);
+    }
+    // Marcar o novo modal como aberto
+    setOpenRoomModalId(photoId);
+  };
   
   // Chave única para salvar posição de scroll por hotel
   const scrollPositionKey = `feed-scroll-global-${hotel}`;
@@ -268,6 +279,34 @@ const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
 
   const handleCommentsClick = (photoId: string) => {};
 
+  // Função para centralizar suavemente uma foto no feed
+  const handleRoomClick = (cardRef: React.RefObject<HTMLElement>, photoId: string) => {
+    if (!cardRef.current || !scrollContainerRef.current) return;
+
+    // Calcular posição para centralizar a foto
+    const cardRect = cardRef.current.getBoundingClientRect();
+    const parentRect = scrollContainerRef.current.getBoundingClientRect();
+    
+    // Posição atual do scroll
+    const currentScrollTop = scrollContainerRef.current.scrollTop;
+    
+    // Posição do card relativa ao container scrollável
+    const cardTopRelativeToParent = cardRect.top - parentRect.top + currentScrollTop;
+    
+    // Altura visível do container
+    const visibleHeight = parentRect.height;
+    
+    // Calcular scroll para centralizar (metade da altura visível menos metade da altura do card)
+    const cardHeight = cardRect.height;
+    const targetScrollTop = cardTopRelativeToParent - (visibleHeight / 2) + (cardHeight / 2);
+
+    // Scroll suave
+    scrollContainerRef.current.scrollTo({
+      top: targetScrollTop,
+      behavior: 'smooth'
+    });
+  };
+
   return (
     <>
       <div 
@@ -316,6 +355,9 @@ const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
                             onUserClick={handleUserClick}
                             onLikesClick={handleLikesClick}
                             onCommentsClick={handleCommentsClick}
+                            onRoomClick={(cardRef, photoId) => handleRoomClick(cardRef, photoId)}
+                            onRoomModalOpen={handleRoomModalOpen}
+                            isRoomModalOpen={openRoomModalId === (photo.id || photo.photo_id)}
                             showDivider={true}
                           />
                         </div>

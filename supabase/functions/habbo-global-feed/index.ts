@@ -39,6 +39,7 @@ interface EnhancedPhoto {
   contentHeight?: number;
   caption: string;
   roomName: string;
+  roomId?: number | string;
   s3_url: string;
   preview_url: string;
   taken_date: string;
@@ -54,6 +55,39 @@ function formatHabboDateFromTime(time: number): string {
     month: '2-digit',
     year: 'numeric',
   });
+}
+
+// Função auxiliar para buscar nome do quarto via API
+async function getRoomName(roomId: number, hotelDomain: string): Promise<string | null> {
+  try {
+    const url = `https://www.habbo.${hotelDomain}/api/public/rooms/${roomId}`;
+    console.log(`[habbo-global-feed] 🔍 Buscando nome do quarto ${roomId} no hotel ${hotelDomain}`);
+    
+    const response = await fetch(url, {
+      headers: { 
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) HabboHubBot/1.0'
+      }
+    });
+    
+    if (response.ok) {
+      const roomData = await response.json();
+      if (roomData && roomData.name) {
+        console.log(`[habbo-global-feed] ✅ Nome do quarto ${roomId} encontrado: "${roomData.name}"`);
+        return roomData.name;
+      } else {
+        console.log(`[habbo-global-feed] ⚠️ Quarto ${roomId} retornou sem nome`);
+      }
+    } else if (response.status === 404) {
+      // Quarto não existe mais - retornar null para usar fallback
+      console.log(`[habbo-global-feed] ⚠️ Quarto ${roomId} não encontrado (404)`);
+    } else {
+      console.log(`[habbo-global-feed] ❌ Erro ${response.status} ao buscar quarto ${roomId}: ${response.statusText}`);
+    }
+  } catch (error) {
+    console.error(`[habbo-global-feed] ❌ Erro de rede ao buscar quarto ${roomId}:`, error);
+  }
+  return null;
 }
 
 function mapRawToEnhancedPhoto(raw: HabboRawPhoto): EnhancedPhoto {
@@ -84,7 +118,8 @@ function mapRawToEnhancedPhoto(raw: HabboRawPhoto): EnhancedPhoto {
     contentWidth: undefined,
     contentHeight: undefined,
     caption: '',
-    roomName: `Room ${raw.room_id}`,
+    roomName: `Room ${raw.room_id}`, // Fallback - será substituído se encontrarmos o nome real
+    roomId: raw.room_id, // Incluir roomId explícito
     s3_url: httpsUrl,
     preview_url: httpsPreview,
     taken_date: timestamp,
@@ -244,6 +279,38 @@ serve(async (req) => {
 
     const pageRaw = rawPhotos.slice(startIndex, endIndex);
     const enhancedPhotos = pageRaw.map(mapRawToEnhancedPhoto);
+
+    console.log(`[🌍 GLOBAL FEED] Buscando nomes de quartos para ${enhancedPhotos.length} fotos...`);
+    
+    // Buscar nomes dos quartos em paralelo (limitando concorrência para evitar rate limiting)
+    const CONCURRENT_ROOM_FETCHES = 5;
+    const roomFetchPromises: Promise<void>[] = [];
+    let roomsFound = 0;
+    let roomsNotFound = 0;
+    let roomsError = 0;
+    
+    for (let i = 0; i < enhancedPhotos.length; i += CONCURRENT_ROOM_FETCHES) {
+      const batch = enhancedPhotos.slice(i, i + CONCURRENT_ROOM_FETCHES);
+      const batchPromises = batch.map(async (photo) => {
+        if (photo.roomId && photo.hotelDomain) {
+          const roomName = await getRoomName(Number(photo.roomId), photo.hotelDomain);
+          if (roomName) {
+            photo.roomName = roomName;
+            roomsFound++;
+          } else {
+            roomsNotFound++;
+          }
+        } else {
+          roomsError++;
+        }
+      });
+      roomFetchPromises.push(...batchPromises);
+    }
+    
+    // Aguardar todas as buscas de nomes de quartos
+    await Promise.allSettled(roomFetchPromises);
+    
+    console.log(`[🌍 GLOBAL FEED] Resultado da busca de nomes: ${roomsFound} encontrados, ${roomsNotFound} não encontrados, ${roomsError} sem roomId`);
 
     const uniqueUsers = [
       ...new Set(enhancedPhotos.map(p => p.userName.toLowerCase())),
