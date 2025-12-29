@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Heart, MessageCircle, User, Calendar, MapPin, MoreHorizontal, Send } from 'lucide-react';
 import { usePhotoLikes } from '@/hooks/usePhotoLikes';
@@ -14,6 +14,7 @@ import { RoomDetailsModal } from './modals/RoomDetailsModal';
 import { getPhotoId, getPhotoUserName } from '@/utils/photoNormalizer';
 import { getAvatarHeadUrl, getAvatarFallbackUrl } from '@/utils/avatarHelpers';
 import { getHotelFlag, hotelDomainToCode, HOTEL_COUNTRIES } from '@/utils/hotelHelpers';
+import { useCompleteProfile } from '@/hooks/useCompleteProfile';
 
 export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   photo,
@@ -33,6 +34,7 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [selectedRoomHotel, setSelectedRoomHotel] = useState<string>('');
   const [roomDisplayName, setRoomDisplayName] = useState<string | null>(null);
+  const [extractedRoomId, setExtractedRoomId] = useState<string | null>(null);
   const photoImageRef = React.useRef<HTMLImageElement>(null);
   const [photoWidth, setPhotoWidth] = useState<number | null>(null);
   const commentFormRef = React.useRef<HTMLDivElement>(null);
@@ -293,6 +295,12 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
     return 'br';
   };
 
+  // Buscar perfil completo do usuário para obter quartos (para fallback de roomId)
+  const photoUserName = getPhotoUserName(photo);
+  const hotelDomainForProfile = getPhotoHotelDomain();
+  const { data: userProfile } = useCompleteProfile(photoUserName, hotelDomainForProfile);
+  const userRooms = useMemo(() => userProfile?.data?.rooms || [], [userProfile?.data?.rooms]);
+
   // Buscar nome do quarto quando houver roomName
   useEffect(() => {
     if (!photo.roomName) {
@@ -300,22 +308,39 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
       return;
     }
     
-    // Prioridade: 1) roomId direto, 2) extrair do roomName (ex: "Room 117037234" -> "117037234")
+    // Prioridade: 1) roomId direto, 2) extrair do roomName (ex: "Room 117037234" -> "117037234"), 3) tentar extrair qualquer número do roomName
     let roomId: string | null = null;
     
     if (photo.roomId) {
       roomId = String(photo.roomId);
     } else {
+      // Tentar extrair do formato "Room XXXXX"
       const roomIdMatch = photo.roomName.match(/Room\s+(\d+)/i);
       if (roomIdMatch) {
         roomId = roomIdMatch[1];
+      } else {
+        // Tentar extrair qualquer número do roomName (última tentativa)
+        const numberMatch = photo.roomName.match(/(\d+)/);
+        if (numberMatch) {
+          roomId = numberMatch[1];
+        }
       }
     }
     
+    // Se ainda não temos roomId e temos quartos do usuário, tentar encontrar o quarto correspondente
+    // Isso é útil quando roomName é "Quarto do jogo" mas o usuário tem apenas um quarto
+    if (!roomId && userRooms.length === 1) {
+      roomId = String(userRooms[0].id);
+    }
+    
     if (!roomId) {
+      setExtractedRoomId(null); // Limpar roomId extraído
       setRoomDisplayName(photo.roomName); // Se não conseguir extrair ID, usar o roomName original
       return;
     }
+    
+    // Armazenar roomId extraído para usar na renderização
+    setExtractedRoomId(roomId);
     
     // Buscar nome do quarto da API
     const fetchRoomName = async () => {
@@ -348,7 +373,7 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
     };
     
     fetchRoomName();
-  }, [photo.roomName, photo.roomId, photo.s3_url, photo.imageUrl, photo.preview_url, photo.hotelDomain, photo.hotel]);
+  }, [photo.roomName, photo.roomId, photo.s3_url, photo.imageUrl, photo.preview_url, photo.hotelDomain, photo.hotel, userRooms]);
 
   const getPhotoOwnerAvatarUrl = (userName: string, preferredDomain?: string): string => {
     const domain = preferredDomain ? hotelCodeToDomain(preferredDomain) : getPhotoHotelDomain();
@@ -880,14 +905,15 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
             <p className="text-sm text-white/90">{photo.caption}</p>
           )}
           {photo.roomName && (() => {
-            // Prioridade: 1) roomId direto, 2) extrair do roomName (ex: "Room 117037234" -> "117037234"), 3) tentar extrair qualquer número do roomName
-            let roomId: string | null = null;
+            // Usar roomId extraído do useEffect (que já considera fallback de userRooms)
+            // Se não houver, tentar extrair diretamente do photo
+            let roomId: string | null = extractedRoomId;
             
-            if (photo.roomId) {
+            if (!roomId && photo.roomId) {
               // Usar roomId direto se disponível
               roomId = String(photo.roomId);
-            } else {
-              // Tentar extrair do formato "Room XXXXX"
+            } else if (!roomId) {
+              // Tentar extrair do formato "Room XXXXX" como fallback
               const roomIdMatch = photo.roomName.match(/Room\s+(\d+)/i);
               if (roomIdMatch) {
                 roomId = roomIdMatch[1];

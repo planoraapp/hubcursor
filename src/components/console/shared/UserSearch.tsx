@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
+import { LoadingSpinner } from '../LoadingSpinner';
 import { getHotelFlag } from '@/utils/hotelHelpers';
 import { searchUsersGlobally } from '@/utils/userSearch';
 
@@ -142,7 +143,7 @@ export const UserSearch: React.FC<UserSearchProps> = ({
           style={{ minWidth: '32px' }}
         >
           {isSearching ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
+            <LoadingSpinner />
           ) : (
             <img 
               src="/assets/console/search.png" 

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Camera, RefreshCw, Users, Heart, Loader2, AlertCircle } from 'lucide-react';
+import { LoadingSpinner } from './LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,11 +11,11 @@ import { PhotoModal } from '../console/PhotoModal';
 import { EnhancedPhotoCard } from '@/components/console/EnhancedPhotoCard';
 import { EnhancedPhoto } from '@/types/habbo';
 
-// Componente de loading otimizado
-const LoadingSpinner = () => (
+// Componente de loading otimizado (wrapper)
+const LoadingSpinnerWrapper = () => (
   <div className="flex items-center justify-center py-12">
     <div className="text-center">
-      <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
+      <LoadingSpinner className="mx-auto mb-4" />
       <p className="text-white/60">Carregando feed de fotos...</p>
     </div>
   </div>
@@ -124,7 +125,7 @@ const FriendsPhotoFeedContent: React.FC = () => {
               className="text-white/80 hover:text-white hover:bg-white/10"
             >
               {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <LoadingSpinner />
               ) : (
                 <RefreshCw className="w-4 h-4" />
               )}
@@ -136,7 +137,7 @@ const FriendsPhotoFeedContent: React.FC = () => {
           <ScrollArea ref={scrollAreaRef} className="h-full">
             <div className="p-4 space-y-4">
               {isLoading && friendsPhotos.length === 0 ? (
-                <LoadingSpinner />
+                <LoadingSpinnerWrapper />
               ) : error ? (
                 <div className="text-center py-8 space-y-3">
                   <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
@@ -182,7 +183,7 @@ const FriendsPhotoFeedContent: React.FC = () => {
                   {/* Loading mais fotos */}
                   {isFetchingNextPage && (
                     <div className="flex justify-center py-4">
-                      <Loader2 className="w-6 h-6 animate-spin text-white/60" />
+                      <LoadingSpinner />
                     </div>
                   )}
 
@@ -217,7 +218,7 @@ const FriendsPhotoFeedContent: React.FC = () => {
 // Componente principal com Suspense
 export const FriendsPhotoFeedColumn: React.FC = () => {
   return (
-    <Suspense fallback={<LoadingSpinner />}>
+    <Suspense fallback={<LoadingSpinnerComponent />}>
       <FriendsPhotoFeedContent />
     </Suspense>
   );

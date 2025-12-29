@@ -69,6 +69,42 @@ function CollapsibleAppSidebarComponent() {
 
   const isAdmin = habboAccount?.habbo_name?.toLowerCase() === 'habbohub' && habboAccount?.is_admin === true;
 
+  // Detectar se há modais abertos
+  const [hasModalOpen, setHasModalOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkForModals = () => {
+      // Verificar se há DialogOverlay ou DialogContent com data-state="open"
+      // Radix UI usa diferentes seletores
+      const dialogOverlays = document.querySelectorAll('[role="dialog"][data-state="open"], [data-radix-dialog-overlay][data-state="open"]');
+      const dialogContents = document.querySelectorAll('[data-radix-dialog-content][data-state="open"]');
+      // Também verificar por elementos com z-50 que são tipicamente modais
+      const modalElements = document.querySelectorAll('[data-state="open"][class*="z-50"]');
+      const hasOpen = dialogOverlays.length > 0 || dialogContents.length > 0 || modalElements.length > 0;
+      setHasModalOpen(hasOpen);
+    };
+
+    // Verificar inicialmente
+    checkForModals();
+
+    // Observar mudanças no DOM para detectar modais abertos/fechados
+    const observer = new MutationObserver(checkForModals);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['data-state', 'role']
+    });
+
+    // Também verificar periodicamente para garantir detecção
+    const interval = setInterval(checkForModals, 100);
+
+    return () => {
+      observer.disconnect();
+      clearInterval(interval);
+    };
+  }, []);
+
   const removeAccents = (text: string) => {
     return text
       .replace(/[áàâã]/g, 'a')
@@ -489,7 +525,9 @@ function CollapsibleAppSidebarComponent() {
         className="hidden md:flex fixed top-24 z-[60] h-8 w-6 items-center justify-center rounded-r-md border-l-0 border-r-2 border-black bg-[#f5f5dc] transition-all duration-200 hover:bg-yellow-200/70"
         style={{ 
           boxShadow: '2px 0 4px rgba(0,0,0,0.1)',
-          left: isCollapsed ? 'calc(6rem - 12px)' : 'calc(16rem - 12px)'
+          left: isCollapsed ? 'calc(6rem - 12px)' : 'calc(16rem - 12px)',
+          opacity: hasModalOpen ? 0.3 : 1,
+          pointerEvents: hasModalOpen ? 'none' : 'auto'
         }}
       >
         {isCollapsed ? (

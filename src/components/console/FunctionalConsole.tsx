@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { User, RefreshCw, Loader2, AlertCircle, Users, MessageSquare, Trophy, Home, Crown, Camera, Heart, MessageCircle, Globe } from 'lucide-react';
+import { LoadingSpinner } from './LoadingSpinner';
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
 import { useUnifiedPhotoSystem } from '@/hooks/useUnifiedPhotoSystem';
 import { useAuth } from '@/hooks/useAuth';
@@ -191,20 +192,15 @@ export const FunctionalConsole: React.FC = () => {
 
   // Handlers para navegação de fotos individuais
   const handlePhotoClick = (photo: any, index: number) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FunctionalConsole.tsx:handlePhotoClick:entry',message:'Photo clicked - entrada',data:{photo_id:photo.photo_id,id:photo.id,roomName:photo.roomName,roomId:photo.roomId,hotelDomain:photo.hotelDomain,hotel:photo.hotel,allKeys:Object.keys(photo),photoStringified:JSON.stringify(photo).substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    
     // Usar photo_id (ID real da API do Habbo) como fonte de verdade
     const photoId = photo.photo_id || photo.id || `temp-photo-${Date.now()}-${index}`;
     
-    console.log('📸 Foto clicada:', {
-      photo_id: photo.photo_id || photo.id,
-      photoId,
-      imageUrl: photo.imageUrl || photo.s3_url || photo.url,
-      hotelDomain: photo.hotelDomain,
-      hotel: photo.hotel,
-      roomName: photo.roomName,
-      roomId: photo.roomId
-    });
-    
     // Extrair hotelDomain do photo ou usar o hotel padrão do perfil
+    // Prioridade: 1) hotelDomain direto, 2) hotel (código) convertido, 3) extrair da URL, 4) hotel do perfil
     let hotelDomain = photo.hotelDomain;
     if (!hotelDomain && photo.hotel) {
       // Converter código do hotel para domínio
@@ -214,13 +210,25 @@ export const FunctionalConsole: React.FC = () => {
       else if (hotelCode === 'us' || hotelCode === 'com') hotelDomain = 'com';
       else hotelDomain = hotelCode; // es, fr, de, it, nl, fi
     }
+    // Se ainda não tiver hotelDomain, tentar extrair da URL da imagem
+    if (!hotelDomain && (photo.imageUrl || photo.s3_url || photo.url)) {
+      const photoUrl = photo.imageUrl || photo.s3_url || photo.url;
+      const hotelCodeMatch = photoUrl.match(/\/hh([a-z]{2})\//);
+      if (hotelCodeMatch && hotelCodeMatch[1]) {
+        const hotelCode = hotelCodeMatch[1];
+        if (hotelCode === 'br') hotelDomain = 'com.br';
+        else if (hotelCode === 'tr') hotelDomain = 'com.tr';
+        else if (hotelCode === 'us' || hotelCode === 'com') hotelDomain = 'com';
+        else hotelDomain = hotelCode;
+      }
+    }
     // Se ainda não tiver hotelDomain, usar o hotel do perfil atual
     if (!hotelDomain) {
       const effectiveHotel = photosProfileHotel || habboAccount?.hotel || 'com.br';
       hotelDomain = effectiveHotel === 'br' ? 'com.br' : effectiveHotel === 'tr' ? 'com.tr' : effectiveHotel === 'us' ? 'com' : effectiveHotel;
     }
     
-    // Extrair roomId se não estiver presente mas houver roomName
+    // Extrair roomId da mesma forma que EnhancedPhotoCard (prioridade: 1) roomId direto, 2) extrair do roomName "Room XXXXX", 3) tentar extrair qualquer número)
     let roomId: string | undefined = photo.roomId ? String(photo.roomId) : undefined;
     if (!roomId && photo.roomName) {
       // Tentar extrair do formato "Room XXXXX"
@@ -236,18 +244,32 @@ export const FunctionalConsole: React.FC = () => {
       }
     }
     
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FunctionalConsole.tsx:handlePhotoClick:roomId-extracted',message:'RoomId extraído',data:{originalRoomId:photo.roomId || 'undefined',extractedRoomId:roomId || 'undefined',originalRoomName:photo.roomName,hotelDomain,hasRoomId:!!photo.roomId,hasExtractedRoomId:!!roomId,roomNameMatchResult:photo.roomName ? photo.roomName.match(/Room\s+(\d+)/i) : null,numberMatchResult:photo.roomName ? photo.roomName.match(/(\d+)/) : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    
+    // Determinar userName: usar do photo, depois do username atual, depois do viewingUser
+    const photoUserName = photo.userName || username || viewingUser;
+    
     const photoData = {
       id: photoId, // Usar o ID real da foto do Habbo
       imageUrl: photo.imageUrl || photo.url || photo.s3_url || `https://habbo-stories-content.s3.amazonaws.com/servercamera/purchased/hhbr/p-464837-${1755308009079 + index}.png`,
+      s3_url: photo.s3_url || photo.imageUrl || photo.url,
+      preview_url: photo.preview_url || photo.imageUrl || photo.url || photo.s3_url,
       date: photo.date || new Date().toLocaleDateString('pt-BR'),
       likes: photo.likes || photo.likesCount || 0,
       roomName: photo.roomName || undefined,
-      roomId: roomId, // Usar roomId extraído ou do photo
+      roomId: roomId, // Usar roomId extraído da mesma forma que EnhancedPhotoCard
       hotel: photo.hotel || (hotelDomain === 'com.br' ? 'br' : hotelDomain === 'com.tr' ? 'tr' : hotelDomain === 'com' ? 'com' : hotelDomain),
       hotelDomain: hotelDomain,
       caption: photo.caption || undefined,
-      timestamp: photo.timestamp || (photo.date ? new Date(photo.date).getTime() : undefined)
+      timestamp: photo.timestamp || (photo.date ? new Date(photo.date).getTime() : undefined),
+      userName: photoUserName // Adicionar userName para o IndividualPhotoView usar no fallback de userRooms
     };
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FunctionalConsole.tsx:handlePhotoClick:photoData-created',message:'PhotoData criado para IndividualPhotoView',data:{photoId:photoData.id,roomId:photoData.roomId || 'undefined',roomName:photoData.roomName,hotelDomain:photoData.hotelDomain,hasRoomId:!!photoData.roomId,photoDataKeys:Object.keys(photoData)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     
     setSelectedIndividualPhoto(photoData);
     setActiveTab('photo'); // Ativa a aba 'photo'
@@ -287,7 +309,7 @@ export const FunctionalConsole: React.FC = () => {
         <Card className="bg-transparent text-white border-0 shadow-none h-full overflow-x-hidden">
           <CardContent className="flex items-center justify-center h-full overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent overflow-y-auto">
             <div className="text-center">
-              <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
+              <LoadingSpinner className="mx-auto mb-4" />
               <p className="text-white/60">{t('pages.console.loadingUser')}</p>
             </div>
           </CardContent>
@@ -1098,7 +1120,7 @@ export const FunctionalConsole: React.FC = () => {
         return selectedIndividualPhoto ? (
           <IndividualPhotoView
             photo={selectedIndividualPhoto}
-            userName={userData?.name || currentUser || 'Usuário'}
+            userName={(selectedIndividualPhoto as any).userName || userData?.name || username || currentUser || 'Usuário'}
             onBack={handleBackFromPhoto}
             onUserClick={() => {}}
           />
@@ -1245,21 +1267,27 @@ export const FunctionalConsole: React.FC = () => {
                       friendsRefreshCooldownRef.current = now;
                       setFriendsRefreshTrigger(prev => prev + 1);
                     }
-                  } else {
-                    // Se clicou na aba Photos e não está visualizando um perfil, fazer refresh
-                    if (tab.id === 'photos' && !photosProfileUser) {
-                      const now = Date.now();
-                      const cooldownMs = 2000; // 2 segundos de cooldown
-                      
-                      // Só fazer refresh se passou o cooldown
-                      if (now - photosRefreshCooldownRef.current > cooldownMs) {
-                        console.log('[📸 PHOTOS TAB] Refresh triggered on tab click');
-                        photosRefreshCooldownRef.current = now;
-                        setPhotosRefreshTrigger(prev => prev + 1);
-                      } else {
-                        console.log('[📸 PHOTOS TAB] Refresh skipped (cooldown active)');
-                      }
+                  } else if (tab.id === 'photos') {
+                    // Se clicou na aba Photos, sempre voltar ao feed geral
+                    if (photosProfileUser) {
+                      // Se está visualizando um perfil de photos, limpar e voltar ao feed geral
+                      clearProfile();
                     }
+                    setActiveTab('photos');
+                    
+                    // Fazer refresh se necessário (com cooldown)
+                    const now = Date.now();
+                    const cooldownMs = 2000; // 2 segundos de cooldown
+                    
+                    // Só fazer refresh se passou o cooldown
+                    if (now - photosRefreshCooldownRef.current > cooldownMs) {
+                      console.log('[📸 PHOTOS TAB] Refresh triggered on tab click');
+                      photosRefreshCooldownRef.current = now;
+                      setPhotosRefreshTrigger(prev => prev + 1);
+                    } else {
+                      console.log('[📸 PHOTOS TAB] Refresh skipped (cooldown active)');
+                    }
+                  } else {
                     // Se clicou na aba Friends e não está visualizando um perfil, fazer refresh e scroll ao topo
                     if (tab.id === 'friends' && !viewingUser) {
                       const now = Date.now();
@@ -1441,7 +1469,7 @@ const FeedTab: React.FC<any> = ({
       <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
+            <LoadingSpinner className="mx-auto mb-4" />
             <p className="text-white/60">{t('pages.console.loadingUser')}</p>
           </div>
         </div>
@@ -1820,7 +1848,7 @@ const FeedTab: React.FC<any> = ({
         <Suspense fallback={
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
+              <LoadingSpinner className="mx-auto mb-4" />
               <p className="text-white/60">{t('pages.console.loadingFeed')}</p>
             </div>
           </div>
@@ -1876,7 +1904,7 @@ const PhotosTab: React.FC<any> = ({ isLoading, onUserClickFromFeed, refreshTrigg
       <Suspense fallback={
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
+            <LoadingSpinner className="mx-auto mb-4" />
             <p className="text-white/60">{t('pages.console.loadingGlobalFeed')}</p>
           </div>
         </div>
@@ -1931,7 +1959,7 @@ const PhotosTab: React.FC<any> = ({ isLoading, onUserClickFromFeed, refreshTrigg
             title="Atualizar feed"
           >
             {isRefreshing ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <LoadingSpinner />
             ) : (
               <RefreshCw className="w-5 h-5" />
             )}
@@ -1973,7 +2001,7 @@ const FriendsTab: React.FC<any> = ({ friends, isLoading, onNavigateToProfile }) 
       <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
+            <LoadingSpinner className="mx-auto mb-4" />
             <p className="text-white/60">{t('pages.console.loadingFriends')}</p>
           </div>
         </div>

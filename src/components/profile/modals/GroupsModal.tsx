@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -250,12 +250,26 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
         }}>
           <div className="pixel-pattern absolute inset-0 opacity-20"></div>
           <DialogHeader className="p-4 relative z-10">
-            <DialogTitle className="flex items-center gap-2 text-white font-bold text-sm" style={{
-              textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
-            }}>
-              <Crown className="w-5 h-5 text-white" />
-              {t('pages.console.groupsOf', { username: userName, count: groups.length })}
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2 text-white font-bold text-sm" style={{
+                textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+              }}>
+                <Crown className="w-5 h-5 text-white" />
+                {t('pages.console.groupsOf', { username: userName, count: groups.length })}
+              </DialogTitle>
+              <DialogClose asChild>
+                <button
+                  onClick={onClose}
+                  className="text-white hover:bg-white/20 p-1 rounded transition-colors"
+                  style={{
+                    textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+                  }}
+                  aria-label="Fechar"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </DialogClose>
+            </div>
           </DialogHeader>
         </div>
         

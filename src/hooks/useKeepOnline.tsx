@@ -24,7 +24,8 @@ export const useKeepOnline = () => {
     const updateOnlineStatus = async () => {
       try {
         // Verificar se userId existe antes de tentar atualizar
-        if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+        const currentUserId = habboAccount?.supabase_user_id;
+        if (!currentUserId || typeof currentUserId !== 'string' || currentUserId.trim().length === 0) {
           console.log('[KEEP ONLINE] No valid userId available, skipping update');
           return;
         }
@@ -40,7 +41,7 @@ export const useKeepOnline = () => {
         // Usar Edge Function para atualizar estado online (bypass de RLS)
         const { error } = await supabase.functions.invoke('keep-online', {
           body: {
-            userId: userId.trim(),
+            userId: currentUserId.trim(),
             isOnline: true // Sempre true quando o hook atualiza (pois só roda se preferência for true)
           }
         });
@@ -79,6 +80,6 @@ export const useKeepOnline = () => {
     return () => {
       clearInterval(interval);
     };
-  }, [userId]);
+  }, [habboAccount?.supabase_user_id]);
 };
 

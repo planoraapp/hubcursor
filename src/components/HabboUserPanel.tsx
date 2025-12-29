@@ -82,15 +82,16 @@ export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: Ha
       const updateStatusInDB = async () => {
         try {
           // Verificar se há userId antes de tentar atualizar
-          if (!habboAccount?.supabase_user_id) {
-            console.log('[HABBO USER PANEL] No supabase_user_id available, skipping update');
+          const userId = habboAccount?.supabase_user_id;
+          if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+            console.log('[HABBO USER PANEL] No valid supabase_user_id available, skipping update');
             return;
           }
 
           const { supabase } = await import('@/integrations/supabase/client');
           const { error } = await supabase.functions.invoke('keep-online', {
             body: {
-              userId: habboAccount.supabase_user_id,
+              userId: userId.trim(),
               isOnline: shouldBeOnline
             }
           });
@@ -206,10 +207,17 @@ export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: Ha
     // Atualizar banco de dados
     if (habboAccount?.supabase_user_id) {
       try {
+        const userId = habboAccount.supabase_user_id;
+        // Validar userId antes de enviar
+        if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+          console.log('[HABBO USER PANEL] Invalid userId, skipping update');
+          return;
+        }
+
         const { supabase } = await import('@/integrations/supabase/client');
         const { error } = await supabase.functions.invoke('keep-online', {
           body: {
-            userId: habboAccount.supabase_user_id,
+            userId: userId.trim(),
             isOnline: newStatus
           }
         });

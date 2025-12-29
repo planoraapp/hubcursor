@@ -17,9 +17,10 @@ const Editor = () => {
         <main className="flex-1 p-4 md:p-8 overflow-y-auto scrollbar-hide">
           <div className="max-w-6xl mx-auto">
             <PageBanner 
-              title="✨ Editor de Conteúdo"
+              title="Editor de Conteúdo"
               subtitle="Ferramentas de edição em desenvolvimento"
               backgroundImage="/assets/gcreate_4_1.png"
+              icon="/assets/editorvisuais.png"
             />
           </div>
         </main>

@@ -5,6 +5,7 @@ import {
   AlertCircle, 
   Camera
 } from 'lucide-react';
+import { LoadingSpinner } from './LoadingSpinner';
 import { useGlobalPhotoFeed } from '@/hooks/useGlobalPhotoFeed';
 import { EnhancedPhotoCard } from '@/components/console/EnhancedPhotoCard';
 import { useI18n } from '@/contexts/I18nContext';
@@ -276,7 +277,7 @@ const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
         <div className="space-y-4 w-full py-2">
               {isLoading && photos.length === 0 ? (
                 <div className="flex justify-center items-center h-32">
-                  <Loader2 className="w-8 h-8 animate-spin text-white/60" />
+                  <LoadingSpinner />
                 </div>
               ) : error ? (
                 <div className="text-center py-8 space-y-3">
@@ -335,7 +336,7 @@ const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
                   {/* Loading mais fotos */}
                   {isLoadingMore && (
                     <div className="flex flex-col items-center justify-center py-4 text-white/60 text-sm gap-2">
-                      <Loader2 className="w-6 h-6 animate-spin text-white/60" />
+                      <LoadingSpinner />
                       <span>Carregando mais fotos...</span>
                     </div>
                   )}

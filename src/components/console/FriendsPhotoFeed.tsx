@@ -4,10 +4,12 @@ import { useFriendsPhotos } from "@/hooks/useFriendsPhotos";
 import { EnhancedPhotoCard } from "@/components/console/EnhancedPhotoCard";
 import { EnhancedPhoto } from "@/types/habbo";
 import { Loader2, AlertCircle, RefreshCw, MessageCircle } from "lucide-react";
+import { LoadingSpinner } from "./LoadingSpinner";
 import { usePhotoComments } from "@/hooks/usePhotoComments";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/contexts/I18nContext";
 import { getAvatarHeadUrl, getAvatarFallbackUrl } from '@/utils/avatarHelpers';
+import { CompactLoginForm } from "@/components/console/CompactLoginForm";
 
 // Componente do Modal de Comentários
 interface CommentsModalProps {
@@ -448,14 +450,22 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
   if (!isLoggedIn || !habboAccount) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="text-4xl mb-4">👤</div>
-          <p className="text-white/80 mb-2 font-semibold">
-            {t('pages.console.loginRequired')}
-          </p>
-          <p className="text-white/60 text-sm">
-            {t('pages.console.loginRequiredDescription')}
-          </p>
+        <div className="text-center w-full max-w-md">
+          <div className="mb-6">
+            <img 
+              src="/assets/pwrup_qm.gif" 
+              alt="" 
+              className="mx-auto mb-4"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            <p className="text-white/80 mb-2 font-semibold">
+              {t('pages.console.loginRequired')}
+            </p>
+            <p className="text-white/60 text-sm">
+              {t('pages.console.loginRequiredDescription')}
+            </p>
+          </div>
+          <CompactLoginForm />
         </div>
       </div>
     );
@@ -465,7 +475,7 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
+          <LoadingSpinner className="mx-auto mb-4" />
           <p className="text-white/60">{t('pages.console.loadingPhotos')}</p>
         </div>
       </div>
@@ -528,7 +538,7 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
               title="Atualizar feed"
             >
               {isRefreshing ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <LoadingSpinner />
               ) : (
                 <RefreshCw className="w-5 h-5" />
               )}

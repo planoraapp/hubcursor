@@ -140,9 +140,10 @@ export const Home: React.FC = () => {
             <div className="mx-auto w-full max-w-7xl">
               {/* Banner padrão com fundo de nuvens */}
               <PageBanner 
-                title="🏠 HabboHub"
+                title="HabboHub"
                 subtitle={t('pages.home.subtitle')}
                 backgroundImage={getBannerImageBySeed('home')}
+                icon="/assets/homebutton.png"
               />
 
               {/* Features Grid */}
@@ -203,7 +204,8 @@ export const Home: React.FC = () => {
                       style={{
                         fontSize: '18px',
                         fontWeight: 'bold',
-                        letterSpacing: '0.3px'
+                        letterSpacing: '0.3px',
+                        textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
                       }}>
                       <MessageSquare className="w-5 h-5 text-white" />
                       {t('pages.home.homes.title')}
@@ -325,7 +327,8 @@ export const Home: React.FC = () => {
                       style={{
                         fontSize: '18px',
                         fontWeight: 'bold',
-                        letterSpacing: '0.3px'
+                        letterSpacing: '0.3px',
+                        textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
                       }}>
                       <Star className="w-5 h-5 text-white" />
                       {t('pages.home.tools.title')}

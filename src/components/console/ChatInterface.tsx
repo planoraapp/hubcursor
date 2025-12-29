@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { getAvatarUrl } from '@/utils/avatarHelpers';
 import { SendMessageModal } from './modals/SendMessageModal';
 import { UserNotRegisteredModal } from './modals/UserNotRegisteredModal';
+import { CompactLoginForm } from './CompactLoginForm';
 
 interface ChatInterfaceProps {
   friends: any[];
@@ -16,7 +17,7 @@ interface ChatInterfaceProps {
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigateToProfile, onBackToList }) => {
   const { t, language } = useI18n();
-  const { habboAccount } = useAuth();
+  const { habboAccount, isLoggedIn } = useAuth();
   const userId = habboAccount?.supabase_user_id;
   
   const { 
@@ -195,6 +196,33 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
     if (diffDays < 7) return t('pages.console.chat.daysAgo', { days: diffDays, plural: diffDays > 1 ? 's' : '' });
     return date.toLocaleDateString(language === 'en' ? 'en-US' : language === 'es' ? 'es-ES' : 'pt-BR');
   };
+
+  // Verificar se está logado
+  if (!isLoggedIn || !habboAccount) {
+    return (
+      <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
+        <div className="flex-1 flex items-center justify-center py-12">
+          <div className="text-center w-full max-w-md px-4">
+            <div className="mb-6">
+              <img 
+                src="/assets/pwrup_qm.gif" 
+                alt="" 
+                className="mx-auto mb-4"
+                style={{ imageRendering: 'pixelated' }}
+              />
+              <p className="text-white/80 mb-2 font-semibold">
+                {t('pages.console.loginRequired')}
+              </p>
+              <p className="text-white/60 text-sm">
+                {t('pages.console.loginRequiredDescription')}
+              </p>
+            </div>
+            <CompactLoginForm />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

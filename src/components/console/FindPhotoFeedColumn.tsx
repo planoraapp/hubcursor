@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Camera, RefreshCw, Search, Heart, Loader2, AlertCircle, Globe, MessageCircle, Ellipsis, Send } from 'lucide-react';
+import { LoadingSpinner } from './LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { useGlobalPhotos } from '@/hooks/useGlobalPhotos';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
@@ -438,7 +439,7 @@ export const FindPhotoFeedColumn: React.FC = () => {
           <div ref={loadMoreRef} className="py-4">
             {isLoadingMore && (
               <div className="flex items-center justify-center space-y-2">
-                <Loader2 className="w-6 h-6 animate-spin text-white/60" />
+                <LoadingSpinner />
                 <span className="text-white/60 text-sm">Carregando mais fotos...</span>
               </div>
             )}

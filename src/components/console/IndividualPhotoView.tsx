@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Heart, MessageCircle, MoreHorizontal, Send, MapPin } from 'lucide-react';
 import { EnhancedPhoto } from '@/types/habbo';
@@ -54,6 +54,7 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [selectedRoomHotel, setSelectedRoomHotel] = useState<string>('');
   const [roomDisplayName, setRoomDisplayName] = useState<string | null>(null);
+  const [extractedRoomId, setExtractedRoomId] = useState<string | null>(null);
   
   // Hook de likes com armazenamento no banco
   const { likesCount, userLiked, toggleLike, isToggling, likes } = usePhotoLikes(photo.id);
@@ -150,24 +151,20 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
     return 'com.br';
   };
 
-  // Estado para armazenar roomId extraído
-  const [extractedRoomId, setExtractedRoomId] = useState<string | null>(null);
-  
-  // Buscar nome do quarto quando houver roomName
+  // Buscar perfil completo do usuário para obter figureString e quartos (ANTES do useEffect para evitar erro de inicialização)
+  const hotelDomainForProfile = getPhotoHotelDomain();
+  const { data: userProfile } = useCompleteProfile(userName, hotelDomainForProfile);
+  const userFigureString = userProfile?.figureString;
+  const userRooms = useMemo(() => userProfile?.data?.rooms || [], [userProfile?.data?.rooms]);
+
+  // Buscar nome do quarto quando houver roomName (mesma lógica do EnhancedPhotoCard)
   useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:useEffect:entry',message:'useEffect roomName - entrada',data:{roomName:photo.roomName,roomId:photo.roomId,hotelDomain:photo.hotelDomain,hotel:photo.hotel,userRoomsCount:userRooms.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    
     if (!photo.roomName) {
       setRoomDisplayName(null);
-      setExtractedRoomId(null);
-      return;
-    }
-    
-    // Verificar se é um placeholder (ex: "Quarto do jogo")
-    const isPlaceholder = photo.roomName.toLowerCase().includes('quarto do jogo') || 
-                         photo.roomName.toLowerCase().includes('game room');
-    
-    if (isPlaceholder && !photo.roomId) {
-      setRoomDisplayName(photo.roomName);
-      setExtractedRoomId(null);
       return;
     }
     
@@ -177,38 +174,70 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
     if (photo.roomId) {
       // Usar roomId direto se disponível
       roomId = String(photo.roomId);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:useEffect:roomId-direct',message:'RoomId direto encontrado',data:{roomId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
     } else {
       // Tentar extrair do formato "Room XXXXX"
       const roomIdMatch = photo.roomName.match(/Room\s+(\d+)/i);
       if (roomIdMatch) {
         roomId = roomIdMatch[1];
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:useEffect:roomId-extracted',message:'RoomId extraído do roomName',data:{roomId,roomName:photo.roomName},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
       } else {
         // Tentar extrair qualquer número do roomName (última tentativa)
         const numberMatch = photo.roomName.match(/(\d+)/);
         if (numberMatch) {
           roomId = numberMatch[1];
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:useEffect:roomId-number-extracted',message:'RoomId extraído de número',data:{roomId,roomName:photo.roomName},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+          // #endregion
         }
       }
     }
     
-    // Armazenar roomId extraído para uso no botão
-    setExtractedRoomId(roomId);
+    // Se ainda não temos roomId e temos quartos do usuário, tentar encontrar o quarto correspondente
+    // Isso é útil quando roomName é "Quarto do jogo" mas o usuário tem apenas um quarto
+    if (!roomId && userRooms.length === 1) {
+      roomId = String(userRooms[0].id);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:useEffect:roomId-from-userRooms',message:'RoomId obtido do único quarto do usuário',data:{roomId,roomName:photo.roomName},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+    }
     
     if (!roomId) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:useEffect:no-roomId',message:'Nenhum roomId encontrado, usando roomName original',data:{roomName:photo.roomName,userRoomsCount:userRooms.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      setExtractedRoomId(null); // Limpar roomId extraído
       setRoomDisplayName(photo.roomName); // Se não conseguir extrair ID, usar o roomName original
       return;
     }
     
+    // Armazenar roomId extraído para usar na renderização
+    setExtractedRoomId(roomId);
+    
     // Buscar nome do quarto da API
     const fetchRoomName = async () => {
       const hotelDomain = getPhotoHotelDomain();
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:fetchRoomName:before-fetch',message:'Antes de buscar quarto da API',data:{roomId,hotelDomain},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       try {
         const response = await fetch(`https://www.habbo.${hotelDomain}/api/public/rooms/${roomId}`, {
           headers: { 'Accept': 'application/json' }
         });
         
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:fetchRoomName:response',message:'Resposta da API de quartos',data:{status:response.status,statusText:response.statusText,ok:response.ok,roomId,hotelDomain},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        
         if (response.ok) {
           const roomData = await response.json();
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:fetchRoomName:roomData',message:'Dados do quarto recebidos',data:{roomName:roomData.name,roomId,hotelDomain},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+          // #endregion
           if (roomData.name) {
             setRoomDisplayName(roomData.name);
           } else {
@@ -218,24 +247,22 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
           // 404 é esperado se o quarto não existir mais - não fazer log de erro
           setRoomDisplayName(photo.roomName); // Fallback para roomName original
         } else {
-          // Outros erros - logar apenas em modo debug
+          // Outros erros (500, etc) - logar apenas em modo debug
           console.debug(`[IndividualPhotoView] Erro ${response.status} ao buscar quarto ${roomId}:`, response.statusText);
           setRoomDisplayName(photo.roomName); // Fallback para roomName original
         }
       } catch (error) {
-        // Erros de rede - logar apenas em modo debug
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'IndividualPhotoView.tsx:fetchRoomName:error',message:'Erro ao buscar quarto',data:{error:error instanceof Error ? error.message : String(error),roomId,hotelDomain},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        // Erros de rede - logar apenas em modo debug para não poluir console
         console.debug('[IndividualPhotoView] Erro de rede ao buscar nome do quarto:', error);
         setRoomDisplayName(photo.roomName); // Fallback para roomName original
       }
     };
     
     fetchRoomName();
-  }, [photo.roomName, photo.roomId, photo.imageUrl]);
-
-  // Buscar perfil completo do usuário para obter figureString
-  const hotelDomainForProfile = getPhotoHotelDomain();
-  const { data: userProfile } = useCompleteProfile(userName, hotelDomainForProfile);
-  const userFigureString = userProfile?.figureString;
+  }, [photo.roomName, photo.roomId, photo.s3_url, photo.imageUrl, photo.preview_url, photo.hotelDomain, photo.hotel, userRooms]);
 
   // Helper para URL de avatar do usuário da foto
   const getPhotoUserAvatarUrl = (userName: string) => {
@@ -386,6 +413,22 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
                   }
                 }}
               />
+              
+              {/* Modal de detalhes do quarto - renderizado aqui para estar no mesmo contexto */}
+              {showRoomDetails && selectedRoomId && (
+                <RoomDetailsModal
+                  roomId={selectedRoomId}
+                  hotelDomain={selectedRoomHotel}
+                  photoImageRef={photoImageRef}
+                  isOpen={showRoomDetails}
+                  onClose={() => {
+                    setShowRoomDetails(false);
+                    setSelectedRoomId(null);
+                    setSelectedRoomHotel('');
+                  }}
+                />
+              )}
+              
               <div className="absolute bottom-2 left-2">
                 <img src="/hub.gif" alt="Hub" className="w-6 h-6 opacity-80" style={{display: 'none'}} />
               </div>
@@ -577,21 +620,14 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
             {photo.roomName && (
               <div className="space-y-1 pt-2 pb-3">
                 {(() => {
-                  // Usar roomId extraído do useEffect ou do photo diretamente
-                  const roomId = extractedRoomId || (photo.roomId ? String(photo.roomId) : null);
+                  // Usar extractedRoomId do estado (já determinado no useEffect, que considera fallback de userRooms)
                   const hotelDomain = getPhotoHotelDomain();
                   
                   // Usar nome do quarto se disponível, senão usar roomName original
                   const displayText = roomDisplayName || photo.roomName;
                   
-                  // Verificar se é "Quarto do jogo" ou similar (sem informações reais do quarto)
-                  const isPlaceholderRoom = !roomId || 
-                    photo.roomName.toLowerCase().includes('quarto do jogo') ||
-                    photo.roomName.toLowerCase().includes('game room') ||
-                    (!photo.roomId && !extractedRoomId && !photo.roomName.match(/\d+/));
-                  
-                  if (isPlaceholderRoom) {
-                    // Sem roomId válido, não é clicável
+                  if (!extractedRoomId) {
+                    // Sem roomId, não é clicável (ex: "Quarto do jogo")
                     return (
                       <div className="flex items-center gap-1 text-xs text-white/60">
                         <MapPin className="w-3 h-3" />
@@ -601,25 +637,21 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
                   }
 
                   return (
-                    <button
-                      type="button"
+                    <div 
                       className={cn(
-                        "flex items-center gap-1 text-xs text-white/60 cursor-pointer hover:text-white/80 transition-colors w-full text-left"
+                        "flex items-center gap-1 text-xs text-white/60 cursor-pointer hover:text-white/80 transition-colors"
                       )}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        if (roomId) {
-                          console.log('[IndividualPhotoView] Abrindo modal do quarto:', { roomId, hotelDomain, displayText });
-                          setSelectedRoomId(roomId);
-                          setSelectedRoomHotel(hotelDomain);
-                          setShowRoomDetails(true);
-                        }
+                        setSelectedRoomId(extractedRoomId);
+                        setSelectedRoomHotel(hotelDomain);
+                        setShowRoomDetails(true);
                       }}
                     >
                       <MapPin className="w-3 h-3" />
                       <span>{displayText}</span>
-                    </button>
+                    </div>
                   );
                 })()}
               </div>
@@ -727,21 +759,6 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Modal de detalhes do quarto */}
-      {showRoomDetails && selectedRoomId && (
-        <RoomDetailsModal
-          roomId={selectedRoomId}
-          hotelDomain={selectedRoomHotel}
-          photoImageRef={photoImageRef}
-          isOpen={showRoomDetails}
-          onClose={() => {
-            setShowRoomDetails(false);
-            setSelectedRoomId(null);
-            setSelectedRoomHotel('');
-          }}
-        />
-      )}
     </div>
   );
 };

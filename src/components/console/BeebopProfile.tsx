@@ -7,6 +7,7 @@ import { BadgesModal } from './modals/BadgesModal';
 import { RoomsModal } from './modals/RoomsModal';
 import { FriendsModal } from './modals/FriendsModal';
 import { GroupsModal } from './modals/GroupsModal';
+import { LoadingSpinner } from './LoadingSpinner';
 
 
 interface UserProfileProps {
@@ -86,7 +87,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ username }) => {
     return (
       <Card className="bg-transparent text-white border-0 shadow-none h-full flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <LoadingSpinner className="mx-auto mb-4" />
           <p className="text-white/60">Carregando perfil...</p>
         </div>
       </Card>
