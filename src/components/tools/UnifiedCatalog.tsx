@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +26,15 @@ import {
 } from 'lucide-react';
 import { habboApiService, HabboHanditem, HabboFurni } from '@/services/HabboAPIService';
 import { habboDataExtractor, ExtractedHanditem } from '@/utils/habboDataExtractor';
+import { handitemSyncService, HanditemData } from '@/services/HanditemSyncService';
 import { useToast } from '@/hooks/use-toast';
+import { useI18n } from '@/contexts/I18nContext';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { avatarPreview } from '@/utils/avatarPreview';
+import { useAuth } from '@/hooks/useAuth';
+import { extractGenderFromFigureString } from '@/utils/userNormalizer';
+import * as handitemImages from './handitemImages';
+import { handitemActionMapper } from '@/utils/handitemActionMapper';
 
 interface UnifiedCatalogProps {
   onHanditemSelect?: (handitem: HabboHanditem) => void;
@@ -45,9 +53,26 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [isLoading, setIsLoading] = useState(false);
   const [handitems, setHanditems] = useState<HabboHanditem[]>([]);
+  const [syncedHanditems, setSyncedHanditems] = useState<HanditemData[]>([]);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [copiedHanditems, setCopiedHanditems] = useState<Set<number>>(new Set());
+  const [selectedHanditemForPreview, setSelectedHanditemForPreview] = useState<HabboHanditem | null>(null);
+  const handitemsContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { language } = useI18n();
+  const { habboAccount } = useAuth();
+
+  // Mapeamento de categorias para handitems representativos (IDs)
+  const CATEGORY_HANDITEM_IDS: { [key: string]: number } = {
+    'Todos': 0, // Sem ícone para "Todos"
+    'Alimentos': 1, // Cenoura
+    'Bebidas': 2, // Café
+    'Doces': 5, // Sorvete
+    'Utensílios': 20, // Lata de Bubblejuice (ou outro utensílio)
+    'Eletrônicos': 244, // Celular
+    'Outros': 1099 // Ursinho Teddy (ou outro item)
+  };
 
   // Categorias para handitems
   const HANDITEM_CATEGORIES = {
@@ -58,6 +83,20 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
     'Utensílios': { label: 'Utensílios', icon: Wrench },
     'Eletrônicos': { label: 'Eletrônicos', icon: Smartphone },
     'Outros': { label: 'Outros', icon: Globe }
+  };
+
+  // Função para obter a URL da imagem do handitem representativo da categoria
+  const getCategoryHanditemImage = (categoryKey: string): string | null => {
+    const handitemId = CATEGORY_HANDITEM_IDS[categoryKey];
+    if (!handitemId || handitemId === 0) return null;
+    
+    // Usar a função de resolução de imagem diretamente
+    try {
+      const imageUrl = handitemImages.getHanditemImageById(handitemId);
+      return imageUrl && !imageUrl.includes('placeholder') ? imageUrl : null;
+    } catch {
+      return null;
+    }
   };
 
   // Carregar dados iniciais
@@ -76,27 +115,249 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
     return () => clearTimeout(timer);
   }, [handitems.length]);
 
+  // Centralizar a janela no handitem clicado e posicionar o popover próximo a ele
+  useLayoutEffect(() => {
+    if (selectedHanditemForPreview && handitemsContainerRef.current) {
+      const container = handitemsContainerRef.current;
+      
+      // Encontrar o elemento scrollável uma vez (pode ser window ou um elemento com overflow)
+      const findScrollableParent = (element: HTMLElement): Window | HTMLElement => {
+        let current: HTMLElement | null = element.parentElement;
+        while (current) {
+          const style = window.getComputedStyle(current);
+          if (style.overflowY === 'auto' || style.overflowY === 'scroll' || 
+              style.overflow === 'auto' || style.overflow === 'scroll') {
+            return current;
+          }
+          current = current.parentElement;
+        }
+        return window;
+      };
+      
+      // Encontrar o card do handitem clicado para determinar o scrollable parent
+      const card = container.querySelector(`[data-handitem-id="${selectedHanditemForPreview.id}"]`) as HTMLElement;
+      const scrollableParent = card ? findScrollableParent(card) : window;
+      
+      const centerItemAndPositionPopover = () => {
+        if (!container) return;
+        
+        // Encontrar o card do handitem clicado
+        const card = container.querySelector(`[data-handitem-id="${selectedHanditemForPreview.id}"]`) as HTMLElement;
+        if (!card) return;
+        
+        // Centralizar o handitem na viewport usando scrollIntoView
+        // Usar block: 'center' para centralizar verticalmente e inline: 'center' para centralizar horizontalmente
+        card.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'center'
+        });
+        
+        // Função para posicionar o popover após o scroll
+        const positionPopover = () => {
+          // Recalcular a posição do card após o scroll
+          const updatedCardRect = card.getBoundingClientRect();
+          const cardCenterX = updatedCardRect.left + updatedCardRect.width / 2;
+          const cardCenterY = updatedCardRect.top + updatedCardRect.height / 2;
+          
+          // Encontrar o popover content
+          let popoverContent = document.querySelector('[data-slot="popover-content"]') as HTMLElement;
+          if (!popoverContent) {
+            popoverContent = document.querySelector('[data-radix-popover-content]') as HTMLElement;
+          }
+          if (!popoverContent) {
+            popoverContent = document.querySelector('[data-state="open"][role="dialog"]') as HTMLElement;
+          }
+          if (!popoverContent) {
+            const dialogs = Array.from(document.querySelectorAll('[role="dialog"]'));
+            popoverContent = dialogs.find(el => 
+              el.getAttribute('data-slot') === 'popover-content' || 
+              el.classList.contains('bg-popover')
+            ) as HTMLElement;
+          }
+          
+          if (popoverContent) {
+            const isMobile = window.innerWidth < 768;
+            const popoverWidth = popoverContent.offsetWidth || 300;
+            const popoverHeight = popoverContent.offsetHeight || 200;
+            
+            let popoverX: number;
+            let popoverY: number;
+            
+            if (isMobile) {
+              // Em mobile, centralizar horizontalmente na tela e posicionar logo abaixo do card
+              popoverX = window.innerWidth / 2;
+              popoverY = updatedCardRect.bottom + 10; // 10px abaixo do card
+              
+              // Se não couber abaixo, posicionar acima
+              if (popoverY + popoverHeight > window.innerHeight - 10) {
+                popoverY = updatedCardRect.top - popoverHeight - 10;
+                // Se ainda não couber acima, centralizar verticalmente na tela
+                if (popoverY < 10) {
+                  popoverY = window.innerHeight / 2;
+                }
+              }
+            } else {
+              // Em desktop, posicionar à direita do card, alinhado verticalmente ao centro do card
+              popoverX = updatedCardRect.right + 15; // 15px à direita
+              popoverY = cardCenterY; // Alinhado ao centro vertical do card
+              
+              // Se não couber à direita, posicionar à esquerda
+              if (popoverX + popoverWidth / 2 > window.innerWidth - 10) {
+                popoverX = updatedCardRect.left - popoverWidth / 2 - 15;
+              }
+              
+              // Ajustar verticalmente se não couber
+              if (popoverY - popoverHeight / 2 < 10) {
+                popoverY = popoverHeight / 2 + 10;
+              } else if (popoverY + popoverHeight / 2 > window.innerHeight - 10) {
+                popoverY = window.innerHeight - popoverHeight / 2 - 10;
+              }
+            }
+            
+            popoverContent.style.position = 'fixed';
+            popoverContent.style.left = `${popoverX}px`;
+            popoverContent.style.top = `${popoverY}px`;
+            popoverContent.style.transform = isMobile ? 'translate(-50%, 0)' : 'translate(-50%, -50%)';
+            popoverContent.style.margin = '0';
+            popoverContent.style.zIndex = '50';
+          }
+        };
+        
+        // Aguardar o scroll completar antes de posicionar o popover
+        // Usar requestAnimationFrame para garantir que o scroll tenha sido processado
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            positionPopover();
+          });
+        });
+      };
+
+      // Executar após um pequeno delay para garantir que o DOM esteja atualizado
+      const timeout = setTimeout(() => {
+        centerItemAndPositionPopover();
+      }, 10);
+
+      // Também executar após delays maiores para garantir que funcione mesmo com scroll lento
+      const timeout1 = setTimeout(() => {
+        centerItemAndPositionPopover();
+      }, 300);
+      
+      const timeout2 = setTimeout(() => {
+        centerItemAndPositionPopover();
+      }, 600);
+
+      // Atualizar quando a janela for redimensionada ou quando o scroll acontecer
+      const handleResize = () => {
+        centerItemAndPositionPopover();
+      };
+      
+      const handleScroll = () => {
+        // Reposicionar o popover durante o scroll para mantê-lo próximo ao item
+        if (selectedHanditemForPreview) {
+          requestAnimationFrame(() => {
+            const card = container.querySelector(`[data-handitem-id="${selectedHanditemForPreview.id}"]`) as HTMLElement;
+            if (card) {
+              const updatedCardRect = card.getBoundingClientRect();
+              const popoverContent = document.querySelector('[data-radix-popover-content]') as HTMLElement ||
+                                    document.querySelector('[data-slot="popover-content"]') as HTMLElement;
+              
+              if (popoverContent) {
+                const isMobile = window.innerWidth < 768;
+                const popoverHeight = popoverContent.offsetHeight || 200;
+                const popoverX = isMobile ? window.innerWidth / 2 : parseFloat(popoverContent.style.left) || 0;
+                let popoverY = updatedCardRect.bottom + 10;
+                
+                if (isMobile) {
+                  if (popoverY + popoverHeight > window.innerHeight - 10) {
+                    popoverY = updatedCardRect.top - popoverHeight - 10;
+                    if (popoverY < 10) {
+                      popoverY = window.innerHeight / 2;
+                    }
+                  }
+                  popoverContent.style.left = `${popoverX}px`;
+                  popoverContent.style.top = `${popoverY}px`;
+                  popoverContent.style.transform = 'translate(-50%, 0)';
+                }
+              }
+            }
+          });
+        }
+      };
+      
+      window.addEventListener('resize', handleResize);
+      
+      // Adicionar listener de scroll no elemento scrollável
+      if (scrollableParent === window) {
+        window.addEventListener('scroll', handleScroll, { passive: true });
+      } else if (scrollableParent instanceof HTMLElement) {
+        scrollableParent.addEventListener('scroll', handleScroll, { passive: true });
+      }
+
+      return () => {
+        clearTimeout(timeout);
+        clearTimeout(timeout1);
+        clearTimeout(timeout2);
+        window.removeEventListener('resize', handleResize);
+        if (scrollableParent === window) {
+          window.removeEventListener('scroll', handleScroll);
+        } else if (scrollableParent instanceof HTMLElement) {
+          scrollableParent.removeEventListener('scroll', handleScroll);
+        }
+      };
+    }
+  }, [selectedHanditemForPreview]);
+
   const loadData = async () => {
     setIsLoading(true);
     try {
-            const data = await habboApiService.getAllData();
+      // 1. Carregar handitems sincronizados (com traduções e novos)
+      const synced = await handitemSyncService.sync();
+      setSyncedHanditems(synced);
       
-      // Mostrar todos os handitems disponíveis
-      setHanditems(data.handitems);
+      // 2. Converter para formato HabboHanditem para compatibilidade
+      const convertedHanditems: (HabboHanditem & { category?: string; isNew?: boolean })[] = synced.map(item => ({
+        id: item.id,
+        name: item.names[language] || item.names.en || item.names.pt,
+        type: item.id >= 1000 ? 'CarryItem' : 'UseItem',
+        assetPrefix: item.id >= 1000 ? 'crr' : 'drk',
+        state: item.id >= 1000 ? 'cri' : 'usei',
+        category: 'outros', // Será categorizado depois
+        isNew: item.isNew || false
+      }));
+      
+      setHanditems(convertedHanditems);
       setLastUpdate(new Date());
       
       toast({
-        title: "Dados carregados com sucesso!",
-        description: `Encontrados ${data.handitems.length} handitems`,
+        title: "Dados sincronizados!",
+        description: `Encontrados ${synced.length} handitems (${synced.filter(h => h.isNew).length} novos)`,
       });
       
-          } catch (error) {
+    } catch (error) {
       console.error('❌ Erro ao carregar dados:', error);
-            toast({
-        title: "Erro ao carregar dados",
-        description: "Não foi possível conectar aos servidores do Habbo",
-        variant: "destructive",
-      });
+      
+      // Fallback: tentar carregar do arquivo local
+      try {
+        const response = await fetch('/handitems/handitems.json');
+        const localData = await response.json();
+        const localHanditems: HabboHanditem[] = localData.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          category: 'outros'
+        }));
+        setHanditems(localHanditems);
+        toast({
+          title: "Dados carregados (modo offline)",
+          description: `Usando dados locais: ${localHanditems.length} handitems`,
+        });
+      } catch (fallbackError) {
+        toast({
+          title: "Erro ao carregar dados",
+          description: "Não foi possível carregar handitems",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -130,16 +391,54 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
   const effectiveSearchTerm = externalSearchTerm ?? searchTerm;
 
   const filteredHanditems = useMemo(() => {
-    let filtered = handitems.filter(item => 
-      item.id !== 0 && // Nenhum
-      item.id !== 20 && // Lata de Bubblejuice
-      item.id !== 21 && // Hambúrger
-      item.id !== 22 && // Habbo Limonada
-      item.id !== 23 && // Habbo Beterraba
-      item.id !== 173 && // Frappucino Banana Deluxe
-      item.id !== 244 && // Celular
-      item.id !== 1077 // Toalha Spa Verde
-    );
+    // Usar syncedHanditems se disponível, senão usar handitems
+    const sourceItems: (HabboHanditem & { category?: string; isNew?: boolean })[] = syncedHanditems.length > 0 
+      ? syncedHanditems.map(item => ({
+          id: item.id,
+          name: item.names[language] || item.names.en || item.names.pt,
+          type: item.id >= 1000 ? 'CarryItem' : 'UseItem',
+          assetPrefix: item.id >= 1000 ? 'crr' : 'drk',
+          state: item.id >= 1000 ? 'cri' : 'usei',
+          category: 'outros',
+          isNew: item.isNew || false
+        }))
+      : handitems.map(item => ({
+          ...item,
+          category: (item as any).category || 'outros',
+          isNew: false
+        }));
+
+    // Remover duplicatas: manter apenas o item com o ID mais alto (mais recente)
+    // Baseado na lista do external_flash_texts, IDs maiores são mais recentes e corretos
+    const itemsMap = new Map<string, (HabboHanditem & { category?: string; isNew?: boolean })>();
+    
+    sourceItems.forEach(item => {
+      if (item.id === 0) return; // Pular "Nenhum"
+      
+      // Normalizar nome para comparação (remover acentos, espaços extras, etc)
+      const nameKey = item.name.toLowerCase()
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+        .replace(/\s+/g, ' '); // Normaliza espaços
+      
+      const existing = itemsMap.get(nameKey);
+      
+      // Se já existe, manter o que tem o ID maior (mais recente/correto)
+      // Exemplo: "Spray" ID 65 vs ID 1060 -> manter 1060
+      if (!existing || item.id > existing.id) {
+        itemsMap.set(nameKey, item);
+      }
+    });
+
+    let filtered = Array.from(itemsMap.values());
+
+    // Ordenar: novos primeiro, depois por ID
+    filtered = filtered.sort((a, b) => {
+      if (a.isNew && !b.isNew) return -1;
+      if (!a.isNew && b.isNew) return 1;
+      return b.id - a.id; // IDs maiores primeiro (mais recentes)
+    });
 
     // Filtro por categoria
     if (selectedCategory !== 'Todos') {
@@ -149,23 +448,30 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
           case 'Alimentos':
             return name.includes('hambúrguer') || name.includes('pizza') || name.includes('sanduíche') || 
                    name.includes('frango') || name.includes('carne') || name.includes('peixe') ||
-                   name.includes('vegetal') || name.includes('salada') || name.includes('sopa');
+                   name.includes('vegetal') || name.includes('salada') || name.includes('sopa') ||
+                   name.includes('cenoura') || name.includes('tomate') || name.includes('queijo') ||
+                   name.includes('pão') || name.includes('fruta') || name.includes('banana') ||
+                   name.includes('maçã') || name.includes('laranja') || name.includes('pêra');
           case 'Bebidas':
             return name.includes('café') || name.includes('suco') || name.includes('água') || 
                    name.includes('leite') || name.includes('chá') || name.includes('refrigerante') ||
-                   name.includes('bebida') || name.includes('drink') || name.includes('copo');
+                   name.includes('bebida') || name.includes('drink') || name.includes('copo') ||
+                   name.includes('champanhe') || name.includes('energético') || name.includes('milkshake');
           case 'Doces':
             return name.includes('doce') || name.includes('açúcar') || name.includes('chocolate') || 
                    name.includes('balas') || name.includes('pirulito') || name.includes('biscoito') ||
-                   name.includes('bolo') || name.includes('torta') || name.includes('sorvete');
+                   name.includes('bolo') || name.includes('torta') || name.includes('sorvete') ||
+                   name.includes('goma') || name.includes('chiclete') || name.includes('algodão');
           case 'Utensílios':
             return name.includes('garfo') || name.includes('faca') || name.includes('colher') || 
                    name.includes('prato') || name.includes('copo') || name.includes('xícara') ||
-                   name.includes('tigela') || name.includes('panela') || name.includes('talher');
+                   name.includes('tigela') || name.includes('panela') || name.includes('talher') ||
+                   name.includes('livro') || name.includes('prancheta') || name.includes('pincel');
           case 'Eletrônicos':
             return name.includes('celular') || name.includes('telefone') || name.includes('computador') || 
                    name.includes('tablet') || name.includes('câmera') || name.includes('rádio') ||
-                   name.includes('tv') || name.includes('vídeo') || name.includes('eletrônico');
+                   name.includes('tv') || name.includes('vídeo') || name.includes('eletrônico') ||
+                   name.includes('hipad') || name.includes('h-phone') || name.includes('microfone');
           case 'Outros':
             return !name.includes('hambúrguer') && !name.includes('pizza') && !name.includes('sanduíche') && 
                    !name.includes('café') && !name.includes('suco') && !name.includes('água') &&
@@ -182,14 +488,104 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
     if (effectiveSearchTerm) {
       filtered = filtered.filter(item => 
         item.name.toLowerCase().includes(effectiveSearchTerm.toLowerCase()) ||
-        item.id.toString().includes(effectiveSearchTerm) ||
-        item.assetPrefix.toLowerCase().includes(effectiveSearchTerm.toLowerCase())
+        item.id.toString().includes(effectiveSearchTerm)
       );
     }
 
     return filtered;
-  }, [handitems, selectedCategory, effectiveSearchTerm]);
+  }, [syncedHanditems, handitems, selectedCategory, effectiveSearchTerm, language]);
 
+
+  // Cache para mapeamento reverso do XML (value -> id)
+  const reverseMappingCache = useRef<Map<number, { drk?: number; crr?: number; type?: 'drk' | 'crr' }>>(new Map());
+  const reverseMappingLoading = useRef<Promise<void> | null>(null);
+
+  // Obter mapeamento reverso do HabboAvatarActions.xml
+  // Exemplo: Se <param id="1074" value="175"/>, então getReverseMapping(175) retorna { crr: 1074, type: 'crr' }
+  const getReverseMappedValue = async (handitemId: number): Promise<{ drk?: number; crr?: number; type?: 'drk' | 'crr' }> => {
+    // Verificar cache primeiro
+    if (reverseMappingCache.current.has(handitemId)) {
+      return reverseMappingCache.current.get(handitemId)!;
+    }
+
+    // Se já está carregando, aguardar
+    if (reverseMappingLoading.current) {
+      await reverseMappingLoading.current;
+      if (reverseMappingCache.current.has(handitemId)) {
+        return reverseMappingCache.current.get(handitemId)!;
+      }
+    }
+
+    // Carregar mapeamento do XML
+    const loadMapping = async () => {
+      try {
+        const response = await fetch('/handitems/gordon/flash-assets-PRODUCTION-202509092352-15493374/HabboAvatarActions.xml');
+        const xmlText = await response.text();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+        
+        // Processar todos os mapeamentos de uma vez
+        const allMappings = new Map<number, { drk?: number; crr?: number; type?: 'drk' | 'crr' }>();
+        
+        // Buscar em UseItem (drk)
+        const useItemAction = xmlDoc.querySelector('action[id="UseItem"]');
+        if (useItemAction) {
+          const params = useItemAction.querySelectorAll('param');
+          params.forEach(param => {
+            const id = param.getAttribute('id');
+            const value = param.getAttribute('value');
+            if (id && value && id !== 'default') {
+              const gameId = parseInt(value, 10);
+              const mappedValue = parseInt(id, 10);
+              if (!allMappings.has(gameId)) {
+                allMappings.set(gameId, {});
+              }
+              const mapping = allMappings.get(gameId)!;
+              mapping.drk = mappedValue;
+              if (!mapping.type) mapping.type = 'drk';
+            }
+          });
+        }
+        
+        // Buscar em CarryItem (crr)
+        const carryItemAction = xmlDoc.querySelector('action[id="CarryItem"]');
+        if (carryItemAction) {
+          const params = carryItemAction.querySelectorAll('param');
+          params.forEach(param => {
+            const id = param.getAttribute('id');
+            const value = param.getAttribute('value');
+            if (id && value && id !== 'default') {
+              const gameId = parseInt(value, 10);
+              const mappedValue = parseInt(id, 10);
+              if (!allMappings.has(gameId)) {
+                allMappings.set(gameId, {});
+              }
+              const mapping = allMappings.get(gameId)!;
+              mapping.crr = mappedValue;
+              // Se já tem drk, manter drk como tipo principal, senão usar crr
+              if (!mapping.type) mapping.type = 'crr';
+            }
+          });
+        }
+        
+        // Armazenar no cache
+        allMappings.forEach((value, key) => {
+          reverseMappingCache.current.set(key, value);
+        });
+        
+        console.log(`✅ Mapeamento reverso carregado: ${allMappings.size} handitems mapeados`);
+      } catch (error) {
+        console.error('⚠️ Erro ao carregar mapeamento reverso do XML:', error);
+      }
+    };
+
+    reverseMappingLoading.current = loadMapping();
+    await reverseMappingLoading.current;
+    reverseMappingLoading.current = null;
+
+    // Retornar do cache ou objeto vazio
+    return reverseMappingCache.current.get(handitemId) || {};
+  };
 
   // Obter URL da imagem do handitem usando imagens reais
   const getHanditemImageUrl = (handitem: HabboHanditem): string => {
@@ -215,6 +611,10 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
   17: 'https://i.imgur.com/1BGBH0d.png', // Café Java
   18: 'https://i.imgur.com/Cfa2xdt.png', // Água da Torneira
     19: 'https://i.imgur.com/sMTSwiG.png', // Suco Bubblejuice
+  20: 'https://i.imgur.com/KKovhHi.png', // Câmera / Lata de Bubblejuice
+  21: 'https://i.imgur.com/Uwby52g.png', // Hambúrger
+  22: 'https://i.imgur.com/iW9Ub5D.png', // Habbo Limonada (Lime Habbo Soda)
+  23: 'https://i.imgur.com/OdYeZ21.png', // Habbo Beterraba (Beetroot Habbo Soda)
     24: 'https://i.imgur.com/3JtoDrn.png', // Suco de Bolhas de 1978
   25: 'https://i.imgur.com/VTfFXla.png', // Poção do Amor
   26: 'https://i.imgur.com/SyjIrTP.png', // Calippo
@@ -256,7 +656,7 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
   62: 'https://i.imgur.com/kRKUkAv.png', // Água Envenenada
   63: 'https://i.imgur.com/XSaqRZp.png', // Saco de Pipocas
   64: 'https://i.imgur.com/hLVm2nD.png', // Suco de Limão
-  65: 'https://i.imgur.com/61rJtrb.png', // Xícara de Café Expresso
+  // ID 65 removido - duplicata de ID 1060 (Spray)
   66: 'https://i.imgur.com/JG2Zh9L.png', // Milkshake de Banana
   67: 'https://i.imgur.com/kjDvllH.png', // Chiclete Azul
   68: 'https://i.imgur.com/iOsm5GN.png', // Chiclete Rosa
@@ -363,6 +763,10 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
   170: 'https://i.imgur.com/zhBCfVQ.png', // Bolo Pato
   171: 'https://i.imgur.com/jE3xT86.png', // Bolo Pato
   172: 'https://i.imgur.com/nWz2OMW.png', // Milkshake de Banana
+  173: 'https://i.imgur.com/gO34eGD.png', // Frappucino Banana Deluxe
+  // ID 175 (Poison Mushroom / Cogumelo Venenoso) - será buscado automaticamente de múltiplas fontes
+  244: 'https://i.imgur.com/EIaep5m.png', // Celular (já existe no mapeamento de CarryItems, mas vou adicionar aqui também)
+  1455: 'https://i.imgur.com/gO34eGD.png', // Frappucino Banana Deluxe (Frappucino B)
   
   // CarryItems (crr) - para carregar
   1000: 'https://i.imgur.com/4gM6r6C.png', // Rosa
@@ -436,6 +840,7 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
   1074: 'https://i.imgur.com/UHrwe8a.png', // Alossauro Verde
   1075: 'https://i.imgur.com/lbNC1v2.png', // Tricerátopo Amarelo
   1076: 'https://i.imgur.com/WmCZiqq.png', // Saurolofo Roxo
+  1077: 'https://i.imgur.com/7OVjtWi.png', // Toalha Spa Verde (green spa towel) - usando imagem de toalha/papel higiênico como referência
   1078: 'https://i.imgur.com/wtziU5n.png', // Espetinho de Lagartixa
   1079: 'https://i.imgur.com/se0ANSR.png', // Besouro Lucano
   1080: 'https://i.imgur.com/ZqwFSAi.png', // Besouro Rinoceronte
@@ -483,11 +888,116 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
       return realImages[handitem.id];
     }
     
-    // Fallback: placeholder local
-    return '/assets/handitem_placeholder.png';
+    // Para ID 175 (Poison Mushroom), usar mapeamento do XML
+    if (handitem.id === 175) {
+      // Carregar mapeamento assincronamente (será usado no onError se necessário)
+      getReverseMappedValue(175).then(mapping => {
+        if (mapping.crr === 1074) {
+          console.log(`🔍 ID 175 mapeado para crr1074 no XML`);
+        }
+      }).catch(console.error);
+      
+      // Tentar URLs baseadas no mapeamento conhecido (1074)
+      const possibleUrls = [
+        '/handitems/images/preview/handitem1074.png',
+        '/handitems/images/crr/crr1074.png',
+        'https://images.habbo.com/gordon/flash-assets-PRODUCTION-202509092352-15493374/hh_human_item_crr1074.png',
+      ];
+      
+      // Retornar primeira URL (o onError tentará as outras)
+      return possibleUrls[0];
+    }
+    
+    // Se não houver imagem no mapeamento, tentar outras fontes
+    // 1. Tentar handitemImages.getHanditemImageById (que tenta REAL_IMAGES e local)
+    try {
+      const handitemImageUrl = handitemImages.getHanditemImageById(handitem.id);
+      // Se retornou uma URL válida (não placeholder), usar
+      if (handitemImageUrl && handitemImageUrl.startsWith('http')) {
+        return handitemImageUrl;
+      }
+      // Se retornou uma URL local, também tentar
+      if (handitemImageUrl && handitemImageUrl.startsWith('/')) {
+        return handitemImageUrl;
+      }
+    } catch (error) {
+      // Ignorar erro
+    }
+    
+    // 2. Tentar imagens preview locais
+    const previewImageUrl = `/handitems/images/preview/handitem_${handitem.id}.png`;
+    // O onError do img tag vai lidar se não existir
+    
+    // 3. Tentar imagens extraídas
+    const extractedImageUrl = `/handitems/images/extracted/handitem_${handitem.id}.svg`;
+    
+    // 4. Tentar imagem local genérica
+    const localImageUrl = `/handitems/images/${handitem.id}.png`;
+    
+    // Retornar preview primeiro, depois extraída, depois local, depois placeholder
+    // O onError vai tentar a próxima automaticamente
+    return previewImageUrl;
   };
 
-  // Copiar ID do handitem para a área de transferência
+  // Verificar se um handitem pode ter ambas as ações (drk e crr)
+  const canHaveBothActions = (handitemId: number): boolean => {
+    // Itens com ID < 1000 são UseItems (drk) por padrão
+    // Itens com ID >= 1000 são CarryItems (crr) por padrão
+    // Mas alguns itens podem ter ambas as ações mapeadas no XML
+    const hasDrkMapping = handitemActionMapper.hasMapping(handitemId, 'drk');
+    const hasCrrMapping = handitemActionMapper.hasMapping(handitemId, 'crr');
+    
+    // Se tem mapeamento para ambas, pode alternar
+    // Ou se é um UseItem (ID < 1000) que também tem mapeamento crr
+    return (hasDrkMapping && hasCrrMapping) || (handitemId < 1000 && hasCrrMapping);
+  };
+
+  // Gerar URL do avatar com ação específica
+  const generateAvatarUrlWithAction = (handitemId: number, actionType: 'drk' | 'crr'): string => {
+    const habboName = habboAccount?.habbo_name || 'habbohub';
+    const figureString = habboAccount?.figure_string;
+    const gender = extractGenderFromFigureString(figureString);
+    
+    // Gerar URL base
+    let avatarUrl = avatarPreview.generateAvatarUrl(habboName, handitemId, {
+      size: 'l',
+      hotel: 'com.br',
+      figureString: figureString,
+      gender: gender
+    });
+    
+    // Substituir a ação na URL pela ação desejada
+    const mappedValue = handitemActionMapper.getMappedValue(handitemId, actionType);
+    if (avatarUrl.includes('action=std,drk=')) {
+      avatarUrl = avatarUrl.replace(/action=std,drk=\d+/, `action=std,${actionType}=${mappedValue}`);
+    } else if (avatarUrl.includes('action=std,crr=')) {
+      avatarUrl = avatarUrl.replace(/action=std,crr=\d+/, `action=std,${actionType}=${mappedValue}`);
+    } else if (avatarUrl.includes('action=std')) {
+      avatarUrl = avatarUrl.replace('action=std', `action=std,${actionType}=${mappedValue}`);
+    }
+    
+    return avatarUrl;
+  };
+
+  // Gerar URL do avatar com handitem
+  const generateAvatarUrl = (handitemId: number): string => {
+    const habboName = habboAccount?.habbo_name || 'habbohub';
+    const figureString = habboAccount?.figure_string;
+    const gender = extractGenderFromFigureString(figureString);
+    
+    return avatarPreview.generateAvatarUrl(habboName, handitemId, {
+      size: 'l',
+      hotel: 'com.br',
+      figureString: figureString,
+      gender: gender
+    });
+  };
+
+  // Resolver imagem do handitem - usa a mesma função que já funciona no grid
+  const resolveHanditemImage = (handitem: HabboHanditem): string => {
+    return getHanditemImageUrl(handitem);
+  };
+
   const copyHanditemId = async (handitem: HabboHanditem) => {const textToCopy = handitem.id.toString();
     
     try {
@@ -578,18 +1088,40 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
       <div className="w-full space-y-4">
         {!hideHeader && (
           <div className="flex flex-wrap gap-2">
-            {Object.entries(HANDITEM_CATEGORIES).map(([key, category]) => (
-              <Button
-                key={key}
-                variant={selectedCategory === key ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(key)}
-                className="flex items-center gap-2"
-              >
-                <category.icon className="h-4 w-4" />
-                {category.label}
-              </Button>
-            ))}
+            {Object.entries(HANDITEM_CATEGORIES).map(([key, category]) => {
+              const categoryImageUrl = getCategoryHanditemImage(key);
+              
+              // Componente interno para o botão de categoria com estado de erro de imagem
+              const CategoryButton: React.FC = () => {
+                const [imageError, setImageError] = useState(false);
+                
+                return (
+                  <Button
+                    variant={selectedCategory === key ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedCategory(key)}
+                    className="flex items-center gap-2"
+                  >
+                    {categoryImageUrl && !imageError ? (
+                      <img 
+                        src={categoryImageUrl} 
+                        alt={category.label}
+                        className="w-4 h-4 object-contain"
+                        style={{ imageRendering: 'pixelated' }}
+                        onError={() => {
+                          setImageError(true);
+                        }}
+                      />
+                    ) : (
+                      <category.icon className="h-4 w-4" />
+                    )}
+                    {category.label}
+                  </Button>
+                );
+              };
+              
+              return <CategoryButton key={key} />;
+            })}
           </div>
         )}
 
@@ -602,53 +1134,336 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-              {filteredHanditems.map((handitem) => (
-                <Card 
+            <div ref={handitemsContainerRef} className="relative grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              {filteredHanditems.map((handitem) => {
+                const isCopied = copiedHanditems.has(handitem.id);
+                const canAlternate = canHaveBothActions(handitem.id);
+                
+                // Componente interno para animação alternada
+                const AnimatedAvatarPreview: React.FC<{ handitemId: number; canAlternate: boolean }> = ({ handitemId, canAlternate }) => {
+                  const [currentAction, setCurrentAction] = useState<'drk' | 'crr'>(handitemId >= 1000 ? 'crr' : 'drk');
+                  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+                  const imgRef = useRef<HTMLImageElement>(null);
+                  
+                  // URL inicial
+                  const initialUrl = useMemo(() => {
+                    return canAlternate 
+                      ? generateAvatarUrlWithAction(handitemId, currentAction)
+                      : generateAvatarUrl(handitemId);
+                  }, [handitemId, canAlternate]);
+                  
+                  // Atualizar src da imagem quando a ação mudar, sem causar re-render
+                  useEffect(() => {
+                    if (canAlternate && imgRef.current) {
+                      const newUrl = generateAvatarUrlWithAction(handitemId, currentAction);
+                      // Atualizar src diretamente sem causar re-render do componente pai
+                      imgRef.current.src = `${newUrl}${newUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`;
+                    }
+                  }, [currentAction, canAlternate, handitemId]);
+                  
+                  useEffect(() => {
+                    if (canAlternate) {
+                      // Alternar entre drk e crr a cada 2 segundos
+                      intervalRef.current = setInterval(() => {
+                        setCurrentAction(prev => prev === 'drk' ? 'crr' : 'drk');
+                      }, 2000);
+                    }
+                    
+                    return () => {
+                      if (intervalRef.current) {
+                        clearInterval(intervalRef.current);
+                      }
+                    };
+                  }, [canAlternate]);
+                  
+                  return (
+                    <img
+                      ref={imgRef}
+                      key={`handitem-popover-${handitemId}`}
+                      src={`${initialUrl}${initialUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`}
+                      alt="Avatar com handitem"
+                      className="w-auto h-auto max-w-none object-scale-down"
+                      style={{ imageRendering: 'pixelated' }}
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        console.error(`❌ Erro ao carregar avatar com handitem:`, {
+                          handitemId: handitemId,
+                          currentAction,
+                          url: target.src
+                        });
+                        const fallbackHabboName = habboAccount?.habbo_name || 'habbohub';
+                        const fallbackFigureString = habboAccount?.figure_string;
+                        const fallbackGender = extractGenderFromFigureString(fallbackFigureString);
+                        const fallbackUrl = avatarPreview.generateAvatarUrl(fallbackHabboName, handitemId, {
+                          size: 'l',
+                          hotel: 'com.br',
+                          figureString: fallbackFigureString,
+                          gender: fallbackGender
+                        });
+                        target.src = `${fallbackUrl}${fallbackUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`;
+                      }}
+                    />
+                  );
+                };
+                
+                return (
+                <Popover 
                   key={`${handitem.assetPrefix}-${handitem.id}`}
-                  className="cursor-pointer hover:shadow-md transition-all duration-200 group hover:scale-105"
-                  onClick={() => copyHanditemId(handitem)}
-                  title="Clique para copiar o ID"
+                  open={selectedHanditemForPreview?.id === handitem.id}
+                  onOpenChange={(open) => {
+                    if (open) {
+                      setSelectedHanditemForPreview(handitem);
+                      // Copiar o ID quando o popover abrir
+                      copyHanditemId(handitem);
+                      if (onHanditemSelect) {
+                        onHanditemSelect(handitem);
+                      }
+                    } else {
+                      setSelectedHanditemForPreview(null);
+                    }
+                  }}
+                  modal={false}
                 >
-                  <CardContent className="p-3">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="flex items-center justify-center">
+                  <PopoverTrigger asChild>
+                    <Card 
+                      data-handitem-id={handitem.id}
+                      className="cursor-pointer hover:shadow-md transition-all duration-200 group hover:scale-105 flex flex-col h-full touch-manipulation"
+                      onClick={(e) => {
+                        // Em mobile, garantir que o popover abra manualmente se necessário
+                        const isMobile = window.innerWidth < 768;
+                        if (isMobile && selectedHanditemForPreview?.id !== handitem.id) {
+                          // Fallback: abrir manualmente se o PopoverTrigger não funcionar
+                          setTimeout(() => {
+                            if (selectedHanditemForPreview?.id !== handitem.id) {
+                              setSelectedHanditemForPreview(handitem);
+                            }
+                          }, 100);
+                        }
+                      }}
+                      onTouchEnd={(e) => {
+                        // Em mobile, garantir que o popover abra ao tocar
+                        const isMobile = window.innerWidth < 768;
+                        if (isMobile) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (selectedHanditemForPreview?.id !== handitem.id) {
+                            setSelectedHanditemForPreview(handitem);
+                          }
+                        }
+                      }}
+                      title="Clique para copiar o ID e ver no avatar"
+                    >
+                  <CardContent className="p-2 flex flex-col h-full">
+                    <div className="flex flex-col items-center justify-between h-full gap-1.5 relative">
+                      {/* Badge "Novo" para os 5 mais recentes */}
+                      {handitem.isNew && (
+                        <div className="absolute -top-1 -right-1 z-10">
+                          <img 
+                            src="/assets/new.png" 
+                            alt="Novo" 
+                            className="w-auto h-auto max-w-5 max-h-5 object-contain"
+                            style={{ imageRendering: 'pixelated' }}
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
+                      
+                      {/* Imagem centralizada no topo */}
+                      <div className="flex items-center justify-center relative flex-shrink-0">
                         <img 
                           src={getHanditemImageUrl(handitem)} 
                           alt={handitem.name}
-                          className="max-w-12 max-h-12 object-contain"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                          className="max-w-10 max-h-10 object-contain"
+                          onError={async (e) => {
+                            const target = e.currentTarget;
+                            const currentSrc = target.src;
+                            
+                            // Lógica especial para ID 175 (Poison Mushroom) - usar mapeamento do XML
+                            if (handitem.id === 175) {
+                              const mapping = await getReverseMappedValue(175);
+                              if (mapping.crr === 1074) {
+                                // Tentar URLs baseadas no valor mapeado 1074
+                                const fallbackUrls = [
+                                  '/handitems/images/crr/crr1074.png',
+                                  'https://images.habbo.com/gordon/flash-assets-PRODUCTION-202509092352-15493374/hh_human_item_crr1074.png',
+                                  '/handitems/images/preview/handitem1074.png',
+                                  handitemImages.getHanditemImageById(1074), // Se existir mapeamento para 1074
+                                ];
+                                
+                                // Tentar cada URL até encontrar uma que funcione
+                                for (const url of fallbackUrls) {
+                                  if (url && url !== currentSrc && !url.includes('placeholder')) {
+                                    try {
+                                      const testImg = new Image();
+                                      testImg.onload = () => {
+                                        target.src = url;
+                                      };
+                                      testImg.onerror = () => {
+                                        // Continuar para próxima URL
+                                      };
+                                      testImg.src = url;
+                                      // Se chegou aqui, a URL foi definida, aguardar resultado
+                                      await new Promise(resolve => setTimeout(resolve, 100));
+                                      if (target.src === url) return; // Se mudou, sucesso
+                                    } catch (error) {
+                                      // Continuar para próxima URL
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                            
+                            // Tentar outras fontes em ordem
+                            if (currentSrc.includes('preview/handitem_')) {
+                              // Se preview falhou, tentar extraída
+                              target.src = `/handitems/images/extracted/handitem_${handitem.id}.svg`;
+                            } else if (currentSrc.includes('extracted/handitem_')) {
+                              // Se extraída falhou, tentar local genérica
+                              target.src = `/handitems/images/${handitem.id}.png`;
+                            } else if (currentSrc.includes(`/handitems/images/${handitem.id}.png`)) {
+                              // Se local falhou, tentar handitemImages
+                              try {
+                                const fallbackUrl = handitemImages.getHanditemImageById(handitem.id);
+                                if (fallbackUrl && fallbackUrl !== currentSrc && !fallbackUrl.includes('placeholder')) {
+                                  target.src = fallbackUrl;
+                                  return;
+                                }
+                              } catch (error) {
+                                // Ignorar
+                              }
+                              // Se tudo falhou, usar placeholder
+                              target.src = '/assets/handitem_placeholder.png';
+                            } else if (!currentSrc.includes('handitem_placeholder') && !currentSrc.includes('placeholder.svg')) {
+                              // Última tentativa: placeholder
+                              target.src = '/assets/handitem_placeholder.png';
+                            } else {
+                              // Se o placeholder também falhar, esconde a imagem e mostra o ícone
+                              target.style.display = 'none';
+                              target.nextElementSibling?.classList.remove('hidden');
+                            }
                           }}
                         />
-                        <ImageIcon className="h-6 w-6 text-gray-400 hidden" />
+                        <ImageIcon className="h-5 w-5 text-gray-400 hidden" />
                       </div>
-                      <div className="text-center w-full">
-                        <h3 className="font-medium text-xs truncate mb-1">
+                      
+                      {/* Nome do item - 2 linhas fixas */}
+                      <div className="text-center w-full flex-1 flex flex-col justify-center min-h-[2rem] px-1">
+                        <h3 className="font-medium text-xs leading-tight break-words" style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          textAlign: 'center'
+                        }}>
                           {handitem.name}
                         </h3>
-                        <div className="flex items-center justify-center gap-1">
-                          <span className="text-xs text-gray-500">
-                            ID: {handitem.id}
-                          </span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              copyHanditemId(handitem);
-                            }}
-                          >
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                        </div>
+                      </div>
+                      
+                      {/* ID alinhado no centro inferior */}
+                      <div className="flex items-center justify-center gap-1 w-full flex-shrink-0 mt-auto">
+                        <span className="text-xs text-gray-500 text-center">
+                          ID: {handitem.id}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copyHanditemId(handitem);
+                          }}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                  </PopoverTrigger>
+                  <PopoverContent 
+                    className="w-auto p-3 z-50" 
+                    style={{
+                      maxWidth: '90vw',
+                      maxHeight: '90vh',
+                      margin: 0
+                    }}
+                    onOpenAutoFocus={(e) => {
+                      // Prevenir foco automático para não causar scroll indesejado
+                      e.preventDefault();
+                    }}
+                    onEscapeKeyDown={() => {
+                      setSelectedHanditemForPreview(null);
+                    }}
+                    onInteractOutside={(e) => {
+                      // Permitir fechar ao clicar fora
+                      setSelectedHanditemForPreview(null);
+                    }}
+                  >
+                    <div className="flex flex-col items-center space-y-3">
+                      {/* Avatar Preview com animação alternada */}
+                      <div className="relative flex items-center justify-center bg-muted rounded-lg border border-border p-2">
+                        <AnimatedAvatarPreview handitemId={handitem.id} canAlternate={canAlternate} />
+                        {/* Botão de Copiar ID sobreposto */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            copyHanditemId(handitem);
+                            setCopiedHanditems(prev => new Set(prev).add(handitem.id));
+                            setTimeout(() => {
+                              setCopiedHanditems(prev => {
+                                const newSet = new Set(prev);
+                                newSet.delete(handitem.id);
+                                return newSet;
+                              });
+                            }, 2000);
+                          }}
+                          type="button"
+                          className="absolute top-2 right-2 bg-background/90 hover:bg-background rounded-md p-1.5 transition-all duration-300 flex items-center justify-end gap-1.5 shadow-md border-0 outline-none overflow-hidden"
+                          style={{ 
+                            border: 'none',
+                            width: isCopied ? 'auto' : '2rem',
+                            minWidth: '2rem'
+                          }}
+                          title="Copiar ID"
+                        >
+                          <Copy className="w-4 h-4 flex-shrink-0" style={{ stroke: 'currentColor' }} />
+                          {isCopied && (
+                            <span className="volter-font text-xs whitespace-nowrap animate-in fade-in slide-in-from-right-2">
+                              ID Copiado
+                            </span>
+                          )}
+                        </button>
+                      </div>
+                      
+                      {/* Informações do Handitem */}
+                      <div className="text-center space-y-1.5 min-w-[120px]">
+                        <div className="flex items-center justify-center gap-2">
+                          <img
+                            src={resolveHanditemImage(handitem)}
+                            alt={handitem.name}
+                            className="max-w-6 max-h-6 w-auto h-auto object-contain"
+                            style={{ imageRendering: 'pixelated' }}
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              if (target.src !== '/assets/handitem_placeholder.png') {
+                                target.src = '/assets/handitem_placeholder.png';
+                              }
+                            }}
+                          />
+                          <span className="volter-font font-bold text-sm">{handitem.name}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          ID: {handitem.id}
+                        </p>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )})}
             </div>
           )}
         </ScrollArea>

@@ -16,7 +16,11 @@ import { handitemDiscovery, DiscoveredHanditem } from '@/utils/handitemDiscovery
 import { avatarPreview, AvatarOptions } from '@/utils/avatarPreview';
 import { UnifiedCatalog } from './UnifiedCatalog';
 import { HabboHanditem, HabboFurni } from '@/services/HabboAPIService';
+import { handitemSyncService, HanditemData as SyncedHanditemData } from '@/services/HanditemSyncService';
+import { useI18n } from '@/contexts/I18nContext';
 import * as handitemImages from './handitemImages';
+import { AnimatedAvatarPreview } from './AnimatedAvatarPreview';
+import { extractGenderFromFigureString } from '@/utils/userNormalizer';
 // Trax removido deste contexto
 
 interface HanditemData {
@@ -1207,14 +1211,20 @@ const getSubCategoryForItem = (categoryType: string): string => {
 const generateHanditemAvatarUrl = (
   habboName: string, 
   handitemId: number | null, 
-  size: string = 'm'
+  size: string = 'm',
+  figureString?: string,
+  gender?: 'M' | 'F'
 ): string => {
-  const direction = 2;
-  const headDirection = 2;
-  const gesture = 'nrm';
-  const actionParam = handitemId && handitemId !== 0 ? `crr=${handitemId}` : '';
-  
-  return `https://www.habbo.com/habbo-imaging/avatarimage?user=${habboName}&direction=${direction}&head_direction=${headDirection}&action=${actionParam}&gesture=${gesture}&size=${size}`;
+  // Usar avatarPreview para gerar URL corretamente
+  // Priorizar figurestring quando disponível (formato correto do Habbo)
+  // Usar habbohub como padrão se o nome estiver vazio
+  const userName = habboName && habboName.trim() ? habboName.trim() : 'habbohub';
+  return avatarPreview.generateAvatarUrl(userName, handitemId, { 
+    size: size as 's' | 'm' | 'l' | 'xl',
+    hotel: 'com.br' as any, // TypeScript workaround
+    figureString: figureString,
+    gender: gender
+  });
 };
 
 // Dados estruturados baseados nas fontes oficiais do Habbo
@@ -1354,7 +1364,9 @@ const HANDITEM_DATA = [
 
 // Componente para o catálogo atual (handitems e mobis)
 const CurrentCatalog: React.FC = () => {
+  const { language } = useI18n();
   const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<'all' | 'handitems' | 'mobis'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -1363,8 +1375,9 @@ const CurrentCatalog: React.FC = () => {
     handitems: any[];
     mobis: any[];
   }>({ handitems: [], mobis: [] });
+  const [syncedHanditems, setSyncedHanditems] = useState<SyncedHanditemData[]>([]);
 
-  // Load catalog data
+  // Load catalog data and sync handitems
   useEffect(() => {
     const loadCatalogData = async () => {
       setLoading(true);
@@ -1373,8 +1386,52 @@ const CurrentCatalog: React.FC = () => {
         const response = await fetch('/catalog-data.json');
         const data = await response.json();
         setCatalogData(data);
+        
+        // Carregar handitems sincronizados
+        // Primeiro tentar carregar diretamente do arquivo (mais confiável)
+        let synced: SyncedHanditemData[] = [];
+        try {
+          const fileResponse = await fetch('/handitems/handitems-full.json');
+          if (fileResponse.ok) {
+            const contentType = fileResponse.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+              const text = await fileResponse.text();
+              try {
+                synced = JSON.parse(text);
+                console.log('📦 Handitems carregados diretamente do arquivo handitems-full.json:', synced.length);
+              } catch (parseError) {
+                console.error('❌ Erro ao fazer parse do JSON:', parseError);
+                console.error('Primeiros 200 caracteres do conteúdo:', text.substring(0, 200));
+                throw parseError;
+              }
+            } else {
+              console.warn('⚠️ Resposta não é JSON, content-type:', contentType);
+              throw new Error('Resposta não é JSON');
+            }
+          } else {
+            console.warn(`⚠️ Arquivo não encontrado, status: ${fileResponse.status}`);
+            // Fallback: usar serviço de sincronização
+            synced = await handitemSyncService.sync();
+            console.log('📦 Handitems sincronizados carregados via serviço:', synced.length);
+          }
+        } catch (fileError: any) {
+          console.error('❌ Erro ao carregar arquivo handitems-full.json:', fileError.message);
+          // Fallback: usar serviço de sincronização
+          try {
+            synced = await handitemSyncService.sync();
+            console.log('📦 Handitems sincronizados carregados via serviço (fallback):', synced.length);
+          } catch (syncError) {
+            console.error('❌ Erro ao sincronizar handitems:', syncError);
+            synced = [];
+          }
+        }
+        
+        const newHanditems = synced.filter(h => h.isNew);
+        console.log('🆕 Handitems novos encontrados:', newHanditems.length, newHanditems.map(h => `ID ${h.id}: ${h.names.pt || h.names.en}`));
+        setSyncedHanditems(synced);
       } catch (error) {
-              } finally {
+        console.error('Erro ao carregar dados:', error);
+      } finally {
         setLoading(false);
       }
     };
@@ -1382,9 +1439,70 @@ const CurrentCatalog: React.FC = () => {
     loadCatalogData();
   }, []);
 
+  // Função para sincronizar handitems manualmente
+  const handleSyncHanditems = useCallback(async () => {
+    setSyncing(true);
+    try {
+      // Forçar sincronização (ignorar cache)
+      const result = await handitemSyncService.sync(true);
+      setSyncedHanditems(result);
+    } catch (error) {
+      console.error('Erro ao sincronizar handitems:', error);
+    } finally {
+      setSyncing(false);
+    }
+  }, []);
+
   // Filter data based on search and filters
   const filteredHanditems = useMemo(() => {
-    return catalogData.handitems.filter(item => {
+    // Criar um mapa de handitems do catalogData
+    const catalogMap = new Map(catalogData.handitems.map(item => [item.id, item]));
+    
+    // Combinar handitems do catalogData com handitems sincronizados
+    // Incluir handitems que estão apenas no syncedHanditems (novos handitems)
+    const allHanditems = new Map();
+    
+    // Adicionar handitems do catalogData
+    catalogData.handitems.forEach(item => {
+      const synced = syncedHanditems.find(s => s.id === item.id);
+      const translatedName = synced 
+        ? synced.names[language] || synced.names.en || item.name
+        : item.name;
+      
+      allHanditems.set(item.id, {
+        ...item,
+        name: translatedName,
+        isNew: synced?.isNew || false
+      });
+    });
+    
+    // Adicionar handitems sincronizados que não estão no catalogData (novos handitems)
+    syncedHanditems.forEach(synced => {
+      if (!allHanditems.has(synced.id)) {
+        const translatedName = synced.names[language] || synced.names.en || synced.names.pt;
+        console.log(`➕ Adicionando handitem novo que não está no catalog: ID ${synced.id}, isNew: ${synced.isNew}`);
+        allHanditems.set(synced.id, {
+          id: synced.id,
+          name: translatedName,
+          description: `Handitem ID: ${synced.id}`,
+          category: 'outros',
+          subcategory: 'diversos',
+          rarity: 'common',
+          spriteUrl: `https://images.habbotemplarios.com/web/avatargen/hand_water.png`,
+          isNew: synced.isNew || false
+        });
+      } else {
+        // Atualizar isNew mesmo se já existe no catalog
+        const existing = allHanditems.get(synced.id);
+        if (existing && synced.isNew) {
+          existing.isNew = true;
+          console.log(`🆕 Atualizando handitem existente como novo: ID ${synced.id}`);
+        }
+      }
+    });
+    
+    // Converter para array e filtrar
+    return Array.from(allHanditems.values()).filter(item => {
       const matchesSearch = (item.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
                            (item.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
       const matchesType = selectedType === 'all' || selectedType === 'handitems';
@@ -1393,7 +1511,7 @@ const CurrentCatalog: React.FC = () => {
       
       return matchesSearch && matchesType && matchesCategory && matchesRarity;
     });
-  }, [catalogData.handitems, searchTerm, selectedType, selectedCategory, selectedRarity]);
+  }, [catalogData.handitems, syncedHanditems, language, searchTerm, selectedType, selectedCategory, selectedRarity]);
 
   const filteredMobis = useMemo(() => {
     return catalogData.mobis.filter(item => {
@@ -1440,12 +1558,25 @@ const CurrentCatalog: React.FC = () => {
       {/* Header */}
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="volter-font text-2xl text-primary">
-            🏪 Catálogo Completo - Handitems e Mobis
-          </CardTitle>
-          <p className="text-muted-foreground volter-font">
-            Explore todos os handitems e mobis disponíveis no Habbo!
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="volter-font text-2xl text-primary">
+                🏪 Catálogo Completo - Handitems e Mobis
+              </CardTitle>
+              <p className="text-muted-foreground volter-font">
+                Explore todos os handitems e mobis disponíveis no Habbo!
+              </p>
+            </div>
+            <Button
+              onClick={handleSyncHanditems}
+              disabled={syncing}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Sincronizando...' : 'Sincronizar Handitems'}
+            </Button>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
             <div className="bg-muted/50 rounded-lg p-3 text-center">
               <div className="text-2xl font-bold text-primary">{catalogData.handitems.length}</div>
@@ -1565,7 +1696,15 @@ const CurrentCatalog: React.FC = () => {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {filteredHanditems.map((handitem) => (
-                <div key={handitem.id} className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div key={handitem.id} className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow relative">
+                  {/* Badge "Novo" no canto superior direito */}
+                  {handitem.isNew && (
+                    <img
+                      src="/assets/new.png"
+                      alt="Novo"
+                      className="absolute top-2 right-2 w-8 h-8 z-10"
+                    />
+                  )}
                   <div className="aspect-square mb-3 bg-muted rounded-lg flex items-center justify-center">
                     <HanditemImage
                       handitem={handitem}
@@ -1747,7 +1886,12 @@ const UnifiedHanditemCatalog: React.FC = () => {
 
   // Função para gerar URL de avatar com handitem
   const generateAvatarUrl = (habboName: string, handitemId: number, size: 's' | 'm' | 'l' | 'xl' = 'l') => {
-    return avatarPreview.generateAvatarUrl(habboName, handitemId, { size });
+    // Usar habbohub como padrão se o nome estiver vazio
+    const userName = habboName && habboName.trim() ? habboName.trim() : 'habbohub';
+    return avatarPreview.generateAvatarUrl(userName, handitemId, { 
+      size,
+      hotel: 'com.br' as any
+    });
   };
 
   const fetchUnifiedData = async () => {
@@ -2095,15 +2239,16 @@ export const HanditemTool: React.FC = () => {
 };
 
 const HanditemToolFixed: React.FC = () => {
+  console.log('🔧 HanditemToolFixed renderizado');
   const [activeTab, setActiveTab] = useState<'catalog' | 'unified' | 'current' | 'trax'>('catalog');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<keyof typeof MAIN_CATEGORIES>('Todos');
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('Todos');
   const [selectedMobi, setSelectedMobi] = useState<MobiData | null>(null);
-  const [selectedHanditem, setSelectedHanditem] = useState<HanditemData | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [previewAvatar, setPreviewAvatar] = useState<string>('');
   const [selectedHanditemId, setSelectedHanditemId] = useState<number | null>(null);
+  const [mobiPreviewHanditem, setMobiPreviewHanditem] = useState<HanditemData | null>(null);
   
   // Sistema de Trax
   const [isPlaying, setIsPlaying] = useState(false);
@@ -2119,7 +2264,8 @@ const HanditemToolFixed: React.FC = () => {
   // Sistema de Itens Rastreados
   const { trackedItems, trackItem, untrackItem, isTracked } = useTrackedItems('br');
 
-  const defaultHabboName = habboAccount?.habbo_name || "";
+  // Usar habbohub como padrão, ou o nome do usuário logado se disponível
+  const defaultHabboName = habboAccount?.habbo_name || "habbohub";
 
   // Funções do Sistema de Trax
   const handlePlayPause = () => {
@@ -2205,7 +2351,12 @@ const HanditemToolFixed: React.FC = () => {
 
   // Função para gerar URL de avatar com handitem
   const generateAvatarUrl = (habboName: string, handitemId: number, size: 's' | 'm' | 'l' | 'xl' = 'l') => {
-    return avatarPreview.generateAvatarUrl(habboName, handitemId, { size });
+    // Usar habbohub como padrão se o nome estiver vazio
+    const userName = habboName && habboName.trim() ? habboName.trim() : 'habbohub';
+    return avatarPreview.generateAvatarUrl(userName, handitemId, { 
+      size,
+      hotel: 'com.br' as any
+    });
   };
 
   const filteredMobis = useMemo(() => {
@@ -2240,7 +2391,6 @@ const HanditemToolFixed: React.FC = () => {
 
   const handleCopyHanditemId = useCallback((handitem: HanditemData) => {
     navigator.clipboard.writeText(handitem.inGameId.toString());
-    setSelectedHanditem(handitem);
     toast({
       title: "ID Copiado!",
       description: `ID ${handitem.inGameId} do item "${handitem.name}" foi copiado.`
@@ -2252,12 +2402,7 @@ const HanditemToolFixed: React.FC = () => {
     setSelectedSubCategory('Todos');
   }, []);
 
-  const avatarUrl = useMemo(() => {
-    return generateHanditemAvatarUrl(
-      defaultHabboName,
-      selectedHanditem?.inGameId || null
-    );
-  }, [defaultHabboName, selectedHanditem]);
+  // Usar a função importada de userNormalizer
 
   const resolveMobiHanditemImage = useCallback((handitemId: number) => {
     // Usar mapeamento centralizado de imagens
@@ -2389,6 +2534,40 @@ const HanditemToolFixed: React.FC = () => {
 
       {/* Catálogos lado a lado */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Coluna Esquerda: Catálogo Unificado (Handitems) com scroll próprio */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="volter-font text-xl">Handitems</CardTitle>
+          </CardHeader>
+          <CardContent className="p-2">
+            <UnifiedCatalog 
+              externalSearchTerm={searchTerm} 
+              hideHeader 
+              onHanditemSelect={(handitem) => {
+                // Quando um handitem é selecionado, atualizar o preview
+                const handitemId = handitem.id;
+                const habboName = habboAccount?.habbo_name || 'habbohub';
+                
+                // Atualizar o handitem selecionado
+                // Converter HabboHanditem para HanditemData se necessário
+                // Obter URL da imagem usando o serviço de imagens
+                const iconUrl = handitemImages.getHanditemImageById(handitem.id);
+                
+                const handitemData: HanditemData = {
+                  name: handitem.name,
+                  webId: handitem.id,
+                  inGameId: handitem.id,
+                  iconUrl: iconUrl,
+                  categoryType: handitem.type || (handitem.id >= 1000 ? 'CarryItem' : 'UseItem')
+                };
+                
+                // Handitem selecionado - agora o popover é gerenciado pelo UnifiedCatalog
+              }}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Coluna Direita: Mobis */}
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="volter-font text-xl">Mobis</CardTitle>
@@ -2477,16 +2656,6 @@ const HanditemToolFixed: React.FC = () => {
             </ScrollArea>
           </CardContent>
         </Card>
-
-        {/* Coluna Direita: Catálogo Unificado (Handitems) com scroll próprio */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="volter-font text-xl">Handitems</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2">
-            <UnifiedCatalog externalSearchTerm={searchTerm} hideHeader />
-          </CardContent>
-        </Card>
       </div>
 
       {/* Modal */}
@@ -2514,31 +2683,60 @@ const HanditemToolFixed: React.FC = () => {
                 </div>
                 
                 <div className="text-center space-y-2">
-                  <h4 className="volter-font font-bold">Avatar Preview ({defaultHabboName})</h4>
-                  <div className="w-32 h-40 mx-auto bg-muted rounded-lg overflow-hidden">
-                    <img
-                      src={avatarUrl}
-                      alt="Avatar com handitem"
-                      className="w-full h-full object-contain"
-                    />
+                  <h4 className="volter-font font-bold">
+                    Avatar Preview ({habboAccount?.habbo_name || 'habbohub'})
+                  </h4>
+                  <div className="w-32 h-40 mx-auto bg-muted rounded-lg overflow-hidden flex items-center justify-center">
+                    {mobiPreviewHanditem ? (
+                      <>
+                        <img
+                          key={`avatar-${mobiPreviewHanditem.inGameId}-${Date.now()}`}
+                          src={`${generateHanditemAvatarUrl(
+                            habboAccount?.habbo_name || 'habbohub',
+                            mobiPreviewHanditem.inGameId,
+                            'm',
+                            habboAccount?.figure_string,
+                            extractGenderFromFigureString(habboAccount?.figure_string)
+                          )}${generateHanditemAvatarUrl(
+                            habboAccount?.habbo_name || 'habbohub',
+                            mobiPreviewHanditem.inGameId,
+                            'm',
+                            habboAccount?.figure_string,
+                            extractGenderFromFigureString(habboAccount?.figure_string)
+                          ).includes('?') ? '&' : '?'}_t=${Date.now()}`}
+                          alt="Avatar com handitem"
+                          className="w-auto h-auto max-w-full max-h-full object-scale-down"
+                          style={{ imageRendering: 'pixelated' }}
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            const habboName = habboAccount?.habbo_name || 'habbohub';
+                            const handitemId = mobiPreviewHanditem.inGameId;
+                            const figureString = habboAccount?.figure_string;
+                            const gender = extractGenderFromFigureString(figureString);
+                            const fallbackUrl = generateHanditemAvatarUrl(habboName, handitemId, 'm', figureString, gender);
+                            target.src = `${fallbackUrl}${fallbackUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`;
+                          }}
+                        />
+                        <div className="flex items-center justify-center gap-2 mt-2">
+                          <img
+                            src={resolveMobiHanditemImage(mobiPreviewHanditem.inGameId)}
+                            alt={mobiPreviewHanditem.name}
+                            className="w-6 h-6"
+                            loading="lazy"
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              if (target.src !== '/assets/handitem_placeholder.png') {
+                                target.src = '/assets/handitem_placeholder.png';
+                              }
+                            }}
+                          />
+                          <span className="text-sm volter-font">{mobiPreviewHanditem.name}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Clique em um handitem para visualizar</p>
+                    )}
                   </div>
-                  {selectedHanditem && (
-                    <div className="flex items-center justify-center gap-2">
-                      <img
-                        src={resolveMobiHanditemImage(selectedHanditem.inGameId)}
-                        alt={selectedHanditem.name}
-                        className="w-6 h-6"
-                        loading="lazy"
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          if (target.src !== '/assets/handitem_placeholder.png') {
-                            target.src = '/assets/handitem_placeholder.png';
-                          }
-                        }}
-                      />
-                      <span className="text-sm volter-font">{selectedHanditem.name}</span>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -2557,7 +2755,10 @@ const HanditemToolFixed: React.FC = () => {
                         <Card
                           key={`${item.inGameId}-${corrected.id}`}
                           className="p-3 cursor-pointer hover:bg-muted/50 transition-colors"
-                          onClick={() => handleCopyHanditemId(item)}
+                          onClick={() => {
+                            handleCopyHanditemId(item);
+                            setMobiPreviewHanditem(item);
+                          }}
                         >
                           <div className="flex items-center gap-3">
                              <img
@@ -2707,6 +2908,7 @@ const HanditemToolFixed: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 };

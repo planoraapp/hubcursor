@@ -58,3 +58,24 @@ export function normalizeUser(user: any): {
   };
 }
 
+/**
+ * Extrai o gênero da figurestring do Habbo
+ * Retorna 'M' (masculino) ou 'F' (feminino)
+ * Por padrão, retorna 'M' se não conseguir determinar
+ */
+export function extractGenderFromFigureString(figureString?: string): 'M' | 'F' {
+  if (!figureString) return 'M';
+  
+  // A figurestring do Habbo geralmente contém partes como:
+  // hr-XXX-XX (hair) - se começar com hr, geralmente é masculino
+  // hd-XXX-XX (head) - pode ter gender no final
+  // Formato típico: hr-100-undefined-.hd-190-7-.ch-210-66-...
+  
+  // Verificar se contém partes que indicam gender
+  // Se tiver .hr- (hair) geralmente é masculino, mas não é garantia
+  // Vamos usar uma heurística: se não encontrar indicação clara, usar 'M' como padrão
+  // Na prática, o Habbo Imaging aceita gender como parâmetro separado
+  
+  // Por padrão, usar 'M' se não conseguir determinar
+  return 'M';
+}

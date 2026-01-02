@@ -341,13 +341,57 @@ export class HabboApiService {
    * Carrega handitems extraídos do external_flash_texts
    */
   private async loadExtractedHanditems(): Promise<any[]> {
+    console.log('🔍 [HabboAPIService] loadExtractedHanditems chamado - versão atualizada');
     try {
-      const response = await fetch('/handitems.json');
-      if (!response.ok) {
-        console.warn('Arquivo handitems.json não encontrado, usando dados internos');
+      // Tentar carregar do arquivo completo primeiro (tem mais dados)
+      try {
+        const fullResponse = await fetch('/handitems/handitems-full.json');
+        if (fullResponse.ok) {
+          const contentType = fullResponse.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const text = await fullResponse.text();
+            try {
+              const fullData = JSON.parse(text);
+              // Converter formato completo para formato simples
+              return fullData.map((item: any) => ({
+                id: item.id,
+                name: item.names?.pt || item.names?.en || item.name || `Handitem ${item.id}`
+              }));
+            } catch (parseError) {
+              console.warn('Erro ao fazer parse do handitems-full.json, tentando arquivo simples...');
+            }
+          }
+        }
+      } catch (fullError) {
+        // Continuar para tentar arquivo simples
+        console.warn('Erro ao carregar handitems-full.json, tentando arquivo simples...');
+      }
+      
+      // Fallback: tentar arquivo simples
+      try {
+        const response = await fetch('/handitems/handitems.json');
+        if (response.ok) {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const text = await response.text();
+            try {
+              return JSON.parse(text);
+            } catch (parseError) {
+              console.warn('Erro ao fazer parse do handitems.json, usando dados internos');
+              return REAL_HANDITEMS;
+            }
+          } else {
+            console.warn('Resposta não é JSON, usando dados internos');
+            return REAL_HANDITEMS;
+          }
+        } else {
+          console.warn(`Arquivo handitems.json não encontrado (status: ${response.status}), usando dados internos`);
+          return REAL_HANDITEMS;
+        }
+      } catch (fetchError) {
+        console.warn('Erro ao buscar handitems.json, usando dados internos:', fetchError);
         return REAL_HANDITEMS;
       }
-      return await response.json();
     } catch (error) {
       console.warn('Erro ao carregar handitems.json, usando dados internos:', error);
       return REAL_HANDITEMS;
