@@ -29,7 +29,6 @@ import { habboDataExtractor, ExtractedHanditem } from '@/utils/habboDataExtracto
 import { handitemSyncService, HanditemData } from '@/services/HanditemSyncService';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/contexts/I18nContext';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { avatarPreview } from '@/utils/avatarPreview';
 import { useAuth } from '@/hooks/useAuth';
 import { extractGenderFromFigureString } from '@/utils/userNormalizer';
@@ -57,7 +56,7 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
   const [copiedHanditems, setCopiedHanditems] = useState<Set<number>>(new Set());
-  const [selectedHanditemForPreview, setSelectedHanditemForPreview] = useState<HabboHanditem | null>(null);
+  const [expandedHanditemId, setExpandedHanditemId] = useState<number | null>(null);
   const handitemsContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { language } = useI18n();
@@ -115,198 +114,42 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
     return () => clearTimeout(timer);
   }, [handitems.length]);
 
-  // Centralizar a janela no handitem clicado e posicionar o popover próximo a ele
+  // Centralizar a janela no handitem clicado quando expandido
   useLayoutEffect(() => {
-    if (selectedHanditemForPreview && handitemsContainerRef.current) {
+    if (expandedHanditemId !== null && handitemsContainerRef.current) {
       const container = handitemsContainerRef.current;
       
-      // Encontrar o elemento scrollável uma vez (pode ser window ou um elemento com overflow)
-      const findScrollableParent = (element: HTMLElement): Window | HTMLElement => {
-        let current: HTMLElement | null = element.parentElement;
-        while (current) {
-          const style = window.getComputedStyle(current);
-          if (style.overflowY === 'auto' || style.overflowY === 'scroll' || 
-              style.overflow === 'auto' || style.overflow === 'scroll') {
-            return current;
-          }
-          current = current.parentElement;
-        }
-        return window;
-      };
-      
-      // Encontrar o card do handitem clicado para determinar o scrollable parent
-      const card = container.querySelector(`[data-handitem-id="${selectedHanditemForPreview.id}"]`) as HTMLElement;
-      const scrollableParent = card ? findScrollableParent(card) : window;
-      
-      const centerItemAndPositionPopover = () => {
+      const centerItem = () => {
         if (!container) return;
         
-        // Encontrar o card do handitem clicado
-        const card = container.querySelector(`[data-handitem-id="${selectedHanditemForPreview.id}"]`) as HTMLElement;
+        // Encontrar o card do handitem expandido
+        const card = container.querySelector(`[data-handitem-id="${expandedHanditemId}"]`) as HTMLElement;
         if (!card) return;
         
         // Centralizar o handitem na viewport usando scrollIntoView
-        // Usar block: 'center' para centralizar verticalmente e inline: 'center' para centralizar horizontalmente
         card.scrollIntoView({
           behavior: 'smooth',
           block: 'center',
           inline: 'center'
         });
-        
-        // Função para posicionar o popover após o scroll
-        const positionPopover = () => {
-          // Recalcular a posição do card após o scroll
-          const updatedCardRect = card.getBoundingClientRect();
-          const cardCenterX = updatedCardRect.left + updatedCardRect.width / 2;
-          const cardCenterY = updatedCardRect.top + updatedCardRect.height / 2;
-          
-          // Encontrar o popover content
-          let popoverContent = document.querySelector('[data-slot="popover-content"]') as HTMLElement;
-          if (!popoverContent) {
-            popoverContent = document.querySelector('[data-radix-popover-content]') as HTMLElement;
-          }
-          if (!popoverContent) {
-            popoverContent = document.querySelector('[data-state="open"][role="dialog"]') as HTMLElement;
-          }
-          if (!popoverContent) {
-            const dialogs = Array.from(document.querySelectorAll('[role="dialog"]'));
-            popoverContent = dialogs.find(el => 
-              el.getAttribute('data-slot') === 'popover-content' || 
-              el.classList.contains('bg-popover')
-            ) as HTMLElement;
-          }
-          
-          if (popoverContent) {
-            const isMobile = window.innerWidth < 768;
-            const popoverWidth = popoverContent.offsetWidth || 300;
-            const popoverHeight = popoverContent.offsetHeight || 200;
-            
-            let popoverX: number;
-            let popoverY: number;
-            
-            if (isMobile) {
-              // Em mobile, centralizar horizontalmente na tela e posicionar logo abaixo do card
-              popoverX = window.innerWidth / 2;
-              popoverY = updatedCardRect.bottom + 10; // 10px abaixo do card
-              
-              // Se não couber abaixo, posicionar acima
-              if (popoverY + popoverHeight > window.innerHeight - 10) {
-                popoverY = updatedCardRect.top - popoverHeight - 10;
-                // Se ainda não couber acima, centralizar verticalmente na tela
-                if (popoverY < 10) {
-                  popoverY = window.innerHeight / 2;
-                }
-              }
-            } else {
-              // Em desktop, posicionar à direita do card, alinhado verticalmente ao centro do card
-              popoverX = updatedCardRect.right + 15; // 15px à direita
-              popoverY = cardCenterY; // Alinhado ao centro vertical do card
-              
-              // Se não couber à direita, posicionar à esquerda
-              if (popoverX + popoverWidth / 2 > window.innerWidth - 10) {
-                popoverX = updatedCardRect.left - popoverWidth / 2 - 15;
-              }
-              
-              // Ajustar verticalmente se não couber
-              if (popoverY - popoverHeight / 2 < 10) {
-                popoverY = popoverHeight / 2 + 10;
-              } else if (popoverY + popoverHeight / 2 > window.innerHeight - 10) {
-                popoverY = window.innerHeight - popoverHeight / 2 - 10;
-              }
-            }
-            
-            popoverContent.style.position = 'fixed';
-            popoverContent.style.left = `${popoverX}px`;
-            popoverContent.style.top = `${popoverY}px`;
-            popoverContent.style.transform = isMobile ? 'translate(-50%, 0)' : 'translate(-50%, -50%)';
-            popoverContent.style.margin = '0';
-            popoverContent.style.zIndex = '50';
-          }
-        };
-        
-        // Aguardar o scroll completar antes de posicionar o popover
-        // Usar requestAnimationFrame para garantir que o scroll tenha sido processado
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            positionPopover();
-          });
-        });
       };
 
       // Executar após um pequeno delay para garantir que o DOM esteja atualizado
       const timeout = setTimeout(() => {
-        centerItemAndPositionPopover();
+        centerItem();
       }, 10);
 
-      // Também executar após delays maiores para garantir que funcione mesmo com scroll lento
-      const timeout1 = setTimeout(() => {
-        centerItemAndPositionPopover();
-      }, 300);
-      
+      // Também executar após delay maior para garantir que funcione mesmo com scroll lento
       const timeout2 = setTimeout(() => {
-        centerItemAndPositionPopover();
-      }, 600);
-
-      // Atualizar quando a janela for redimensionada ou quando o scroll acontecer
-      const handleResize = () => {
-        centerItemAndPositionPopover();
-      };
-      
-      const handleScroll = () => {
-        // Reposicionar o popover durante o scroll para mantê-lo próximo ao item
-        if (selectedHanditemForPreview) {
-          requestAnimationFrame(() => {
-            const card = container.querySelector(`[data-handitem-id="${selectedHanditemForPreview.id}"]`) as HTMLElement;
-            if (card) {
-              const updatedCardRect = card.getBoundingClientRect();
-              const popoverContent = document.querySelector('[data-radix-popover-content]') as HTMLElement ||
-                                    document.querySelector('[data-slot="popover-content"]') as HTMLElement;
-              
-              if (popoverContent) {
-                const isMobile = window.innerWidth < 768;
-                const popoverHeight = popoverContent.offsetHeight || 200;
-                const popoverX = isMobile ? window.innerWidth / 2 : parseFloat(popoverContent.style.left) || 0;
-                let popoverY = updatedCardRect.bottom + 10;
-                
-                if (isMobile) {
-                  if (popoverY + popoverHeight > window.innerHeight - 10) {
-                    popoverY = updatedCardRect.top - popoverHeight - 10;
-                    if (popoverY < 10) {
-                      popoverY = window.innerHeight / 2;
-                    }
-                  }
-                  popoverContent.style.left = `${popoverX}px`;
-                  popoverContent.style.top = `${popoverY}px`;
-                  popoverContent.style.transform = 'translate(-50%, 0)';
-                }
-              }
-            }
-          });
-        }
-      };
-      
-      window.addEventListener('resize', handleResize);
-      
-      // Adicionar listener de scroll no elemento scrollável
-      if (scrollableParent === window) {
-        window.addEventListener('scroll', handleScroll, { passive: true });
-      } else if (scrollableParent instanceof HTMLElement) {
-        scrollableParent.addEventListener('scroll', handleScroll, { passive: true });
-      }
+        centerItem();
+      }, 300);
 
       return () => {
         clearTimeout(timeout);
-        clearTimeout(timeout1);
         clearTimeout(timeout2);
-        window.removeEventListener('resize', handleResize);
-        if (scrollableParent === window) {
-          window.removeEventListener('scroll', handleScroll);
-        } else if (scrollableParent instanceof HTMLElement) {
-          scrollableParent.removeEventListener('scroll', handleScroll);
-        }
       };
     }
-  }, [selectedHanditemForPreview]);
+  }, [expandedHanditemId]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -1134,7 +977,7 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
               </div>
             </div>
           ) : (
-            <div ref={handitemsContainerRef} className="relative grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            <div ref={handitemsContainerRef} className="relative grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 auto-rows-min">
               {filteredHanditems.map((handitem) => {
                 const isCopied = copiedHanditems.has(handitem.id);
                 const canAlternate = canHaveBothActions(handitem.id);
@@ -1206,264 +1049,239 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
                   );
                 };
                 
+                const isExpanded = expandedHanditemId === handitem.id;
+                
                 return (
-                <Popover 
-                  key={`${handitem.assetPrefix}-${handitem.id}`}
-                  open={selectedHanditemForPreview?.id === handitem.id}
-                  onOpenChange={(open) => {
-                    if (open) {
-                      setSelectedHanditemForPreview(handitem);
-                      // Copiar o ID quando o popover abrir
-                      copyHanditemId(handitem);
-                      if (onHanditemSelect) {
-                        onHanditemSelect(handitem);
+                  <Card 
+                    key={`${handitem.assetPrefix}-${handitem.id}`}
+                    data-handitem-id={handitem.id}
+                    className={`cursor-pointer hover:shadow-md transition-all duration-200 group flex flex-col h-full touch-manipulation ${
+                      isExpanded ? 'col-span-2 md:col-span-3 lg:col-span-4 xl:col-span-5' : 'hover:scale-105'
+                    }`}
+                    onClick={() => {
+                      if (isExpanded) {
+                        setExpandedHanditemId(null);
+                      } else {
+                        setExpandedHanditemId(handitem.id);
+                        // Copiar o ID quando expandir
+                        copyHanditemId(handitem);
+                        if (onHanditemSelect) {
+                          onHanditemSelect(handitem);
+                        }
                       }
-                    } else {
-                      setSelectedHanditemForPreview(null);
-                    }
-                  }}
-                  modal={false}
-                >
-                  <PopoverTrigger asChild>
-                    <Card 
-                      data-handitem-id={handitem.id}
-                      className="cursor-pointer hover:shadow-md transition-all duration-200 group hover:scale-105 flex flex-col h-full touch-manipulation"
-                      onClick={(e) => {
-                        // Em mobile, garantir que o popover abra manualmente se necessário
-                        const isMobile = window.innerWidth < 768;
-                        if (isMobile && selectedHanditemForPreview?.id !== handitem.id) {
-                          // Fallback: abrir manualmente se o PopoverTrigger não funcionar
-                          setTimeout(() => {
-                            if (selectedHanditemForPreview?.id !== handitem.id) {
-                              setSelectedHanditemForPreview(handitem);
-                            }
-                          }, 100);
-                        }
-                      }}
-                      onTouchEnd={(e) => {
-                        // Em mobile, garantir que o popover abra ao tocar
-                        const isMobile = window.innerWidth < 768;
-                        if (isMobile) {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (selectedHanditemForPreview?.id !== handitem.id) {
-                            setSelectedHanditemForPreview(handitem);
-                          }
-                        }
-                      }}
-                      title="Clique para copiar o ID e ver no avatar"
-                    >
-                  <CardContent className="p-2 flex flex-col h-full">
-                    <div className="flex flex-col items-center justify-between h-full gap-1.5 relative">
-                      {/* Badge "Novo" para os 5 mais recentes */}
-                      {handitem.isNew && (
-                        <div className="absolute -top-1 -right-1 z-10">
-                          <img 
-                            src="/assets/new.png" 
-                            alt="Novo" 
-                            className="w-auto h-auto max-w-5 max-h-5 object-contain"
-                            style={{ imageRendering: 'pixelated' }}
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      )}
-                      
-                      {/* Imagem centralizada no topo */}
-                      <div className="flex items-center justify-center relative flex-shrink-0">
-                        <img 
-                          src={getHanditemImageUrl(handitem)} 
-                          alt={handitem.name}
-                          className="max-w-10 max-h-10 object-contain"
-                          onError={async (e) => {
-                            const target = e.currentTarget;
-                            const currentSrc = target.src;
-                            
-                            // Lógica especial para ID 175 (Poison Mushroom) - usar mapeamento do XML
-                            if (handitem.id === 175) {
-                              const mapping = await getReverseMappedValue(175);
-                              if (mapping.crr === 1074) {
-                                // Tentar URLs baseadas no valor mapeado 1074
-                                const fallbackUrls = [
-                                  '/handitems/images/crr/crr1074.png',
-                                  'https://images.habbo.com/gordon/flash-assets-PRODUCTION-202509092352-15493374/hh_human_item_crr1074.png',
-                                  '/handitems/images/preview/handitem1074.png',
-                                  handitemImages.getHanditemImageById(1074), // Se existir mapeamento para 1074
-                                ];
+                    }}
+                    title="Clique para expandir e ver no avatar"
+                  >
+                    <CardContent className={`p-2 flex flex-col h-full ${isExpanded ? 'p-4' : ''}`}>
+                      {!isExpanded ? (
+                        // Vista compacta (original)
+                        <div className="flex flex-col items-center justify-between h-full gap-1.5 relative">
+                          {/* Badge "Novo" para os 5 mais recentes */}
+                          {handitem.isNew && (
+                            <div className="absolute -top-1 -right-1 z-10">
+                              <img 
+                                src="/assets/new.png" 
+                                alt="Novo" 
+                                className="w-auto h-auto max-w-5 max-h-5 object-contain"
+                                style={{ imageRendering: 'pixelated' }}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
+                          
+                          {/* Imagem centralizada no topo */}
+                          <div className="flex items-center justify-center relative flex-shrink-0">
+                            <img 
+                              src={getHanditemImageUrl(handitem)} 
+                              alt={handitem.name}
+                              className="max-w-10 max-h-10 object-contain"
+                              onError={async (e) => {
+                                const target = e.currentTarget;
+                                const currentSrc = target.src;
                                 
-                                // Tentar cada URL até encontrar uma que funcione
-                                for (const url of fallbackUrls) {
-                                  if (url && url !== currentSrc && !url.includes('placeholder')) {
-                                    try {
-                                      const testImg = new Image();
-                                      testImg.onload = () => {
-                                        target.src = url;
-                                      };
-                                      testImg.onerror = () => {
-                                        // Continuar para próxima URL
-                                      };
-                                      testImg.src = url;
-                                      // Se chegou aqui, a URL foi definida, aguardar resultado
-                                      await new Promise(resolve => setTimeout(resolve, 100));
-                                      if (target.src === url) return; // Se mudou, sucesso
-                                    } catch (error) {
-                                      // Continuar para próxima URL
+                                // Lógica especial para ID 175 (Poison Mushroom) - usar mapeamento do XML
+                                if (handitem.id === 175) {
+                                  const mapping = await getReverseMappedValue(175);
+                                  if (mapping.crr === 1074) {
+                                    // Tentar URLs baseadas no valor mapeado 1074
+                                    const fallbackUrls = [
+                                      '/handitems/images/crr/crr1074.png',
+                                      'https://images.habbo.com/gordon/flash-assets-PRODUCTION-202509092352-15493374/hh_human_item_crr1074.png',
+                                      '/handitems/images/preview/handitem1074.png',
+                                      handitemImages.getHanditemImageById(1074), // Se existir mapeamento para 1074
+                                    ];
+                                    
+                                    // Tentar cada URL até encontrar uma que funcione
+                                    for (const url of fallbackUrls) {
+                                      if (url && url !== currentSrc && !url.includes('placeholder')) {
+                                        try {
+                                          const testImg = new Image();
+                                          testImg.onload = () => {
+                                            target.src = url;
+                                          };
+                                          testImg.onerror = () => {
+                                            // Continuar para próxima URL
+                                          };
+                                          testImg.src = url;
+                                          // Se chegou aqui, a URL foi definida, aguardar resultado
+                                          await new Promise(resolve => setTimeout(resolve, 100));
+                                          if (target.src === url) return; // Se mudou, sucesso
+                                        } catch (error) {
+                                          // Continuar para próxima URL
+                                        }
+                                      }
                                     }
                                   }
                                 }
-                              }
-                            }
-                            
-                            // Tentar outras fontes em ordem
-                            if (currentSrc.includes('preview/handitem_')) {
-                              // Se preview falhou, tentar extraída
-                              target.src = `/handitems/images/extracted/handitem_${handitem.id}.svg`;
-                            } else if (currentSrc.includes('extracted/handitem_')) {
-                              // Se extraída falhou, tentar local genérica
-                              target.src = `/handitems/images/${handitem.id}.png`;
-                            } else if (currentSrc.includes(`/handitems/images/${handitem.id}.png`)) {
-                              // Se local falhou, tentar handitemImages
-                              try {
-                                const fallbackUrl = handitemImages.getHanditemImageById(handitem.id);
-                                if (fallbackUrl && fallbackUrl !== currentSrc && !fallbackUrl.includes('placeholder')) {
-                                  target.src = fallbackUrl;
-                                  return;
+                                
+                                // Tentar outras fontes em ordem
+                                if (currentSrc.includes('preview/handitem_')) {
+                                  // Se preview falhou, tentar extraída
+                                  target.src = `/handitems/images/extracted/handitem_${handitem.id}.svg`;
+                                } else if (currentSrc.includes('extracted/handitem_')) {
+                                  // Se extraída falhou, tentar local genérica
+                                  target.src = `/handitems/images/${handitem.id}.png`;
+                                } else if (currentSrc.includes(`/handitems/images/${handitem.id}.png`)) {
+                                  // Se local falhou, tentar handitemImages
+                                  try {
+                                    const fallbackUrl = handitemImages.getHanditemImageById(handitem.id);
+                                    if (fallbackUrl && fallbackUrl !== currentSrc && !fallbackUrl.includes('placeholder')) {
+                                      target.src = fallbackUrl;
+                                      return;
+                                    }
+                                  } catch (error) {
+                                    // Ignorar
+                                  }
+                                  // Se tudo falhou, usar placeholder
+                                  target.src = '/assets/handitem_placeholder.png';
+                                } else if (!currentSrc.includes('handitem_placeholder') && !currentSrc.includes('placeholder.svg')) {
+                                  // Última tentativa: placeholder
+                                  target.src = '/assets/handitem_placeholder.png';
+                                } else {
+                                  // Se o placeholder também falhar, esconde a imagem e mostra o ícone
+                                  target.style.display = 'none';
+                                  target.nextElementSibling?.classList.remove('hidden');
                                 }
-                              } catch (error) {
-                                // Ignorar
-                              }
-                              // Se tudo falhou, usar placeholder
-                              target.src = '/assets/handitem_placeholder.png';
-                            } else if (!currentSrc.includes('handitem_placeholder') && !currentSrc.includes('placeholder.svg')) {
-                              // Última tentativa: placeholder
-                              target.src = '/assets/handitem_placeholder.png';
-                            } else {
-                              // Se o placeholder também falhar, esconde a imagem e mostra o ícone
-                              target.style.display = 'none';
-                              target.nextElementSibling?.classList.remove('hidden');
-                            }
-                          }}
-                        />
-                        <ImageIcon className="h-5 w-5 text-gray-400 hidden" />
-                      </div>
-                      
-                      {/* Nome do item - 2 linhas fixas */}
-                      <div className="text-center w-full flex-1 flex flex-col justify-center min-h-[2rem] px-1">
-                        <h3 className="font-medium text-xs leading-tight break-words" style={{
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          textAlign: 'center'
-                        }}>
-                          {handitem.name}
-                        </h3>
-                      </div>
-                      
-                      {/* ID alinhado no centro inferior */}
-                      <div className="flex items-center justify-center gap-1 w-full flex-shrink-0 mt-auto">
-                        <span className="text-xs text-gray-500 text-center">
-                          ID: {handitem.id}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            copyHanditemId(handitem);
-                          }}
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                  </PopoverTrigger>
-                  <PopoverContent 
-                    className="w-auto p-3 z-50" 
-                    style={{
-                      maxWidth: '90vw',
-                      maxHeight: '90vh',
-                      margin: 0
-                    }}
-                    onOpenAutoFocus={(e) => {
-                      // Prevenir foco automático para não causar scroll indesejado
-                      e.preventDefault();
-                    }}
-                    onEscapeKeyDown={() => {
-                      setSelectedHanditemForPreview(null);
-                    }}
-                    onInteractOutside={(e) => {
-                      // Permitir fechar ao clicar fora
-                      setSelectedHanditemForPreview(null);
-                    }}
-                  >
-                    <div className="flex flex-col items-center space-y-3">
-                      {/* Avatar Preview com animação alternada */}
-                      <div className="relative flex items-center justify-center bg-muted rounded-lg border border-border p-2">
-                        <AnimatedAvatarPreview handitemId={handitem.id} canAlternate={canAlternate} />
-                        {/* Botão de Copiar ID sobreposto */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            copyHanditemId(handitem);
-                            setCopiedHanditems(prev => new Set(prev).add(handitem.id));
-                            setTimeout(() => {
-                              setCopiedHanditems(prev => {
-                                const newSet = new Set(prev);
-                                newSet.delete(handitem.id);
-                                return newSet;
-                              });
-                            }, 2000);
-                          }}
-                          type="button"
-                          className="absolute top-2 right-2 bg-background/90 hover:bg-background rounded-md p-1.5 transition-all duration-300 flex items-center justify-end gap-1.5 shadow-md border-0 outline-none overflow-hidden"
-                          style={{ 
-                            border: 'none',
-                            width: isCopied ? 'auto' : '2rem',
-                            minWidth: '2rem'
-                          }}
-                          title="Copiar ID"
-                        >
-                          <Copy className="w-4 h-4 flex-shrink-0" style={{ stroke: 'currentColor' }} />
-                          {isCopied && (
-                            <span className="volter-font text-xs whitespace-nowrap animate-in fade-in slide-in-from-right-2">
-                              ID Copiado
+                              }}
+                            />
+                            <ImageIcon className="h-5 w-5 text-gray-400 hidden" />
+                          </div>
+                          
+                          {/* Nome do item - 2 linhas fixas */}
+                          <div className="text-center w-full flex-1 flex flex-col justify-center min-h-[2rem] px-1">
+                            <h3 className="font-medium text-xs leading-tight break-words" style={{
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              textAlign: 'center'
+                            }}>
+                              {handitem.name}
+                            </h3>
+                          </div>
+                          
+                          {/* ID alinhado no centro inferior */}
+                          <div className="flex items-center justify-center gap-1 w-full flex-shrink-0 mt-auto">
+                            <span className="text-xs text-gray-500 text-center">
+                              ID: {handitem.id}
                             </span>
-                          )}
-                        </button>
-                      </div>
-                      
-                      {/* Informações do Handitem */}
-                      <div className="text-center space-y-1.5 min-w-[120px]">
-                        <div className="flex items-center justify-center gap-2">
-                          <img
-                            src={resolveHanditemImage(handitem)}
-                            alt={handitem.name}
-                            className="max-w-6 max-h-6 w-auto h-auto object-contain"
-                            style={{ imageRendering: 'pixelated' }}
-                            onError={(e) => {
-                              const target = e.currentTarget;
-                              if (target.src !== '/assets/handitem_placeholder.png') {
-                                target.src = '/assets/handitem_placeholder.png';
-                              }
-                            }}
-                          />
-                          <span className="volter-font font-bold text-sm">{handitem.name}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyHanditemId(handitem);
+                              }}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          ID: {handitem.id}
-                        </p>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              )})}
+                      ) : (
+                        // Vista expandida (com avatar preview)
+                        <div className="relative flex flex-col items-center space-y-4 w-full">
+                          {/* Badge "Novo" para os 5 mais recentes */}
+                          {handitem.isNew && (
+                            <div className="absolute -top-1 -right-1 z-10">
+                              <img 
+                                src="/assets/new.png" 
+                                alt="Novo" 
+                                className="w-auto h-auto max-w-5 max-h-5 object-contain"
+                                style={{ imageRendering: 'pixelated' }}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
+                          
+                          {/* Avatar Preview com animação alternada */}
+                          <div className="relative flex items-center justify-center bg-muted rounded-lg border border-border p-4 w-full">
+                            <AnimatedAvatarPreview handitemId={handitem.id} canAlternate={canAlternate} />
+                            {/* Botão de Copiar ID sobreposto */}
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                copyHanditemId(handitem);
+                                setCopiedHanditems(prev => new Set(prev).add(handitem.id));
+                                setTimeout(() => {
+                                  setCopiedHanditems(prev => {
+                                    const newSet = new Set(prev);
+                                    newSet.delete(handitem.id);
+                                    return newSet;
+                                  });
+                                }, 2000);
+                              }}
+                              type="button"
+                              className="absolute top-2 right-2 bg-background/90 hover:bg-background rounded-md p-1.5 transition-all duration-300 flex items-center justify-end gap-1.5 shadow-md border-0 outline-none overflow-hidden"
+                              style={{ 
+                                border: 'none',
+                                width: isCopied ? 'auto' : '2rem',
+                                minWidth: '2rem'
+                              }}
+                              title="Copiar ID"
+                            >
+                              <Copy className="w-4 h-4 flex-shrink-0" style={{ stroke: 'currentColor' }} />
+                              {isCopied && (
+                                <span className="volter-font text-xs whitespace-nowrap animate-in fade-in slide-in-from-right-2">
+                                  ID Copiado
+                                </span>
+                              )}
+                            </button>
+                          </div>
+                          
+                          {/* Informações do Handitem */}
+                          <div className="text-center space-y-2 w-full">
+                            <div className="flex items-center justify-center gap-2">
+                              <img
+                                src={resolveHanditemImage(handitem)}
+                                alt={handitem.name}
+                                className="max-w-8 max-h-8 w-auto h-auto object-contain"
+                                style={{ imageRendering: 'pixelated' }}
+                                onError={(e) => {
+                                  const target = e.currentTarget;
+                                  if (target.src !== '/assets/handitem_placeholder.png') {
+                                    target.src = '/assets/handitem_placeholder.png';
+                                  }
+                                }}
+                              />
+                              <span className="volter-font font-bold text-base">{handitem.name}</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              ID: {handitem.id}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </ScrollArea>
