@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Search, 
   Package, 
@@ -961,42 +962,42 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
 
       <div className="w-full space-y-4">
         {!hideHeader && (
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(HANDITEM_CATEGORIES).map(([key, category]) => {
-              const categoryImageUrl = getCategoryHanditemImage(key);
-              
-              // Componente interno para o botão de categoria com estado de erro de imagem
-              const CategoryButton: React.FC = () => {
-                const [imageError, setImageError] = useState(false);
+          <Tabs value={selectedCategory} onValueChange={(value) => setSelectedCategory(value)}>
+            <TabsList className="grid grid-cols-7 w-full h-10">
+              {Object.entries(HANDITEM_CATEGORIES).map(([key, category]) => {
+                const categoryImageUrl = getCategoryHanditemImage(key);
                 
-                return (
-                  <Button
-                    variant={selectedCategory === key ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedCategory(key)}
-                    className="flex items-center gap-2"
-                  >
-                    {categoryImageUrl && !imageError ? (
-                      <img 
-                        src={categoryImageUrl} 
-                        alt={category.label}
-                        className="w-4 h-4 object-contain"
-                        style={{ imageRendering: 'pixelated' }}
-                        onError={() => {
-                          setImageError(true);
-                        }}
-                      />
-                    ) : (
-                      <category.icon className="h-4 w-4" />
-                    )}
-                    {category.label}
-                  </Button>
-                );
-              };
-              
-              return <CategoryButton key={key} />;
-            })}
-          </div>
+                // Componente interno para o trigger de categoria com estado de erro de imagem
+                const CategoryTabTrigger: React.FC = () => {
+                  const [imageError, setImageError] = useState(false);
+                  
+                  return (
+                    <TabsTrigger 
+                      value={key}
+                      className="flex items-center gap-1 text-xs volter-font"
+                    >
+                      {categoryImageUrl && !imageError ? (
+                        <img 
+                          src={categoryImageUrl} 
+                          alt={category.label}
+                          className="w-3 h-3 object-contain"
+                          style={{ imageRendering: 'pixelated' }}
+                          onError={() => {
+                            setImageError(true);
+                          }}
+                        />
+                      ) : (
+                        <category.icon className="w-3 h-3" />
+                      )}
+                      {category.label}
+                    </TabsTrigger>
+                  );
+                };
+                
+                return <CategoryTabTrigger key={key} />;
+              })}
+            </TabsList>
+          </Tabs>
         )}
 
         <ScrollArea className="h-[600px]">
