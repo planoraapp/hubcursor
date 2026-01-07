@@ -230,6 +230,68 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
     }
   };
 
+  // Função auxiliar para determinar a categoria de um handitem baseado no nome
+  const getHanditemCategory = (name: string): string => {
+    const normalizedName = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    
+    // Alimentos
+    const alimentosKeywords = [
+      'hamburguer', 'pizza', 'sanduiche', 'frango', 'carne', 'peixe', 'vegetal', 'salada', 
+      'sopa', 'cenoura', 'tomate', 'queijo', 'pao', 'fruta', 'banana', 'maca', 'laranja', 
+      'pera', 'pessego', 'abacate', 'uva', 'melancia', 'brocolis', 'camarao', 'linguiça',
+      'cachorro-quente', 'torrada', 'croissant', 'ovo', 'batata', 'coxinha',
+      'caranguejo', 'pimenta', 'cookie', 'espetinho', 'takoyaki', 'caldo', 'iogurte',
+      'cereal', 'donut', 'picolé', 'salgadinho', 'castanha', 'pipoca'
+    ];
+    
+    // Bebidas
+    const bebidasKeywords = [
+      'cafe', 'suco', 'agua', 'leite', 'cha', 'refrigerante', 'bebida', 'drink', 'copo',
+      'champanhe', 'energetico', 'milkshake', 'groselha', 'bubblejuice', 'pocao',
+      'sake', 'rum', 'espumante', 'champagne', 'limonada', 'beterraba', 'ramune',
+      'vitamina', 'frappuccino', 'barista', 'fanta', 'pepsi', 'dalgon', 'chocolate quente'
+    ];
+    
+    // Doces
+    const docesKeywords = [
+      'doce', 'acucar', 'chocolate', 'balas', 'pirulito', 'biscoito', 'bolo', 'torta',
+      'sorvete', 'goma', 'chiclete', 'algodao', 'cupcake', 'caveira de doces',
+      'marshmallow', 'raspadinha', 'chiclete', 'goma de mascar'
+    ];
+    
+    // Utensílios
+    const utensiliosKeywords = [
+      'garfo', 'faca', 'colher', 'prato', 'copo', 'xicara', 'tigela', 'panela', 'talher',
+      'livro', 'prancheta', 'pincel', 'lata', 'garrafa', 'caneca', 'regador', 'lupa',
+      'luneta', 'vara de pescar', 'espada', 'marreta', 'osso', 'graveto'
+    ];
+    
+    // Eletrônicos
+    const eletronicosKeywords = [
+      'celular', 'telefone', 'computador', 'tablet', 'camera', 'radio', 'tv', 'video',
+      'eletronico', 'hipad', 'h-phone', 'microfone', 'console', 'dvd', 'caderno', 'lapis'
+    ];
+    
+    // Verificar categoria
+    if (alimentosKeywords.some(keyword => normalizedName.includes(keyword))) {
+      return 'Alimentos';
+    }
+    if (bebidasKeywords.some(keyword => normalizedName.includes(keyword))) {
+      return 'Bebidas';
+    }
+    if (docesKeywords.some(keyword => normalizedName.includes(keyword))) {
+      return 'Doces';
+    }
+    if (utensiliosKeywords.some(keyword => normalizedName.includes(keyword))) {
+      return 'Utensílios';
+    }
+    if (eletronicosKeywords.some(keyword => normalizedName.includes(keyword))) {
+      return 'Eletrônicos';
+    }
+    
+    return 'Outros';
+  };
+
   // Filtrar handitems
   const effectiveSearchTerm = externalSearchTerm ?? searchTerm;
 
@@ -283,57 +345,26 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
       return b.id - a.id; // IDs maiores primeiro (mais recentes)
     });
 
-    // Filtro por categoria
-    if (selectedCategory !== 'Todos') {
-      filtered = filtered.filter(item => {
-        const name = item.name.toLowerCase();
-        switch (selectedCategory) {
-          case 'Alimentos':
-            return name.includes('hambúrguer') || name.includes('pizza') || name.includes('sanduíche') || 
-                   name.includes('frango') || name.includes('carne') || name.includes('peixe') ||
-                   name.includes('vegetal') || name.includes('salada') || name.includes('sopa') ||
-                   name.includes('cenoura') || name.includes('tomate') || name.includes('queijo') ||
-                   name.includes('pão') || name.includes('fruta') || name.includes('banana') ||
-                   name.includes('maçã') || name.includes('laranja') || name.includes('pêra');
-          case 'Bebidas':
-            return name.includes('café') || name.includes('suco') || name.includes('água') || 
-                   name.includes('leite') || name.includes('chá') || name.includes('refrigerante') ||
-                   name.includes('bebida') || name.includes('drink') || name.includes('copo') ||
-                   name.includes('champanhe') || name.includes('energético') || name.includes('milkshake');
-          case 'Doces':
-            return name.includes('doce') || name.includes('açúcar') || name.includes('chocolate') || 
-                   name.includes('balas') || name.includes('pirulito') || name.includes('biscoito') ||
-                   name.includes('bolo') || name.includes('torta') || name.includes('sorvete') ||
-                   name.includes('goma') || name.includes('chiclete') || name.includes('algodão');
-          case 'Utensílios':
-            return name.includes('garfo') || name.includes('faca') || name.includes('colher') || 
-                   name.includes('prato') || name.includes('copo') || name.includes('xícara') ||
-                   name.includes('tigela') || name.includes('panela') || name.includes('talher') ||
-                   name.includes('livro') || name.includes('prancheta') || name.includes('pincel');
-          case 'Eletrônicos':
-            return name.includes('celular') || name.includes('telefone') || name.includes('computador') || 
-                   name.includes('tablet') || name.includes('câmera') || name.includes('rádio') ||
-                   name.includes('tv') || name.includes('vídeo') || name.includes('eletrônico') ||
-                   name.includes('hipad') || name.includes('h-phone') || name.includes('microfone');
-          case 'Outros':
-            return !name.includes('hambúrguer') && !name.includes('pizza') && !name.includes('sanduíche') && 
-                   !name.includes('café') && !name.includes('suco') && !name.includes('água') &&
-                   !name.includes('doce') && !name.includes('açúcar') && !name.includes('chocolate') &&
-                   !name.includes('garfo') && !name.includes('faca') && !name.includes('colher') &&
-                   !name.includes('celular') && !name.includes('telefone') && !name.includes('computador');
-          default:
-            return true;
-        }
-      });
-    }
-
-    // Filtro por busca
-    if (effectiveSearchTerm) {
-      filtered = filtered.filter(item => 
-        item.name.toLowerCase().includes(effectiveSearchTerm.toLowerCase()) ||
-        item.id.toString().includes(effectiveSearchTerm)
-      );
-    }
+    // Aplicar filtros de categoria e busca simultaneamente
+    filtered = filtered.filter(item => {
+      // Filtro por categoria
+      let matchesCategory = true;
+      if (selectedCategory !== 'Todos') {
+        const itemCategory = getHanditemCategory(item.name);
+        matchesCategory = itemCategory === selectedCategory;
+      }
+      
+      // Filtro por busca
+      let matchesSearch = true;
+      if (effectiveSearchTerm) {
+        const searchLower = effectiveSearchTerm.toLowerCase();
+        matchesSearch = item.name.toLowerCase().includes(searchLower) ||
+                       item.id.toString().includes(effectiveSearchTerm);
+      }
+      
+      // Retornar true apenas se ambos os filtros passarem
+      return matchesCategory && matchesSearch;
+    });
 
     return filtered;
   }, [syncedHanditems, handitems, selectedCategory, effectiveSearchTerm, language]);
