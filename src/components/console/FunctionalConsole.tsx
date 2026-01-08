@@ -886,19 +886,6 @@ export const FunctionalConsole: React.FC = () => {
   // Quando não logado, mostrar perfil do habbohub (habbo.com.br) como padrão
   const username = viewingUser || (currentUser && currentUser.trim() ? currentUser.trim() : (!isLoggedIn ? 'habbohub' : undefined));
   
-  // Debug temporário para verificar valores
-  React.useEffect(() => {
-    if (habboAccount || viewingUser) {
-      console.log('[CONSOLE DEBUG] Valores de perfil:', {
-        habboAccount: habboAccount ? { habbo_name: habboAccount.habbo_name, hotel: habboAccount.hotel } : null,
-        currentUser,
-        viewingUser,
-        username,
-        isLoggedIn,
-        authLoading
-      });
-    }
-  }, [habboAccount, currentUser, viewingUser, username, isLoggedIn, authLoading]);
   
   // Definir hotel efetivo para busca de perfil/fotos
   // Normalizar para formato de domínio (com.br, com, es, fr, etc.)
@@ -925,12 +912,6 @@ export const FunctionalConsole: React.FC = () => {
   // O habbo_id já está no formato correto (hhbr-{uniqueId}) conforme visto em habbo-complete-auth
   const habboUniqueId = habboAccount?.habbo_id || undefined;
   
-  // Debug: verificar se temos uniqueId disponível
-  React.useEffect(() => {
-    if (habboUniqueId && !viewingUser) {
-      console.log('[CONSOLE DEBUG] Usando habbo_id como uniqueId:', habboUniqueId);
-    }
-  }, [habboUniqueId, viewingUser]);
   
   // Estratégia: Usar username como prioridade (mais confiável na API do Habbo)
   // uniqueId será usado apenas como fallback se username não funcionar
@@ -1047,36 +1028,6 @@ export const FunctionalConsole: React.FC = () => {
   const groups = completeProfile?.data?.groups || [];
   const photos = photosData || [];
   
-  // Debug: verificar amigos do usuário logado quando estiver na aba Friends
-  React.useEffect(() => {
-    if (activeTab === 'friends') {
-      console.log('[FRIENDS TAB DEBUG]', {
-        activeTab,
-        loggedUserUsername,
-        loggedUserUniqueId,
-        loggedUserProfile: loggedUserProfile ? {
-          name: loggedUserProfile.name,
-          uniqueId: loggedUserProfile.uniqueId,
-          friendsCount: loggedUserProfile.data?.friends?.length || 0
-        } : null,
-        friendsCount: friends.length,
-        isLoadingLoggedUserFriends,
-        habboAccount: habboAccount ? { habbo_name: habboAccount.habbo_name, hotel: habboAccount.hotel } : null
-      });
-    }
-  }, [activeTab, loggedUserProfile, loggedUserUsername, loggedUserUniqueId, friends.length, isLoadingLoggedUserFriends, habboAccount]);
-  
-  // Debug: verificar amigos do usuário logado
-  React.useEffect(() => {
-    if (activeTab === 'friends' && loggedUserProfile) {
-      console.log('[FRIENDS TAB] Amigos do usuário logado:', {
-        username: loggedUserUsername,
-        uniqueId: loggedUserUniqueId,
-        friendsCount: loggedUserProfile?.data?.friends?.length || 0,
-        friends: loggedUserProfile?.data?.friends
-      });
-    }
-  }, [activeTab, loggedUserProfile, loggedUserUsername, loggedUserUniqueId]);
   
   const error = profileError?.message || null;
   
@@ -1509,7 +1460,6 @@ export const FunctionalConsole: React.FC = () => {
                     const now = Date.now();
                     const cooldownMs = 2000; // 2 segundos de cooldown
                     if (now - friendsRefreshCooldownRef.current > cooldownMs) {
-                      console.log('[👥 FRIENDS TAB] Refresh triggered on tab click');
                       friendsRefreshCooldownRef.current = now;
                       setFriendsRefreshTrigger(prev => prev + 1);
                     }
@@ -1527,11 +1477,8 @@ export const FunctionalConsole: React.FC = () => {
                     
                     // Só fazer refresh se passou o cooldown
                     if (now - photosRefreshCooldownRef.current > cooldownMs) {
-                      console.log('[📸 PHOTOS TAB] Refresh triggered on tab click');
                       photosRefreshCooldownRef.current = now;
                       setPhotosRefreshTrigger(prev => prev + 1);
-                    } else {
-                      console.log('[📸 PHOTOS TAB] Refresh skipped (cooldown active)');
                     }
                   } else {
                     // Se clicou na aba Friends e não está visualizando um perfil, fazer refresh e scroll ao topo
@@ -1553,11 +1500,8 @@ export const FunctionalConsole: React.FC = () => {
                       
                       // Só fazer refresh se passou o cooldown
                       if (now - friendsRefreshCooldownRef.current > cooldownMs) {
-                        console.log('[👥 FRIENDS TAB] Refresh triggered on tab click');
                         friendsRefreshCooldownRef.current = now;
                         setFriendsRefreshTrigger(prev => prev + 1);
-                      } else {
-                        console.log('[👥 FRIENDS TAB] Refresh skipped (cooldown active)');
                       }
                     }
                     setActiveTab(tab.id);
@@ -2255,14 +2199,6 @@ const PhotosTab: React.FC<any> = ({ isLoading, onUserClickFromFeed, refreshTrigg
 const FriendsTab: React.FC<any> = ({ friends, isLoading, onNavigateToProfile }) => {
   const { t } = useI18n();
   
-  // Debug: verificar dados de friends
-  React.useEffect(() => {
-    console.log('[FriendsTab] Dados recebidos:', {
-      friendsCount: friends?.length || 0,
-      friends: friends,
-      isLoading
-    });
-  }, [friends, isLoading]);
   
   if (isLoading) {
     return (

@@ -9,7 +9,7 @@ import { NotificationProvider, useNotification } from '@/hooks/useNotification'
 import { NotificationContainer } from '@/components/ui/notification'
 import { ChatNotificationProvider } from '@/contexts/ChatNotificationContext'
 import { useKeepOnline } from '@/hooks/useKeepOnline'
-import { Analytics } from '@vercel/analytics/react'
+// import { Analytics } from '@vercel/analytics/react' // Desativado
 import './index.css'
 import './styles/widget-skins.css'
 
@@ -167,7 +167,11 @@ const router = createBrowserRouter([
     path: "*",
     element: <NotFound />,
   },
-]);
+], {
+  future: {
+    v7_startTransition: true,
+  },
+});
 
 // Componente principal com notificações
 const AppWithNotifications = () => {
@@ -177,7 +181,7 @@ const AppWithNotifications = () => {
 
   return (
     <>
-      <RouterProvider router={router} />
+      <RouterProvider router={router} future={{ v7_startTransition: true }} />
       <NotificationContainer 
         notifications={notifications}
         onClose={removeNotification}
@@ -195,7 +199,7 @@ root.render(
         <NotificationProvider>
           <ChatNotificationProvider>
             <AppWithNotifications />
-            <Analytics />
+            {/* <Analytics /> */}
           </ChatNotificationProvider>
         </NotificationProvider>
       </AuthProvider>

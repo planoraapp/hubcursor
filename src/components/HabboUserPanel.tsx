@@ -4,7 +4,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { CountryFlags } from '@/components/marketplace/CountryFlags';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronUp, ChevronLeft, Award, Globe, Bell, Wifi } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronLeft, Award, Bell, Wifi } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { generateUniqueUsername } from '@/utils/usernameUtils';
@@ -31,7 +31,7 @@ interface HabboUserPanelProps {
 
 export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: HabboUserPanelProps = {}) => {
   const { habboAccount, isLoggedIn, logout } = useAuth();
-  const { language, setLanguage, t } = useI18n();
+  const { t } = useI18n();
   const { toast } = useToast();
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
@@ -78,33 +78,8 @@ export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: Ha
       const savedStatus = localStorage.getItem('habbo-hub-online-status-enabled');
       const shouldBeOnline = savedStatus !== null ? savedStatus === 'true' : true;
       
-      // Atualizar banco de dados com o estado salvo
-      const updateStatusInDB = async () => {
-        try {
-          // Verificar se há userId antes de tentar atualizar
-          const userId = habboAccount?.supabase_user_id;
-          if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
-            console.log('[HABBO USER PANEL] No valid supabase_user_id available, skipping update');
-            return;
-          }
-
-          const { supabase } = await import('@/integrations/supabase/client');
-          const { error } = await supabase.functions.invoke('keep-online', {
-            body: {
-              userId: userId.trim(),
-              isOnline: shouldBeOnline
-            }
-          });
-          
-          if (error) {
-            console.error('[HABBO USER PANEL] Error updating online status:', error);
-          }
-        } catch (error) {
-          console.error('[HABBO USER PANEL] Error:', error);
-        }
-      };
-      
-      updateStatusInDB();
+      // Nota: Removido updateStatusInDB - o keep-online agora só faz keep-alive do backend
+      // Se precisar atualizar status de usuário no futuro, criar Edge Function separada
       setIsOnline(shouldBeOnline);
       
       setUserProfile({
@@ -139,62 +114,6 @@ export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: Ha
     return hotelNames[hotel] || 'habbo.com';
   };
 
-  const handleLanguageChange = (newLanguage: 'pt' | 'en' | 'es') => {
-    if (newLanguage !== language) {
-      setLanguage(newLanguage);
-      
-      // Nomes dos idiomas traduzidos em cada idioma
-      const languageNames: Record<string, Record<string, string>> = {
-        'pt': {
-          'pt': 'Português',
-          'en': 'Inglês',
-          'es': 'Espanhol'
-        },
-        'en': {
-          'pt': 'Portuguese',
-          'en': 'English',
-          'es': 'Spanish'
-        },
-        'es': {
-          'pt': 'Portugués',
-          'en': 'Inglés',
-          'es': 'Español'
-        }
-      };
-      
-      // Usar o novo idioma para a tradução
-      const tempT = (key: string, params?: Record<string, string | number>) => {
-        const translations: Record<string, Record<string, string>> = {
-          'pt': {
-            'toast.languageChanged': 'Idioma alterado',
-            'toast.languageChangedTo': 'O idioma foi alterado para {language}'
-          },
-          'en': {
-            'toast.languageChanged': 'Language changed',
-            'toast.languageChangedTo': 'Language has been changed to {language}'
-          },
-          'es': {
-            'toast.languageChanged': 'Idioma cambiado',
-            'toast.languageChangedTo': 'El idioma ha sido cambiado a {language}'
-          }
-        };
-        
-        let text = translations[newLanguage]?.[key] || key;
-        if (params) {
-          Object.entries(params).forEach(([paramKey, paramValue]) => {
-            text = text.replace(`{${paramKey}}`, String(paramValue));
-          });
-        }
-        return text;
-      };
-      
-      toast({
-        title: `✅ ${tempT('toast.languageChanged')}`,
-        description: tempT('toast.languageChangedTo', { language: languageNames[newLanguage][newLanguage] }),
-      });
-    }
-  };
-
   const handleStatusToggle = async () => {
     const newStatus = !isOnline;
     setIsOnline(newStatus);
@@ -210,20 +129,21 @@ export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: Ha
         const userId = habboAccount.supabase_user_id;
         // Validar userId antes de enviar
         if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
-          console.log('[HABBO USER PANEL] Invalid userId, skipping update');
           return;
         }
 
-        const { supabase } = await import('@/integrations/supabase/client');
-        const { error } = await supabase.functions.invoke('keep-online', {
-          body: {
-            userId: userId.trim(),
-            isOnline: newStatus
-          }
-        });
+        // Nota: Removido update via keep-online - essa função agora só faz keep-alive
+        // O status é salvo apenas no localStorage por enquanto
+        // Se precisar persistir no banco, criar Edge Function separada ou usar RLS direto
+      } catch (error: any) {
+        // Silenciar erros 400 completamente
+        const is400Error = error?.status === 400 || 
+                          error?.message?.includes('400') || 
+                          error?.message?.includes('Bad Request') ||
+                          error?.context?.status === 400;
         
-        if (error) {
-          console.error('[HABBO USER PANEL] Error updating online status:', error);
+        if (!is400Error) {
+          console.error('[HABBO USER PANEL] Error:', error);
           toast({
             title: "⚠️ Erro",
             description: "Não foi possível atualizar o status. Tente novamente.",
@@ -231,14 +151,6 @@ export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: Ha
           });
           return;
         }
-      } catch (error) {
-        console.error('[HABBO USER PANEL] Error:', error);
-        toast({
-          title: "⚠️ Erro",
-          description: "Não foi possível atualizar o status. Tente novamente.",
-          variant: "destructive"
-        });
-        return;
       }
     }
     
@@ -627,73 +539,6 @@ export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: Ha
                 </div>
               </div>
 
-              {/* Idioma */}
-              <div className={`${styles.infoBar} p-4 rounded-lg text-center`}>
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <Globe className="w-4 h-4 text-gray-600" />
-                  <span 
-                    className="text-gray-900 font-bold"
-                    style={{
-                      fontFamily: 'Volter',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      letterSpacing: '0.3px'
-                    }}
-                  >
-                    {removeAccents(t('sidebar.userPanel.language'))}
-                  </span>
-                </div>
-                <div className="flex gap-2 justify-center items-center">
-                  <button
-                    onClick={() => handleLanguageChange('pt')}
-                    className={`rounded transition-all ${
-                      language === 'pt' 
-                        ? 'ring-2 ring-blue-500 ring-offset-1' 
-                        : 'opacity-60 hover:opacity-100'
-                    }`}
-                    title="Português"
-                  >
-                    <img 
-                      src="/flags/flagbrazil.png" 
-                      alt="Português" 
-                      className="w-auto object-contain"
-                      style={{ imageRendering: 'pixelated', height: 'auto', maxHeight: 'none' }}
-                    />
-                  </button>
-                  <button
-                    onClick={() => handleLanguageChange('en')}
-                    className={`rounded transition-all ${
-                      language === 'en' 
-                        ? 'ring-2 ring-blue-500 ring-offset-1' 
-                        : 'opacity-60 hover:opacity-100'
-                    }`}
-                    title="English"
-                  >
-                    <img 
-                      src="/flags/flagcom.png" 
-                      alt="English" 
-                      className="w-auto object-contain"
-                      style={{ imageRendering: 'pixelated', height: 'auto', maxHeight: 'none' }}
-                    />
-                  </button>
-                  <button
-                    onClick={() => handleLanguageChange('es')}
-                    className={`rounded transition-all ${
-                      language === 'es' 
-                        ? 'ring-2 ring-blue-500 ring-offset-1' 
-                        : 'opacity-60 hover:opacity-100'
-                    }`}
-                    title="Español"
-                  >
-                    <img 
-                      src="/flags/flagspain.png" 
-                      alt="Español" 
-                      className="w-auto object-contain"
-                      style={{ imageRendering: 'pixelated', height: 'auto', maxHeight: 'none' }}
-                    />
-                  </button>
-                </div>
-              </div>
             </div>
 
             {/* Botão Voltar */}

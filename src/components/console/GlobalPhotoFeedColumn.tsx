@@ -197,47 +197,16 @@ const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
       const scrollContainer = scrollContainerRef.current;
       
       if (!sentinel || !scrollContainer) {
-        console.log('[📜 GLOBAL FEED] IntersectionObserver setup skipped: missing sentinel or container');
         return;
       }
-
-      // Verificar se o container tem altura definida
-      const containerHeight = scrollContainer.clientHeight;
-      const containerScrollHeight = scrollContainer.scrollHeight;
-      console.log('[📜 GLOBAL FEED] Setting up IntersectionObserver', {
-        hasMore,
-        isLoadingMore,
-        isLoading,
-        photosCount: photos.length,
-        containerHeight,
-        containerScrollHeight,
-        hasScroll: containerScrollHeight > containerHeight
-      });
 
       observer = new IntersectionObserver(
         (entries) => {
           const entry = entries[0];
-          console.log('[📜 GLOBAL FEED] IntersectionObserver callback', {
-            isIntersecting: entry.isIntersecting,
-            intersectionRatio: entry.intersectionRatio,
-            hasMore,
-            isLoadingMore,
-            isLoading,
-            boundingClientRect: entry.boundingClientRect,
-            rootBounds: entry.rootBounds
-          });
           
           // Verificar condições dentro do callback para permitir mudanças dinâmicas
           if (entry.isIntersecting && hasMore && !isLoadingMore && !isLoading) {
-            console.log('[📜 GLOBAL FEED] ✅ Conditions met, calling loadMore()');
             loadMore();
-          } else {
-            console.log('[📜 GLOBAL FEED] ❌ Conditions not met for loadMore', {
-              isIntersecting: entry.isIntersecting,
-              hasMore,
-              isLoadingMore,
-              isLoading
-            });
           }
         },
         { 
@@ -248,13 +217,11 @@ const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
       );
 
       observer.observe(sentinel);
-      console.log('[📜 GLOBAL FEED] ✅ Sentinel observed, waiting for intersection...');
     }, 100);
 
     return () => {
       clearTimeout(timeoutId);
       if (observer) {
-        console.log('[📜 GLOBAL FEED] Cleaning up IntersectionObserver');
         observer.disconnect();
       }
     };

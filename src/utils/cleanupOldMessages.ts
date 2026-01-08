@@ -2,8 +2,6 @@ import { supabase } from '@/integrations/supabase/client';
 
 export async function cleanupOldChatMessages() {
   try {
-    console.log('🔍 Buscando IDs corretos...');
-    
     // 1. Buscar os supabase_user_id corretos
     const { data: accounts, error: accountsError } = await supabase
       .from('habbo_accounts')
@@ -14,8 +12,6 @@ export async function cleanupOldChatMessages() {
       console.error('❌ Erro ao buscar contas:', accountsError);
       return;
     }
-    
-    console.log('✅ Contas encontradas:', accounts);
     
     const validIds = accounts.map(acc => acc.supabase_user_id);
     
@@ -34,17 +30,11 @@ export async function cleanupOldChatMessages() {
       !validIds.includes(msg.sender_id) || !validIds.includes(msg.receiver_id)
     ) || [];
     
-    console.log(`📊 Total de mensagens: ${allMessages?.length || 0}`);
-    console.log(`🗑️  Mensagens inválidas: ${invalidMessages.length}`);
-    
     if (invalidMessages.length === 0) {
-      console.log('✅ Nenhuma mensagem inválida encontrada!');
       return;
     }
     
     // 4. Deletar mensagens inválidas uma por uma
-    console.log('🗑️  Deletando mensagens inválidas...');
-    
     let deletedCount = 0;
     for (const msg of invalidMessages) {
       const { error: deleteError } = await supabase
@@ -56,12 +46,8 @@ export async function cleanupOldChatMessages() {
         console.error(`❌ Erro ao deletar ${msg.id}:`, deleteError);
       } else {
         deletedCount++;
-        console.log(`✅ Deletada mensagem ${msg.id} (sender: ${msg.sender_id}, receiver: ${msg.receiver_id})`);
       }
     }
-    
-    console.log(`\n✅ Limpeza concluída! ${deletedCount} mensagens deletadas.`);
-    console.log('🔄 Recarregue a página para ver as mudanças.');
     
     return { success: true, deletedCount };
     
@@ -78,11 +64,9 @@ if (typeof window !== 'undefined') {
   // Executar automaticamente apenas uma vez na primeira carga
   const hasCleanedUp = localStorage.getItem('chat_cleanup_done');
   if (!hasCleanedUp) {
-    console.log('🔄 Executando limpeza automática de mensagens antigas...');
     cleanupOldChatMessages().then((result) => {
       if (result?.success) {
         localStorage.setItem('chat_cleanup_done', 'true');
-        console.log('✅ Limpeza automática concluída! Recarregue a página.');
       }
     });
   }

@@ -491,7 +491,6 @@ export const useChat = () => {
   useEffect(() => {
     if (!userId) return;
 
-    console.log('[CHAT] Setting up real-time subscription for user:', userId.substring(0, 8));
 
     const channel = supabase
       .channel(`chat-messages-${userId}`)
@@ -504,7 +503,6 @@ export const useChat = () => {
           filter: `receiver_id=eq.${userId}`,
         },
         async (payload) => {
-          console.log('[CHAT] New message received via real-time:', payload.new);
           const newMessage = payload.new as ChatMessage;
           
           // NÃO tocar som aqui - o contexto global de notificações cuida disso
@@ -512,7 +510,6 @@ export const useChat = () => {
           
           // Se estiver na conversa atual, adicionar mensagem diretamente
           if (currentChat && newMessage.sender_id === currentChat) {
-            console.log('[CHAT] Adding message to current chat');
             setMessages(prev => {
               // Evitar duplicatas
               if (prev.some(m => m.id === newMessage.id)) {
@@ -524,11 +521,9 @@ export const useChat = () => {
             // Marcar como lida automaticamente (será feito quando buscar mensagens)
             // Não precisa marcar imediatamente via Edge Function
           } else {
-            console.log('[CHAT] Updating conversations list for new message from:', newMessage.sender_id?.substring(0, 8));
             // Atualizar contador de não lidas da conversa
             setConversations(prev => {
               const exists = prev.find(c => c.userId === newMessage.sender_id);
-              console.log('[CHAT] Conversation exists?', !!exists, 'Current conversations:', prev.map(c => c.userId?.substring(0, 8)));
               
               if (exists) {
                 const updated = prev.map(conv => 
@@ -541,10 +536,8 @@ export const useChat = () => {
                       }
                     : conv
                 );
-                console.log('[CHAT] Updated conversation unreadCount:', updated.find(c => c.userId === newMessage.sender_id)?.unreadCount);
                 return updated;
               } else {
-                console.log('[CHAT] New conversation detected, fetching conversations...');
                 // Nova conversa - buscar dados do usuário e adicionar à lista temporariamente
                 fetchConversations();
                 // Enquanto busca, adicionar conversa temporária com unreadCount = 1
@@ -577,8 +570,6 @@ export const useChat = () => {
           
           // Se uma mensagem foi marcada como lida, atualizar contador da conversa
           if (updatedMessage.read_at && !oldMessage?.read_at && updatedMessage.receiver_id === userId) {
-            console.log('[CHAT] Message marked as read via real-time, updating conversation unreadCount');
-            
             // Atualizar contador da conversa para 0 (recarregar conversas para garantir precisão)
             setConversations(prev => prev.map(conv => 
               conv.userId === updatedMessage.sender_id
@@ -589,10 +580,7 @@ export const useChat = () => {
         }
       )
       .subscribe((status) => {
-        console.log('[CHAT] Subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('[CHAT] Successfully subscribed to real-time updates');
-        } else if (status === 'CHANNEL_ERROR') {
+        if (status === 'CHANNEL_ERROR') {
           console.error('[CHAT] Channel subscription error');
         }
       });

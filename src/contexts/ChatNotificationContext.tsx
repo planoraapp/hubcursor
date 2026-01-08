@@ -92,28 +92,8 @@ export const ChatNotificationProvider: React.FC<{ children: React.ReactNode }> =
       );
       const unread = unreadMessages.length;
 
-      console.log('[CHAT NOTIFICATIONS] Unread count calculation:', {
-        totalMessages: messages.length,
-        unreadCount: unread,
-        userId: userId?.substring(0, 8),
-        unreadMessages: unreadMessages.map((msg: any) => ({
-          id: msg.id?.substring(0, 8),
-          sender_id: msg.sender_id?.substring(0, 8),
-          receiver_id: msg.receiver_id?.substring(0, 8),
-          read_at: msg.read_at,
-          message: msg.message?.substring(0, 50),
-          created_at: msg.created_at
-        }))
-      });
-      
-      // Se há mensagens não lidas, logar detalhes completos para debug
-      if (unread > 0) {
-        console.warn('[CHAT NOTIFICATIONS] ⚠️ Encontradas mensagens não lidas:', unreadMessages);
-      }
-      
       // Sempre atualizar o estado, mesmo se for 0, para garantir sincronização
       const previousCount = prevUnreadCountRef.current;
-      console.log('[CHAT NOTIFICATIONS] Setting unreadCount to:', unread, 'previous:', previousCount);
       
       // Tocar som ao fazer login se houver mensagens não lidas (apenas uma vez)
       if (!hasCheckedInitialMessagesRef.current && unread > 0) {
@@ -124,7 +104,6 @@ export const ChatNotificationProvider: React.FC<{ children: React.ReactNode }> =
         const isViewingAnyConversation = isOnChatPage && activeChatTab === 'chat' && currentChatUserId;
         
         if (!isViewingAnyConversation && messageNotificationSound.isEnabled()) {
-          console.log('[CHAT NOTIFICATIONS] 🎵 Playing sound on login - unread messages detected');
           try {
             messageNotificationSound.play();
           } catch (error) {
@@ -160,13 +139,6 @@ export const ChatNotificationProvider: React.FC<{ children: React.ReactNode }> =
           filter: `receiver_id=eq.${userId}`,
         },
         async (payload) => {
-          console.log('[CHAT NOTIFICATIONS] 📨 New message received via subscription:', {
-            messageId: payload.new?.id?.substring(0, 8),
-            senderId: payload.new?.sender_id?.substring(0, 8),
-            receiverId: payload.new?.receiver_id?.substring(0, 8),
-            userId: userId?.substring(0, 8)
-          });
-          
           const newMessage = payload.new as any;
           
           // Verificar se a página atual é a conversa ativa
@@ -176,30 +148,18 @@ export const ChatNotificationProvider: React.FC<{ children: React.ReactNode }> =
           const currentChatUserId = (window as any).currentChatUserId;
           const isViewingThisConversation = isOnChatPage && activeChatTab === 'chat' && currentChatUserId === newMessage.sender_id;
 
-          console.log('[CHAT NOTIFICATIONS] 📊 Sound play conditions:', {
-            isOnChatPage,
-            activeChatTab,
-            currentChatUserId: currentChatUserId?.substring(0, 8),
-            newMessageSenderId: newMessage.sender_id?.substring(0, 8),
-            isViewingThisConversation,
-            userId: userId?.substring(0, 8),
-            sameSender: newMessage.sender_id === userId
-          });
-
           // Se NÃO estiver visualizando esta conversa específica, tocar som (apenas uma vez por mensagem)
           if (!isViewingThisConversation && newMessage.sender_id !== userId) {
             const messageId = newMessage.id;
             
             // Verificar se já notificamos esta mensagem
             if (notifiedMessagesRef.current.has(messageId)) {
-              console.log('[CHAT NOTIFICATIONS] 🔇 Sound already played for this message, skipping');
               fetchUnreadCount();
               return;
             }
             
             // Verificar se o som está habilitado nas configurações
             if (!messageNotificationSound.isEnabled()) {
-              console.log('[CHAT NOTIFICATIONS] 🔇 Sound disabled by user settings');
               fetchUnreadCount();
               return;
             }
@@ -207,12 +167,9 @@ export const ChatNotificationProvider: React.FC<{ children: React.ReactNode }> =
             // Marcar mensagem como notificada
             notifiedMessagesRef.current.add(messageId);
             
-            console.log('[CHAT NOTIFICATIONS] 🎵 Attempting to play sound - new message received');
             try {
               const played = messageNotificationSound.play();
-              console.log('[CHAT NOTIFICATIONS] 🎵 Sound play() returned:', played);
               if (!played) {
-                console.warn('[CHAT NOTIFICATIONS] ⚠️ Sound play() returned false - may be rate limited');
                 // Se não tocou, remover do Set para tentar novamente na próxima vez
                 notifiedMessagesRef.current.delete(messageId);
               }
@@ -221,13 +178,6 @@ export const ChatNotificationProvider: React.FC<{ children: React.ReactNode }> =
               // Em caso de erro, remover do Set
               notifiedMessagesRef.current.delete(messageId);
             }
-          } else {
-            console.log('[CHAT NOTIFICATIONS] 🔇 NOT playing sound - conditions not met:', {
-              isViewingThisConversation,
-              newMessageSenderId: newMessage.sender_id?.substring(0, 8),
-              userId: userId?.substring(0, 8),
-              sameSender: newMessage.sender_id === userId
-            });
           }
 
           // Não incrementar imediatamente - apenas recarregar para garantir precisão
@@ -249,7 +199,6 @@ export const ChatNotificationProvider: React.FC<{ children: React.ReactNode }> =
           const oldMessage = payload.old as any;
           // Só atualizar se realmente mudou de não lida para lida
           if (updatedMessage.read_at && !oldMessage?.read_at && updatedMessage.receiver_id === userId) {
-            console.log('[CHAT NOTIFICATIONS] Message marked as read, refreshing count');
             // Recarregar contador imediatamente
             fetchUnreadCount();
           }
@@ -284,7 +233,6 @@ export const ChatNotificationProvider: React.FC<{ children: React.ReactNode }> =
         const toKeep = messages.slice(-100); // Manter apenas as últimas 100
         notifiedMessagesRef.current.clear();
         toKeep.forEach(id => notifiedMessagesRef.current.add(id));
-        console.log('[CHAT NOTIFICATIONS] Cleaned up old notified messages, kept', toKeep.length);
       }
     }, 60000); // A cada 1 minuto
 
@@ -292,15 +240,6 @@ export const ChatNotificationProvider: React.FC<{ children: React.ReactNode }> =
   }, [userId]);
 
   const hasNotificationsValue = unreadCount > 0;
-  
-  // Log para debug
-  useEffect(() => {
-    console.log('[CHAT NOTIFICATIONS PROVIDER] Current state:', {
-      unreadCount,
-      hasNotifications: hasNotificationsValue,
-      userId: userId?.substring(0, 8)
-    });
-  }, [unreadCount, hasNotificationsValue, userId]);
 
   return (
     <ChatNotificationContext.Provider value={{ unreadCount, hasNotifications: hasNotificationsValue, refreshUnreadCount: fetchUnreadCount }}>

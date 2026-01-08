@@ -1,85 +1,48 @@
 import { useEffect } from 'react';
-import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Hook para manter o usuário marcado como online enquanto estiver usando o site
- * Atualiza o estado online a cada 30 segundos
+ * Hook para manter o backend Supabase ativo
+ * Faz requisições periódicas ao backend para evitar que seja pausado por inatividade
+ * (Projetos gratuitos do Supabase são pausados após 7 dias sem atividade)
+ * 
+ * Nota: Este hook complementa o cron job diário (api/supabase_start.js)
+ * fornecendo atividade adicional durante o uso do site
  */
 export const useKeepOnline = () => {
-  const { habboAccount } = useAuth();
-  const userId = habboAccount?.supabase_user_id;
-
   useEffect(() => {
-    if (!userId) return;
-
-    // Verificar se o usuário quer estar online (preferência do localStorage)
-    const getOnlinePreference = (): boolean => {
-      if (typeof window === 'undefined') return true;
-      const saved = localStorage.getItem('habbo-hub-online-status-enabled');
-      return saved !== null ? saved === 'true' : true; // Padrão é true (online)
-    };
-
-    // Atualizar imediatamente ao montar
-    const updateOnlineStatus = async () => {
+    // Função para fazer ping no backend (mantém sistema ativo)
+    const pingBackend = async () => {
       try {
-        // Verificar se userId existe antes de tentar atualizar
-        const currentUserId = habboAccount?.supabase_user_id;
-        if (!currentUserId || typeof currentUserId !== 'string' || currentUserId.trim().length === 0) {
-          console.log('[KEEP ONLINE] No valid userId available, skipping update');
-          return;
-        }
-
-        const shouldBeOnline = getOnlinePreference();
-        
-        // Se o usuário não quer estar online, não atualizar
-        if (!shouldBeOnline) {
-          console.log('[KEEP ONLINE] User prefers to be offline, skipping update');
-          return;
-        }
-        
-        // Usar Edge Function para atualizar estado online (bypass de RLS)
+        // Chamar Edge Function que apenas faz ping no banco
+        // Não precisa de parâmetros - apenas mantém o sistema ativo
         const { error } = await supabase.functions.invoke('keep-online', {
-          body: {
-            userId: currentUserId.trim(),
-            isOnline: true // Sempre true quando o hook atualiza (pois só roda se preferência for true)
-          }
+          body: {} // Body vazio - apenas ping
         });
 
-        if (error) {
-          // Se for erro 400, pode ser problema de validação na Edge Function
-          // Não fazer log de erro repetitivo para não poluir o console
-          if (error.message?.includes('400') || error.status === 400) {
-            console.debug('[KEEP ONLINE] Edge Function returned 400 (possível problema de validação):', error.message);
-          } else {
-            console.error('[KEEP ONLINE] Error updating online status:', error);
-          }
-        } else {
-          console.log('[KEEP ONLINE] Online status updated');
+        // Silenciar erros - o importante é que a requisição foi feita
+        // Mesmo erros 400/500 indicam que o sistema está processando requisições
+        if (error && error.status >= 500) {
+          // Apenas logar erros críticos de servidor
+          console.error('[KEEP ONLINE] Server error:', error);
         }
       } catch (error: any) {
-        // Tratar erros de forma silenciosa para não poluir o console
-        if (error?.message?.includes('400') || error?.status === 400) {
-          console.debug('[KEEP ONLINE] Error 400 (silenciado):', error.message);
-        } else {
-          console.error('[KEEP ONLINE] Error:', error);
-        }
+        // Silenciar erros de rede/parsing - não são críticos para keep-alive
+        // O objetivo é apenas fazer requisições periódicas
       }
     };
 
-    // Atualizar imediatamente
-    updateOnlineStatus();
+    // Fazer ping imediatamente ao montar
+    pingBackend();
 
-    // Atualizar a cada 30 segundos (somente se o usuário preferir estar online)
+    // Fazer ping a cada 5 minutos (300000ms)
+    // Isso complementa o cron diário com atividade durante o uso
     const interval = setInterval(() => {
-      if (getOnlinePreference()) {
-        updateOnlineStatus();
-      }
-    }, 30000); // 30 segundos
+      pingBackend();
+    }, 300000); // 5 minutos
 
     return () => {
       clearInterval(interval);
     };
-  }, [habboAccount?.supabase_user_id]);
+  }, []); // Sem dependências - roda sempre que o componente monta
 };
-

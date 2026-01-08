@@ -1,8 +1,9 @@
 // ========================================
-// EDGE FUNCTION: Keep Online
+// EDGE FUNCTION: Keep Online (Keep-Alive)
 // ========================================
-// Atualiza o estado online do usuário enquanto ele está usando o site
-// Usa service_role para bypass de RLS
+// Mantém o backend Supabase ativo com requisições periódicas
+// Não atualiza status de usuários - apenas faz ping no sistema
+// Útil para evitar que projetos gratuitos sejam pausados por inatividade
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
@@ -10,7 +11,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
 const jsonResponse = (data: any, status = 200) => {
@@ -46,43 +47,36 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    let body;
-    try {
-      body = await req.json();
-    } catch (jsonError) {
-      console.error('[KEEP ONLINE] Error parsing JSON:', jsonError);
-      return jsonResponse({ error: 'Erro ao processar requisição JSON' }, 400);
-    }
-
-    const { userId, user_id, isOnline } = body;
-
-    // Suportar tanto userId quanto user_id para compatibilidade
-    const actualUserId = userId || user_id;
-
-    if (!actualUserId) {
-      return jsonResponse({ error: 'userId é obrigatório' }, 400);
-    }
-
-    // Se isOnline não for fornecido, assumir true (comportamento padrão)
-    const shouldBeOnline = isOnline !== undefined ? isOnline : true;
-
-    console.log('[KEEP ONLINE] Updating online status for user:', actualUserId.substring(0, 8), 'isOnline:', shouldBeOnline);
-
-    // Atualizar estado online
+    // Fazer uma query simples no banco para manter o sistema ativo
+    // Não precisa de parâmetros - apenas ping no sistema
     const { error } = await supabaseAdmin
       .from('habbo_accounts')
-      .update({ 
-        is_online: shouldBeOnline, 
-        updated_at: new Date().toISOString() 
-      })
-      .eq('supabase_user_id', actualUserId);
+      .select('id')
+      .limit(1);
 
-    if (error) {
-      console.error('[KEEP ONLINE] Error updating online status:', error);
-      return jsonResponse({ error: 'Erro ao atualizar estado online' }, 500);
+    // Qualquer resposta (incluindo erro de tabela vazia) significa que o sistema está ativo
+    // O importante é que a requisição foi processada pelo Supabase
+    if (error && error.code !== 'PGRST116') { // PGRST116 = nenhuma linha retornada (OK para keep-alive)
+      console.error('[KEEP ONLINE] Error pinging database:', error);
+      // Mesmo com erro, retornamos sucesso se foi um erro de query (sistema está ativo)
+      if (error.code && error.code.startsWith('PGRST')) {
+        return jsonResponse({ 
+          success: true, 
+          message: 'Backend está ativo',
+          note: 'Query executada com sucesso (erro esperado de tabela vazia)'
+        }, 200);
+      }
+      return jsonResponse({ 
+        error: 'Erro ao verificar sistema',
+        details: error.message 
+      }, 500);
     }
 
-    return jsonResponse({ success: true }, 200);
+    return jsonResponse({ 
+      success: true, 
+      message: 'Backend está ativo',
+      timestamp: new Date().toISOString()
+    }, 200);
 
   } catch (error: any) {
     console.error('[KEEP ONLINE] Unexpected error:', error);

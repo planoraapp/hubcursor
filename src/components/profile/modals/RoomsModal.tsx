@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Home, Star, X } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
@@ -25,6 +25,26 @@ export const RoomsModal: React.FC<RoomsModalProps> = ({
   const { t } = useI18n();
   const [copiedRoomId, setCopiedRoomId] = useState<string | null>(null);
   const [loadedImages, setLoadedImages] = useState<{ [roomId: string]: string }>({});
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Limpar pesquisa quando o modal fechar
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchTerm('');
+    }
+  }, [isOpen]);
+
+  // Filtrar quartos baseado no termo de pesquisa
+  const filteredRooms = useMemo(() => {
+    if (!searchTerm.trim()) return rooms;
+    const term = searchTerm.toLowerCase();
+    return rooms.filter((room) => 
+      room.name?.toLowerCase().includes(term) ||
+      room.description?.toLowerCase().includes(term) ||
+      room.id?.toString().includes(term) ||
+      room.tags?.some((tag: string) => tag.toLowerCase().includes(term))
+    );
+  }, [rooms, searchTerm]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
@@ -65,7 +85,7 @@ export const RoomsModal: React.FC<RoomsModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] bg-transparent border-0 p-0 overflow-hidden rounded-lg" style={{
+      <DialogContent className="max-w-2xl max-h-[80vh] bg-transparent border-0 p-0 overflow-hidden rounded-lg [&>button]:hidden" style={{
         backgroundImage: 'repeating-linear-gradient(0deg, #333333, #333333 1px, #222222 1px, #222222 2px)',
         backgroundSize: '100% 2px'
       }}>
@@ -86,13 +106,12 @@ export const RoomsModal: React.FC<RoomsModalProps> = ({
               <DialogClose asChild>
                 <button
                   onClick={onClose}
-                  className="text-white hover:bg-white/20 p-1 rounded transition-colors"
-                  style={{
-                    textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
-                  }}
+                  className="text-black hover:bg-white/20 p-1 rounded transition-colors"
                   aria-label="Fechar"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-5 h-5" style={{
+                    textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+                  }} />
                 </button>
               </DialogClose>
             </div>
@@ -106,8 +125,32 @@ export const RoomsModal: React.FC<RoomsModalProps> = ({
           height: '60vh'
         }}>
           <div className="relative z-10">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
-              {Array.isArray(rooms) ? rooms.map((room) => {
+            {/* Barra de pesquisa */}
+            <div className="p-4 pb-2">
+              <div className="relative flex items-center bg-white/10 border border-white/20 rounded focus-within:border-white/60 transition-colors">
+                <Input
+                  type="text"
+                  placeholder="Pesquisar quartos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 bg-transparent border-0 text-white placeholder:text-white/50 focus:outline-none focus:ring-0"
+                />
+                <button
+                  className="px-2 py-1 text-white/60 hover:text-white transition-colors flex items-center justify-center flex-shrink-0"
+                  title="Buscar"
+                >
+                  <img 
+                    src="/assets/console/search.png" 
+                    alt="Buscar" 
+                    className="w-5 h-5"
+                    style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
+                  />
+                </button>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 px-4 pb-4">
+              {Array.isArray(filteredRooms) ? filteredRooms.map((room) => {
                 const thumbnailUrls = getRoomThumbnailUrls(room.id);
                 const isCopied = copiedRoomId === room.id;
                 
@@ -298,10 +341,10 @@ export const RoomsModal: React.FC<RoomsModalProps> = ({
               }) : null}
             </div>
             
-            {(!Array.isArray(rooms) || rooms.length === 0) && (
+            {(!Array.isArray(filteredRooms) || filteredRooms.length === 0) && (
               <div className="text-center text-white/60 py-8">
                 <Home className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p>Nenhum quarto encontrado</p>
+                <p>{searchTerm ? 'Nenhum quarto encontrado para sua pesquisa' : 'Nenhum quarto encontrado'}</p>
               </div>
             )}
           </div>

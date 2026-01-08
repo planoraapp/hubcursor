@@ -20,24 +20,17 @@ import { ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { HabboUserPanel } from '@/components/HabboUserPanel';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 
 function CollapsibleAppSidebarComponent() {
   const location = useLocation();
   const { habboAccount, isLoggedIn } = useAuth();
-  const { t } = useI18n();
+  const { t, language, setLanguage } = useI18n();
   const { hasNotifications, unreadCount } = useChatNotifications();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
+  const { toast } = useToast();
   
-  // Debug: log para verificar se hasNotifications está correto
-  React.useEffect(() => {
-    console.log('[SIDEBAR] Notification state:', {
-      hasNotifications,
-      unreadCount,
-      shouldShowNotification: unreadCount > 0,
-      iconPath: hasNotifications ? '/assets/2367_HabboFriendBarCom_icon_friendlist_notify_1_png.png' : '/assets/console/consoleoff.gif'
-    });
-  }, [hasNotifications, unreadCount]);
   const isMobileViewport = useIsMobile();
   const [isHeaderHidden, setIsHeaderHidden] = React.useState(false);
   const lastScrollY = React.useRef(0);
@@ -121,12 +114,67 @@ function CollapsibleAppSidebarComponent() {
       .replace(/[Ç]/g, 'C');
   };
 
+  const handleLanguageChange = (newLanguage: 'pt' | 'en' | 'es') => {
+    if (newLanguage !== language) {
+      setLanguage(newLanguage);
+      
+      // Nomes dos idiomas traduzidos em cada idioma
+      const languageNames: Record<string, Record<string, string>> = {
+        'pt': {
+          'pt': 'Português',
+          'en': 'Inglês',
+          'es': 'Espanhol'
+        },
+        'en': {
+          'pt': 'Portuguese',
+          'en': 'English',
+          'es': 'Spanish'
+        },
+        'es': {
+          'pt': 'Portugués',
+          'en': 'Inglés',
+          'es': 'Español'
+        }
+      };
+      
+      // Usar o novo idioma para a tradução
+      const tempT = (key: string, params?: Record<string, string | number>) => {
+        const translations: Record<string, Record<string, string>> = {
+          'pt': {
+            'toast.languageChanged': 'Idioma alterado',
+            'toast.languageChangedTo': 'O idioma foi alterado para {language}'
+          },
+          'en': {
+            'toast.languageChanged': 'Language changed',
+            'toast.languageChangedTo': 'Language has been changed to {language}'
+          },
+          'es': {
+            'toast.languageChanged': 'Idioma cambiado',
+            'toast.languageChangedTo': 'El idioma ha sido cambiado a {language}'
+          }
+        };
+        
+        let text = translations[newLanguage]?.[key] || key;
+        if (params) {
+          Object.entries(params).forEach(([paramKey, paramValue]) => {
+            text = text.replace(`{${paramKey}}`, String(paramValue));
+          });
+        }
+        return text;
+      };
+      
+      toast({
+        title: `✅ ${tempT('toast.languageChanged')}`,
+        description: tempT('toast.languageChangedTo', { language: languageNames[newLanguage][newLanguage] }),
+      });
+    }
+  };
+
   // Calcular ícone do console baseado no estado de notificações
   const consoleIcon = React.useMemo(() => {
     const iconPath = hasNotifications 
       ? '/assets/2367_HabboFriendBarCom_icon_friendlist_notify_1_png.png' 
       : '/assets/console/consoleoff.gif';
-    console.log('[SIDEBAR] Computing console icon:', { hasNotifications, unreadCount, iconPath });
     return iconPath;
   }, [hasNotifications, unreadCount]);
 
@@ -421,36 +469,92 @@ function CollapsibleAppSidebarComponent() {
     <div className="relative">
       <Sidebar className="bg-[#f5f5dc] border-r-2 border-black" collapsible="icon">
         <SidebarHeader className="px-2 pt-6 pb-2">
-          <div className="flex w-full items-center justify-center">
-            {isCollapsed ? (
-              <img
-                src="/assets/hub.gif"
-                alt="Hub"
-                className="h-auto max-h-16 w-auto max-w-full"
-                style={{
-                  imageRendering: 'pixelated',
-                  objectFit: 'contain',
-                }}
-                onError={(event) => {
-                  const target = event.currentTarget as HTMLImageElement;
-                  target.src = '/assets/hub.gif';
-                }}
-              />
-            ) : (
-              <img
-                src="/assets/hubbeta.gif"
-                alt="Habbo Hub"
-                className="h-auto w-auto"
-                style={{
-                  imageRendering: 'pixelated',
-                  objectFit: 'contain',
-                  maxHeight: '3.6rem',
-                }}
-                onError={(event) => {
-                  const target = event.currentTarget as HTMLImageElement;
-                  target.src = '/assets/hubbeta.gif';
-                }}
-              />
+          <div className="flex flex-col gap-2">
+            <div className="flex w-full items-center justify-center">
+              {isCollapsed ? (
+                <img
+                  src="/assets/hub.gif"
+                  alt="Hub"
+                  className="h-auto max-h-16 w-auto max-w-full"
+                  style={{
+                    imageRendering: 'pixelated',
+                    objectFit: 'contain',
+                  }}
+                  onError={(event) => {
+                    const target = event.currentTarget as HTMLImageElement;
+                    target.src = '/assets/hub.gif';
+                  }}
+                />
+              ) : (
+                <img
+                  src="/assets/hubbeta.gif"
+                  alt="Habbo Hub"
+                  className="h-auto w-auto"
+                  style={{
+                    imageRendering: 'pixelated',
+                    objectFit: 'contain',
+                    maxHeight: '3.6rem',
+                  }}
+                  onError={(event) => {
+                    const target = event.currentTarget as HTMLImageElement;
+                    target.src = '/assets/hubbeta.gif';
+                  }}
+                />
+              )}
+            </div>
+            
+            {/* Seleção de Idioma */}
+            {!isCollapsed && (
+              <div className="flex gap-2 justify-center items-center">
+                <button
+                  onClick={() => handleLanguageChange('pt')}
+                  className={`rounded transition-all ${
+                    language === 'pt' 
+                      ? 'bg-yellow-300/70' 
+                      : 'opacity-60 hover:opacity-100'
+                  }`}
+                  title="Português"
+                >
+                  <img 
+                    src="/flags/flagbrazil.png" 
+                    alt="Português" 
+                    className="w-auto object-contain"
+                    style={{ imageRendering: 'pixelated', height: 'auto', maxHeight: 'none', background: 'transparent' }}
+                  />
+                </button>
+                <button
+                  onClick={() => handleLanguageChange('en')}
+                  className={`rounded transition-all ${
+                    language === 'en' 
+                      ? 'bg-yellow-300/70' 
+                      : 'opacity-60 hover:opacity-100'
+                  }`}
+                  title="English"
+                >
+                  <img 
+                    src="/flags/flagcom.png" 
+                    alt="English" 
+                    className="w-auto object-contain"
+                    style={{ imageRendering: 'pixelated', height: 'auto', maxHeight: 'none', background: 'transparent' }}
+                  />
+                </button>
+                <button
+                  onClick={() => handleLanguageChange('es')}
+                  className={`rounded transition-all ${
+                    language === 'es' 
+                      ? 'bg-yellow-300/70' 
+                      : 'opacity-60 hover:opacity-100'
+                  }`}
+                  title="Español"
+                >
+                  <img 
+                    src="/flags/flagspain.png" 
+                    alt="Español" 
+                    className="w-auto object-contain"
+                    style={{ imageRendering: 'pixelated', height: 'auto', maxHeight: 'none', background: 'transparent' }}
+                  />
+                </button>
+              </div>
             )}
           </div>
         </SidebarHeader>

@@ -24,7 +24,6 @@ class MessageNotificationSound {
       const enableAudio = () => {
         if (!this.hasUserInteracted) {
           this.hasUserInteracted = true;
-          console.log('[SOUND] ✅ User interaction detected, audio playback enabled');
           
           // Tentar tocar um som silencioso para "unlock" o autoplay
           if (this.audio && this.pendingPlay) {
@@ -43,11 +42,6 @@ class MessageNotificationSound {
       window.addEventListener('keydown', enableAudio, { once: true });
       window.addEventListener('touchstart', enableAudio, { once: true });
       
-      // Log quando o áudio é carregado
-      this.audio.addEventListener('loadeddata', () => {
-        console.log('[SOUND] Audio file loaded successfully');
-      });
-      
       // Tratamento de erros
       this.audio.addEventListener('error', (e) => {
         console.error('[SOUND] ❌ Erro ao carregar som de notificação. Verifique se o arquivo /habbo_mensage.mp3 existe em public/', e);
@@ -57,16 +51,6 @@ class MessageNotificationSound {
           readyState: this.audio?.readyState,
           src: this.audio?.src
         });
-      });
-      
-      // Log quando começa a tocar
-      this.audio.addEventListener('play', () => {
-        console.log('[SOUND] ✅ Audio started playing');
-      });
-      
-      // Log quando termina de tocar
-      this.audio.addEventListener('ended', () => {
-        console.log('[SOUND] ✅ Audio finished playing');
       });
     }
   }
@@ -80,7 +64,6 @@ class MessageNotificationSound {
    */
   play(): boolean {
     if (!this.audio) {
-      console.warn('[SOUND] Audio element not available');
       return false;
     }
 
@@ -88,14 +71,12 @@ class MessageNotificationSound {
 
     // Se passou mais de 10 segundos desde a primeira execução da janela, resetar
     if (this.resetTime > 0 && now - this.resetTime > this.COOLDOWN_MS) {
-      console.log('[SOUND] Resetting play count after cooldown');
       this.playCount = 0;
       this.resetTime = 0;
     }
 
     // Se já tocou 3 vezes na janela atual (últimos 10 segundos), não tocar
     if (this.playCount >= this.MAX_REPEATED_PLAYS) {
-      console.log('[SOUND] Max plays reached, skipping:', this.playCount);
       return false;
     }
 
@@ -109,12 +90,9 @@ class MessageNotificationSound {
     this.lastPlayTime = now;
     this.audio.currentTime = 0; // Resetar para tocar do início
     
-    console.log('[SOUND] 🎵 Attempting to play notification sound, play count:', this.playCount, 'audio readyState:', this.audio.readyState, 'hasUserInteracted:', this.hasUserInteracted);
-    
     // Se o usuário ainda não interagiu, marcar como pendente
     if (!this.hasUserInteracted) {
       this.pendingPlay = true;
-      console.log('[SOUND] ⚠️ User has not interacted yet, attempting anyway (may be blocked)');
     }
     
     const playPromise = this.audio.play();
@@ -122,7 +100,6 @@ class MessageNotificationSound {
     if (playPromise !== undefined) {
       playPromise
         .then(() => {
-          console.log('[SOUND] ✅ Sound played successfully');
           this.hasUserInteracted = true; // Se tocou com sucesso, marcar como interagido
           this.pendingPlay = false;
         })
@@ -140,7 +117,6 @@ class MessageNotificationSound {
           
           // Se o erro for por autoplay policy
           if (err.name === 'NotAllowedError' || err.name === 'NotSupportedError') {
-            console.warn('[SOUND] ⚠️ Autoplay blocked by browser. User interaction required. Sound will play after user clicks anywhere on the page.');
             this.pendingPlay = true;
           }
         });

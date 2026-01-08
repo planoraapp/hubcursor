@@ -40,6 +40,7 @@ interface UnifiedCatalogProps {
   onHanditemSelect?: (handitem: HabboHanditem) => void;
   onFurniSelect?: (furni: HabboFurni) => void;
   externalSearchTerm?: string; // quando fornecido, usa busca externa e esconde input
+  externalCategory?: string; // quando fornecido, usa categoria externa e esconde tabs
   hideHeader?: boolean; // oculta barra de busca/ações e filtros de categoria
 }
 
@@ -47,10 +48,14 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
   onHanditemSelect, 
   onFurniSelect,
   externalSearchTerm,
+  externalCategory,
   hideHeader
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [internalCategory, setInternalCategory] = useState('Todos');
+  
+  // Usar categoria externa se fornecida, senão usar categoria interna
+  const selectedCategory = externalCategory ?? internalCategory;
   const [isLoading, setIsLoading] = useState(false);
   const [handitems, setHanditems] = useState<HabboHanditem[]>([]);
   const [syncedHanditems, setSyncedHanditems] = useState<HanditemData[]>([]);
@@ -65,13 +70,13 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
 
   // Mapeamento de categorias para handitems representativos (IDs)
   const CATEGORY_HANDITEM_IDS: { [key: string]: number } = {
-    'Todos': 0, // Sem ícone para "Todos"
-    'Alimentos': 1, // Cenoura
-    'Bebidas': 2, // Café
-    'Doces': 5, // Sorvete
-    'Utensílios': 20, // Lata de Bubblejuice (ou outro utensílio)
-    'Eletrônicos': 244, // Celular
-    'Outros': 1099 // Ursinho Teddy (ou outro item)
+    'Todos': 1053, // Pato
+    'Alimentos': 103, // Banana
+    'Bebidas': 2, // Café (mantido)
+    'Doces': 75, // Sorvete de Morango
+    'Utensílios': 1058, // Lampião
+    'Eletrônicos': 1104, // H-Phone
+    'Outros': 1095 // Coração
   };
 
   // Categorias para handitems
@@ -88,9 +93,25 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
   // Função para obter a URL da imagem do handitem representativo da categoria
   const getCategoryHanditemImage = (categoryKey: string): string | null => {
     const handitemId = CATEGORY_HANDITEM_IDS[categoryKey];
-    if (!handitemId || handitemId === 0) return null;
+    if (!handitemId) return null;
     
-    // Usar a função de resolução de imagem diretamente
+    // Mapeamento direto de imagens para IDs de categorias (usando o mesmo mapeamento do grid)
+    const categoryImages: { [key: number]: string } = {
+      1053: 'https://i.imgur.com/3EL82RT.png', // Pato (Todos)
+      103: 'https://i.imgur.com/6BKn94N.png', // Banana (Alimentos)
+      2: 'https://i.imgur.com/1BGBH0d.png', // Café (Bebidas)
+      75: 'https://i.imgur.com/4UyBReh.png', // Sorvete de Morango (Doces)
+      1058: 'https://i.imgur.com/DqBzgIQ.png', // Lampião (Utensílios)
+      1104: 'https://i.imgur.com/Ey281Fk.png', // H-Phone (Eletrônicos)
+      1095: 'https://i.imgur.com/WB20uCW.png', // Coração (Outros)
+    };
+    
+    // Retornar URL direta se disponível
+    if (categoryImages[handitemId]) {
+      return categoryImages[handitemId];
+    }
+    
+    // Fallback: usar a função de resolução de imagem
     try {
       const imageUrl = handitemImages.getHanditemImageById(handitemId);
       return imageUrl && !imageUrl.includes('placeholder') ? imageUrl : null;
@@ -233,7 +254,14 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
 
   // Função auxiliar para determinar a categoria de um handitem baseado no nome
   const getHanditemCategory = (name: string): string => {
-    const normalizedName = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (!name || typeof name !== 'string' || name.trim() === '') {
+      return 'Outros';
+    }
+    
+    const normalizedName = name.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+      .trim();
     
     // Alimentos
     const alimentosKeywords = [
@@ -242,7 +270,7 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
       'pera', 'pessego', 'abacate', 'uva', 'melancia', 'brocolis', 'camarao', 'linguiça',
       'cachorro-quente', 'torrada', 'croissant', 'ovo', 'batata', 'coxinha',
       'caranguejo', 'pimenta', 'cookie', 'espetinho', 'takoyaki', 'caldo', 'iogurte',
-      'cereal', 'donut', 'picolé', 'salgadinho', 'castanha', 'pipoca'
+      'cereal', 'donut', 'picolé', 'salgadinho', 'castanha', 'pipoca', 'fatia'
     ];
     
     // Bebidas
@@ -250,30 +278,45 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
       'cafe', 'suco', 'agua', 'leite', 'cha', 'refrigerante', 'bebida', 'drink', 'copo',
       'champanhe', 'energetico', 'milkshake', 'groselha', 'bubblejuice', 'pocao',
       'sake', 'rum', 'espumante', 'champagne', 'limonada', 'beterraba', 'ramune',
-      'vitamina', 'frappuccino', 'barista', 'fanta', 'pepsi', 'dalgon', 'chocolate quente'
+      'vitamina', 'frappuccino', 'barista', 'fanta', 'pepsi', 'dalgon', 'chocolate quente',
+      'refrescante', 'descafeinado', 'mocaccino', 'macchiato', 'expresso', 'cappuccino',
+      'java', 'gourmet', 'torneira', 'bolhas', 'amor', 'radioativo', 'coco', 'geladinho'
     ];
     
     // Doces
     const docesKeywords = [
       'doce', 'acucar', 'chocolate', 'balas', 'pirulito', 'biscoito', 'bolo', 'torta',
       'sorvete', 'goma', 'chiclete', 'algodao', 'cupcake', 'caveira de doces',
-      'marshmallow', 'raspadinha', 'chiclete', 'goma de mascar'
+      'marshmallow', 'raspadinha', 'calippo', 'baunilha'
     ];
     
-    // Utensílios
+    // Utensílios - verificar ANTES de bebidas para evitar conflitos (ex: "Lata de Bubblejuice")
     const utensiliosKeywords = [
-      'garfo', 'faca', 'colher', 'prato', 'copo', 'xicara', 'tigela', 'panela', 'talher',
-      'livro', 'prancheta', 'pincel', 'lata', 'garrafa', 'caneca', 'regador', 'lupa',
-      'luneta', 'vara de pescar', 'espada', 'marreta', 'osso', 'graveto'
+      'lata', 'garrafa', 'garfo', 'faca', 'colher', 'prato', 'xicara', 'tigela', 'panela', 'talher',
+      'livro', 'prancheta', 'pincel', 'caneca', 'regador', 'lupa',
+      'luneta', 'vara de pescar', 'espada', 'marreta', 'osso', 'graveto',
+      'seringa', 'comprimido', 'bolsa', 'residuo', 'hospitalar', 'toalha', 'papel higienico',
+      'bexiga', 'bandeira', 'vela', 'presente', 'flor', 'margarida', 'jacinto', 'poinsetia',
+      'panetone', 'bengala', 'tocha', 'ovni', 'alienigena', 'cobra', 'mao',
+      'coracao animal', 'lula', 'bat-coco', 'verme', 'rato', 'dentadura', 'creme', 'pelouro',
+      'pato', 'lampiao', 'spray', 'cravo', 'caveira', 'boneca', 'ursinho', 'soldadinho',
+      'revista', 'bussola', 'dino', 'alossauro', 'triceratopo', 'saurolofo', 'besouro',
+      'lagartixa', 'espetinho', 'sacola', 'compras', 'dvd', 'caderno', 'lapis', 'saco',
+      'pescar', 'bota', 'mensagem', 'vasinho', 'muda', 'robozinho', 'teddy',
+      'ferias', 'futebol', 'taco', 'tenis', 'astral bow', 'virvontavitsa',
+      'balao', 'chocolate quente'
     ];
     
     // Eletrônicos
     const eletronicosKeywords = [
       'celular', 'telefone', 'computador', 'tablet', 'camera', 'radio', 'tv', 'video',
-      'eletronico', 'hipad', 'h-phone', 'microfone', 'console', 'dvd', 'caderno', 'lapis'
+      'eletronico', 'hipad', 'h-phone', 'microfone', 'console'
     ];
     
-    // Verificar categoria
+    // Verificar categoria - ordem importante: Utensílios antes de Bebidas para evitar conflitos
+    if (utensiliosKeywords.some(keyword => normalizedName.includes(keyword))) {
+      return 'Utensílios';
+    }
     if (alimentosKeywords.some(keyword => normalizedName.includes(keyword))) {
       return 'Alimentos';
     }
@@ -282,9 +325,6 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
     }
     if (docesKeywords.some(keyword => normalizedName.includes(keyword))) {
       return 'Doces';
-    }
-    if (utensiliosKeywords.some(keyword => normalizedName.includes(keyword))) {
-      return 'Utensílios';
     }
     if (eletronicosKeywords.some(keyword => normalizedName.includes(keyword))) {
       return 'Eletrônicos';
@@ -368,7 +408,7 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
     });
 
     return filtered;
-  }, [syncedHanditems, handitems, selectedCategory, effectiveSearchTerm, language]);
+  }, [syncedHanditems, handitems, selectedCategory, effectiveSearchTerm, language, externalCategory]);
 
 
   // Cache para mapeamento reverso do XML (value -> id)
@@ -961,9 +1001,18 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
       )}
 
       <div className="w-full space-y-4">
-        {!hideHeader && (
-          <Tabs value={selectedCategory} onValueChange={(value) => setSelectedCategory(value)}>
-            <TabsList className="grid grid-cols-7 w-full h-10">
+        {!hideHeader && !externalCategory && (
+          <>
+            <style>{`
+              @media (max-width: 767px) {
+                [data-state="active"] .category-icon { display: none !important; }
+                [data-state="inactive"] .category-text { display: none !important; }
+              }
+            `}</style>
+            <Tabs value={selectedCategory} onValueChange={(value) => {
+              setInternalCategory(value);
+            }}>
+              <TabsList className="grid grid-cols-7 w-full h-10 items-center justify-center">
               {Object.entries(HANDITEM_CATEGORIES).map(([key, category]) => {
                 const categoryImageUrl = getCategoryHanditemImage(key);
                 
@@ -974,22 +1023,24 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
                   return (
                     <TabsTrigger 
                       value={key}
-                      className="flex items-center gap-1 text-xs volter-font"
+                      className="flex items-center justify-center gap-1.5 text-xs volter-font h-full py-0"
                     >
+                      {/* Ícone/Imagem - no mobile: oculto quando ativo, visível quando inativo */}
                       {categoryImageUrl && !imageError ? (
                         <img 
                           src={categoryImageUrl} 
                           alt={category.label}
-                          className="w-3 h-3 object-contain"
+                          className="category-icon max-w-10 max-h-10 w-auto h-auto object-contain"
                           style={{ imageRendering: 'pixelated' }}
                           onError={() => {
                             setImageError(true);
                           }}
                         />
                       ) : (
-                        <category.icon className="w-3 h-3" />
+                        <category.icon className="category-icon w-3 h-3" />
                       )}
-                      {category.label}
+                      {/* Texto - no mobile: visível quando ativo, oculto quando inativo */}
+                      <span className="category-text">{category.label}</span>
                     </TabsTrigger>
                   );
                 };
@@ -997,7 +1048,8 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
                 return <CategoryTabTrigger key={key} />;
               })}
             </TabsList>
-          </Tabs>
+            </Tabs>
+          </>
         )}
 
         <ScrollArea className="h-[600px]">
@@ -1224,7 +1276,7 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
                               size="sm"
                               variant="ghost"
                               className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={(e) => {
+na página console,                              onClick={(e) => {
                                 e.stopPropagation();
                                 copyHanditemId(handitem);
                               }}

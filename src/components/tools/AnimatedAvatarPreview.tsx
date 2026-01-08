@@ -30,21 +30,46 @@ export const AnimatedAvatarPreview: React.FC<AnimatedAvatarPreviewProps> = ({
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
-    // Gerar frames de animação apenas se houver handitem
+    // Gerar frames de animação apenas para itens de beber/comer (UseItems com ID < 1000)
     // Usar figurestring quando disponível (formato correto do Habbo)
     const options = {
       size,
       figureString,
-      gender
+      gender,
+      hotel: 'com.br' as const
     };
     
+    // Debug: verificar se figurestring está sendo passada
+    console.log('🎨 AnimatedAvatarPreview:', {
+      habboName,
+      handitemId,
+      hasFigureString: !!figureString,
+      figureString: figureString ? figureString.substring(0, 50) + '...' : 'N/A',
+      gender,
+      size
+    });
+    
     if (handitemId && handitemId !== 0) {
-      const frames = avatarPreview.generateAnimationFrames(habboName, handitemId, options);
-      setAnimationFrames(frames);
-      setIsAnimating(true);
+      // Verificar se é um UseItem (ID < 1000) - itens de beber/comer com efeito
+      const isUseItem = handitemId < 1000;
+      
+      if (isUseItem) {
+        // Para UseItems, gerar frames de animação
+        const frames = avatarPreview.generateAnimationFrames(habboName, handitemId, options);
+        console.log(`✅ Gerando ${frames.length} frames de animação para UseItem ${handitemId}`);
+        setAnimationFrames(frames);
+        setIsAnimating(true);
+      } else {
+        // Para CarryItems (ID >= 1000), usar apenas uma imagem estática
+        const staticUrl = avatarPreview.generateAvatarUrl(habboName, handitemId, options);
+        console.log(`📷 Usando imagem estática para CarryItem ${handitemId}`);
+        setAnimationFrames([staticUrl]);
+        setIsAnimating(false);
+      }
     } else {
       // Se não houver handitem, usar apenas uma imagem estática
       const staticUrl = avatarPreview.generateAvatarUrl(habboName, null, options);
+      console.log('📷 Usando imagem estática sem handitem');
       setAnimationFrames([staticUrl]);
       setIsAnimating(false);
     }
@@ -85,9 +110,9 @@ export const AnimatedAvatarPreview: React.FC<AnimatedAvatarPreviewProps> = ({
       src={currentUrl}
       alt={alt}
       className={`${className} transition-opacity duration-150`}
-      key={`${currentFrame}-${handitemId}-${Date.now()}`} // Force re-render para animação
+      key={`${currentFrame}-${handitemId}`}
       style={{
-        imageRendering: 'auto',
+        imageRendering: 'pixelated',
       }}
       onError={(e) => {
         // Fallback para imagem estática se a animação falhar
@@ -95,7 +120,8 @@ export const AnimatedAvatarPreview: React.FC<AnimatedAvatarPreviewProps> = ({
         const fallbackUrl = avatarPreview.generateAvatarUrl(habboName, handitemId, { 
           size, 
           figureString, 
-          gender 
+          gender,
+          hotel: 'com.br' as const
         });
         if (target.src !== fallbackUrl) {
           target.src = fallbackUrl;

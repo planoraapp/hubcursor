@@ -33,7 +33,6 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
 
   // Resetar quando o hotel mudar
   useEffect(() => {
-    console.log(`[🌍 GLOBAL FEED] Hotel changed to: ${hotel}, resetting feed`);
     setCursor(undefined);
     setAllPhotos([]);
     setIsLoadingMore(false);
@@ -78,27 +77,6 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
         };
       }
       
-      // Debug: verificar usuários únicos
-      if (data.photos && data.photos.length > 0) {
-        const uniqueUsers = [...new Set(data.photos.map((p: any) => p.userName))];
-        const pageOffset = currentCursor ? parseInt(currentCursor) : 0;
-        console.log(
-          `[🌍 GLOBAL FEED] Página ${pageOffset}: ${data.photos.length} fotos, usuários únicos: ${uniqueUsers.length} (${uniqueUsers
-            .slice(0, 5)
-            .join(', ')}${uniqueUsers.length > 5 ? '...' : ''})`,
-        );
-
-        // Apenas log de diversidade para debug (não bloqueia feed)
-        if (uniqueUsers.length < 2 && data.photos.length >= 10) {
-          console.warn(
-            `[🌍 GLOBAL FEED] ⚠️ Baixa diversidade: apenas ${uniqueUsers.length} usuário(s) único(s) em ${data.photos.length} fotos`,
-          );
-        }
-      } else if (currentCursor) {
-        const pageOffset = parseInt(currentCursor);
-        console.log(`[🌍 GLOBAL FEED] Nenhuma foto encontrada para página ${pageOffset}`);
-      }
-
       const result = {
         photos: data.photos || [],
         nextCursor: data.nextCursor || null,
@@ -106,14 +84,6 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
         totalCount: data.totalCount || 0,
         cursor: data.cursor || currentCursor || '0'
       };
-      
-      console.log(`[🌍 GLOBAL FEED] Fetch result for cursor ${currentCursor || '0'}:`, {
-        photosCount: result.photos.length,
-        hasMore: result.hasMore,
-        nextCursor: result.nextCursor,
-        totalCount: result.totalCount,
-        hotel
-      });
       
       return result;
 
@@ -134,7 +104,6 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['global-photo-feed', hotel, cursor],
     queryFn: () => {
-      console.log(`[🌍 GLOBAL FEED] Query function called: hotel=${hotel}, cursor=${cursor}`);
       return fetchGlobalPhotos(cursor);
     },
     enabled: true,
@@ -275,7 +244,6 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
           }
         } else {
           // Substituir todas as fotos (refresh ou primeira carga)
-          console.log(`[🌍 GLOBAL FEED] Setting ${data.photos.length} photos (first load/refresh, cursor: ${currentCursor})`);
           return data.photos;
         }
       });

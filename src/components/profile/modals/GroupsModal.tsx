@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Crown, ExternalLink, Users, X } from 'lucide-react';
 import { getGroupDetails, getGroupMembers, getRoomDetails } from '@/services/habboApi';
@@ -27,6 +27,26 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
   const { t } = useI18n();
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [groupDetails, setGroupDetails] = useState<Map<string, any>>(new Map());
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Limpar pesquisa quando o modal fechar
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchTerm('');
+    }
+  }, [isOpen]);
+
+  // Filtrar grupos baseado no termo de pesquisa
+  const filteredGroups = useMemo(() => {
+    if (!searchTerm.trim()) return groups;
+    const term = searchTerm.toLowerCase();
+    return groups.filter((group) => 
+      group.name?.toLowerCase().includes(term) ||
+      group.description?.toLowerCase().includes(term) ||
+      group.id?.toString().includes(term) ||
+      group.badgeCode?.toLowerCase().includes(term)
+    );
+  }, [groups, searchTerm]);
 
   // Função ROBUSTA para buscar detalhes completos do grupo e identificar o dono
   const fetchComprehensiveGroupDetails = async (groupId: string, roomId?: string) => {
@@ -34,13 +54,16 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
       return groupDetails.get(groupId);
     }
 
-    try {let ownerInfo = null;
+    try {
+      let ownerInfo = null;
       let groupData = null;
       let membersData = null;
       let roomData = null;
       
       // 1. PRIMEIRO: Buscar detalhes do grupo via API pública
-      try {groupData = await getGroupDetails(groupId);// Verificar se a API retorna informações do dono diretamente
+      try {
+        groupData = await getGroupDetails(groupId);
+        // Verificar se a API retorna informações do dono diretamente
         if (groupData?.ownerName) {
           ownerInfo = {
             ownerName: groupData.ownerName,
@@ -48,14 +71,15 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
             roomName: groupData.name,
             source: 'group_api_direct',
             confirmed: true
-          };} else {
-          console.log(`❌ API do grupo não retorna ownerName. Campos disponíveis:`, Object.keys(groupData || {}));
+          };
         }
       } catch (error) {}
       
       // 2. SEGUNDO: Buscar membros do grupo para identificar o dono
       if (!ownerInfo) {
-        try {membersData = await getGroupMembers(groupId);if (membersData && membersData.length > 0) {
+        try {
+          membersData = await getGroupMembers(groupId);
+          if (membersData && membersData.length > 0) {
             // Procurar por um membro que seja dono usando múltiplos critérios
             const ownerMember = membersData.find(member => 
               member.isOwner === true || 
@@ -70,10 +94,7 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
             );
             
             // Se não encontrou com critérios padrão, tentar outras estratégias
-            if (!ownerMember && membersData.length > 0) {// Estratégia 1: Primeiro membro pode ser o dono
-              const firstMember = membersData[0];
-              console.log(`🔍 Primeiro membro (possível dono):`, firstMember);
-              
+            if (!ownerMember && membersData.length > 0) {
               // Estratégia 2: Procurar por membro com nome específico
               const beebopMember = membersData.find(m => 
                 m.name === userName || 
@@ -82,7 +103,8 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
                 m.username?.toLowerCase().includes('beebop')
               );
               
-              if (beebopMember) {console.log(`🔍 Campos do Beebop:`, Object.keys(beebopMember));// Se Beebop é admin, pode ser o dono
+              if (beebopMember) {
+                // Se Beebop é admin, pode ser o dono
                 if (beebopMember.isAdmin || beebopMember.admin || beebopMember.role === 'ADMIN') {
                   ownerInfo = {
                     ownerName: beebopMember.name || beebopMember.username,
@@ -91,8 +113,7 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
                     source: 'beebop_admin_logic',
                     confirmed: true
                   };
-                  console.log(`👑 Beebop identificado como dono (é admin):`, ownerInfo);
-                } else {}
+                }
               }
             }
             
@@ -103,20 +124,7 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
                 roomName: groupData?.name || 'Quarto do grupo',
                 source: 'group_members',
                 confirmed: true
-              };} else {console.log(`📊 Roles dos membros:`, membersData.map(m => ({ name: m.name, role: m.role, isOwner: m.isOwner })));
-              console.log(`🔍 Primeiros 5 membros detalhados:`, membersData.slice(0, 5).map(m => ({ 
-                name: m.name, 
-                username: m.username,
-                uniqueId: m.uniqueId,
-                id: m.id,
-                role: m.role, 
-                isOwner: m.isOwner,
-                owner: m.owner,
-                allFields: Object.keys(m)
-              })));
-              
-              // Expandir o primeiro membro completamente para ver todos os campos
-              if (membersData.length > 0) {}
+              };
             }
           }
         } catch (error) {}
@@ -124,36 +132,32 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
       
       // 3. TERCEIRO: Buscar detalhes do quarto associado ao grupo
       if (!ownerInfo && roomId) {
-        try {roomData = await getRoomDetails(roomId);if (roomData?.ownerName) {
+        try {
+          roomData = await getRoomDetails(roomId);
+          if (roomData?.ownerName) {
             ownerInfo = {
               ownerName: roomData.ownerName,
               ownerUniqueId: roomData.ownerUniqueId,
               roomName: roomData.name,
               source: 'room_api',
               confirmed: true
-            };}
+            };
+          }
         } catch (error) {}
       }
       
       // 4. QUARTO: Buscar perfil do usuário atual para verificar se é dono
       if (!ownerInfo) {
-        try {// Buscar perfil do usuário atual
+        try {
+          // Buscar perfil do usuário atual
           const userUrl = `https://www.habbo.com.br/api/public/users?name=${userName}`;
           const userResponse = await fetch(userUrl);
           
           if (userResponse.ok) {
-            const userData = await userResponse.json();console.log(`👤 Campos disponíveis no usuário:`, Object.keys(userData));
+            const userData = await userResponse.json();
             
             // Verificar se o usuário tem grupos onde é dono
             if (userData.groups) {
-              console.log(`👤 Grupos do usuário ${userName}:`, userData.groups.map(g => ({ 
-                id: g.id, 
-                name: g.name, 
-                role: g.role, 
-                isOwner: g.isOwner,
-                allFields: Object.keys(g)
-              })));
-              
               const ownedGroup = userData.groups.find(g => 
                 g.id === groupId && 
                 (g.isOwner === true || g.role === 'owner' || g.role === 'OWNER')
@@ -166,20 +170,23 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
                   roomName: groupData?.name || 'Quarto do grupo',
                   source: 'user_groups',
                   confirmed: true
-                };} else {}
-            } else {}
+                };
+              }
+            }
           }
         } catch (error) {}
       }
       
       // 5. QUINTO: Buscar no Supabase como fallback final
       if (!ownerInfo) {
-        try {// Buscar por qualquer relação possível
+        try {
+          // Buscar por qualquer relação possível
           const { data: supabaseData, error: supabaseError } = await supabase
             .from('habbo_rooms')
             .select('*')
             .or(`name.ilike.%${groupData?.name}%,habbo_group_id.eq.${groupId}`)
-            .limit(5);if (supabaseData && supabaseData.length > 0) {
+            .limit(5);
+          if (supabaseData && supabaseData.length > 0) {
             const room = supabaseData[0];
             if (room.owner_name) {
               ownerInfo = {
@@ -188,7 +195,8 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
                 roomName: room.name,
                 source: 'supabase',
                 confirmed: true
-              };}
+              };
+            }
           }
         } catch (error) {}
       }
@@ -201,7 +209,8 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
           roomName: groupData?.name || 'Quarto do grupo',
           source: 'not_found',
           confirmed: false
-        };}
+        };
+      }
 
       const enhancedDetails = {
         ...groupData,
@@ -211,13 +220,14 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
         searchAttempted: true,
         hasRoomId: !!roomId,
         apiNote: 'Busca completa realizada com todas as APIs disponíveis'
-      };setGroupDetails(prev => new Map(prev).set(groupId, enhancedDetails));
+      };
+      setGroupDetails(prev => new Map(prev).set(groupId, enhancedDetails));
       return enhancedDetails;
       
     } catch (error) {
       console.warn(`❌ Erro geral ao buscar grupo ${groupId}:`, error);
+      return null;
     }
-    return null;
   };
 
   // Função para gerar URLs de emblemas de grupos com múltiplos fallbacks
@@ -239,7 +249,7 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] bg-transparent border-0 p-0 overflow-hidden rounded-lg" style={{
+      <DialogContent className="max-w-4xl max-h-[80vh] bg-transparent border-0 p-0 overflow-hidden rounded-lg [&>button]:hidden" style={{
         backgroundImage: 'repeating-linear-gradient(0deg, #333333, #333333 1px, #222222 1px, #222222 2px)',
         backgroundSize: '100% 2px'
       }}>
@@ -260,13 +270,12 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
               <DialogClose asChild>
                 <button
                   onClick={onClose}
-                  className="text-white hover:bg-white/20 p-1 rounded transition-colors"
-                  style={{
-                    textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
-                  }}
+                  className="text-black hover:bg-white/20 p-1 rounded transition-colors"
                   aria-label="Fechar"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-5 h-5" style={{
+                    textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+                  }} />
                 </button>
               </DialogClose>
             </div>
@@ -280,14 +289,37 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
           height: '60vh'
         }}>
           <div className="relative z-10">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-              {Array.isArray(groups) ? groups.map((group) => {
+            {/* Barra de pesquisa */}
+            <div className="p-4 pb-2">
+              <div className="relative flex items-center bg-white/10 border border-white/20 rounded focus-within:border-white/60 transition-colors">
+                <Input
+                  type="text"
+                  placeholder="Pesquisar grupos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 bg-transparent border-0 text-white placeholder:text-white/50 focus:outline-none focus:ring-0"
+                />
+                <button
+                  className="px-2 py-1 text-white/60 hover:text-white transition-colors flex items-center justify-center flex-shrink-0"
+                  title="Buscar"
+                >
+                  <img 
+                    src="/assets/console/search.png" 
+                    alt="Buscar" 
+                    className="w-5 h-5"
+                    style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
+                  />
+                </button>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4 pb-4">
+              {Array.isArray(filteredGroups) ? filteredGroups.map((group) => {
                 const badgeUrls = getGroupBadgeUrls(group.badgeCode);
                 return (
                   <Popover key={group.id} open={selectedGroup?.id === group.id} onOpenChange={async (open) => {
                     if (open) {
                       setSelectedGroup(group);
-                      console.log(`🔍 Abrindo grupo: ${group.name} (ID: ${group.id}, RoomID: ${group.roomId})`);
                       await fetchComprehensiveGroupDetails(group.id, group.roomId);
                     } else {
                       setSelectedGroup(null);
@@ -373,14 +405,6 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
                         <div className="flex-1">
                           <div className="flex items-start justify-between mb-2">
                             <h3 className="font-bold text-lg text-white">{group.name}</h3>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="p-1 text-white/60 hover:text-white flex-shrink-0"
-                              onClick={() => setSelectedGroup(null)}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
                           </div>
                           
                           {group.isAdmin && (
@@ -451,10 +475,10 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
               }) : null}
             </div>
             
-            {(!Array.isArray(groups) || groups.length === 0) && (
+            {(!Array.isArray(filteredGroups) || filteredGroups.length === 0) && (
               <div className="text-center text-white/60 py-8">
                 <Crown className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p>Nenhum grupo encontrado</p>
+                <p>{searchTerm ? 'Nenhum grupo encontrado para sua pesquisa' : 'Nenhum grupo encontrado'}</p>
               </div>
             )}
           </div>

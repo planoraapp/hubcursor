@@ -127,6 +127,7 @@ export class AvatarPreview {
     
     const frames: string[] = [];
     const frameCount = 6; // 6 frames para animação suave e performática
+    const timestamp = Date.now(); // Usar um único timestamp para todos os frames
     
     // Sequência de gestures que simula a animação de drink/carry
     // Para drink: nrm -> spk (levar à boca) -> nrm -> sml (sorrir após beber) -> nrm -> spk
@@ -146,8 +147,8 @@ export class AvatarPreview {
       
       const baseUrl = this.generateAvatarUrl(habboName, handitemId, frameOptions);
       // Adicionar índice de frame e timestamp para cache busting
-      // Isso força o navegador a recarregar a imagem
-      frames.push(`${baseUrl}&_f=${i}&_t=${Date.now()}`);
+      // Usar o mesmo timestamp para todos os frames para evitar problemas de cache
+      frames.push(`${baseUrl}${baseUrl.includes('?') ? '&' : '?'}_f=${i}&_t=${timestamp}`);
     }
     
     return frames;

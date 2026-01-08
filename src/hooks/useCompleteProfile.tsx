@@ -90,13 +90,6 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br', u
         // Determinar hotelCode para passar para Edge Function
         const hotelCode = preferredDomain === 'com.br' ? 'br' : preferredDomain;
         
-        // Debug: verificar parâmetros recebidos
-        console.log('[useCompleteProfile] Parâmetros:', {
-          normalizedUsername,
-          uniqueId,
-          hotel: preferredDomain,
-          hotelCode
-        });
         
         // SOLUÇÃO SIMPLIFICADA: Chamar Edge Function diretamente com username
         // A Edge Function já faz a busca por username internamente (no servidor, sem problemas de CORS)
@@ -136,8 +129,11 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br', u
         // A Edge Function retorna os dados no formato esperado
         const profileData = edgeFunctionData;
         
+        // Garantir que friends seja sempre um array antes de fazer map
+        const friendsArray = Array.isArray(profileData.friends) ? profileData.friends : [];
+        
         // Garantir que friends tenha todos os campos necessários
-        const friends = (profileData.friends || []).map((friend: any) => ({
+        const friends = friendsArray.map((friend: any) => ({
           ...friend,
           name: friend.name || friend.username || 'Nome não disponível',
           uniqueId: friend.uniqueId || friend.id || '',
@@ -149,14 +145,6 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br', u
         
         // Determinar hotelDomain a partir dos dados retornados ou parâmetros
         const hotelDomain = preferredDomain;
-        
-        console.log(`[useCompleteProfile] ✅ Dados obtidos da Edge Function:`, {
-          badges: (profileData.badges || []).length,
-          friends: friends.length,
-          groups: (profileData.groups || []).length,
-          rooms: (profileData.rooms || []).length,
-          uniqueId: profileData.uniqueId
-        });
         
         return {
           uniqueId: profileData.uniqueId,

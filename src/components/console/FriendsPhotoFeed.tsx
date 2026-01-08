@@ -224,20 +224,8 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
   // Usar habboAccount para obter uniqueId se disponível
   const habboUniqueId = habboAccount?.habbo_id || undefined;
   
-  // Debug: verificar parâmetros
   React.useEffect(() => {
-    if (currentUserName) {
-      console.log('[FriendsPhotoFeed] Configuração:', {
-        currentUserName,
-        hotel,
-        habboUniqueId,
-        habboAccount: habboAccount ? {
-          habbo_name: habboAccount.habbo_name,
-          hotel: habboAccount.hotel
-        } : null,
-        isValid: currentUserName && currentUserName.trim()
-      });
-    }
+    // Configuração verificada
   }, [currentUserName, hotel, habboUniqueId, habboAccount]);
   
   const {
@@ -476,12 +464,6 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
   // Debug: log quando photos mudar
   useEffect(() => {
     if (photos && photos.length > 0) {
-      console.log(`[📊 FRIENDS FEED] Displaying ${photos.length} photos`);
-      console.log(`[📊 FRIENDS FEED] First photo:`, {
-        user: photos[0].userName,
-        date: photos[0].date,
-        timestamp: photos[0].timestamp
-      });
     }
   }, [photos]);
 
