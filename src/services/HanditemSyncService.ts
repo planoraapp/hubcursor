@@ -150,26 +150,51 @@ class HanditemSyncService {
       try {
         const fullResponse = await fetch('/handitems/handitems-full.json');
         if (fullResponse.ok) {
-          const fullData: HanditemData[] = await fullResponse.json();
-          console.log('📦 Carregados handitems do arquivo completo (com traduções e novos)');
-          return fullData;
+          const contentType = fullResponse.headers.get('content-type');
+          // Verificar se a resposta é realmente JSON (não HTML de erro 404)
+          if (contentType && contentType.includes('application/json')) {
+            const text = await fullResponse.text();
+            // Verificar se não é HTML (página de erro)
+            if (text.trim().startsWith('<!')) {
+              throw new Error('Resposta HTML recebida ao invés de JSON');
+            }
+            const fullData: HanditemData[] = JSON.parse(text);
+            console.log('📦 Carregados handitems do arquivo completo (com traduções e novos)');
+            return fullData;
+          }
         }
       } catch (fullError) {
         console.warn('Arquivo handitems-full.json não encontrado, tentando formato simples...');
       }
 
       // Fallback: carregar do arquivo simples
-      const response = await fetch('/handitems/handitems.json');
-      const data: Array<{ id: number; name: string }> = await response.json();
-      
-      return data.map(item => ({
-        id: item.id,
-        names: {
-          pt: item.name,
-          en: item.name,
-          es: item.name
+      try {
+        const response = await fetch('/handitems/handitems.json');
+        if (response.ok) {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const text = await response.text();
+            // Verificar se não é HTML (página de erro)
+            if (text.trim().startsWith('<!')) {
+              throw new Error('Resposta HTML recebida ao invés de JSON');
+            }
+            const data: Array<{ id: number; name: string }> = JSON.parse(text);
+            
+            return data.map(item => ({
+              id: item.id,
+              names: {
+                pt: item.name,
+                en: item.name,
+                es: item.name
+              }
+            }));
+          }
         }
-      }));
+      } catch (simpleError) {
+        console.warn('Arquivo handitems.json também não encontrado');
+      }
+      
+      return [];
     } catch (error) {
       console.error('Error loading local handitems:', error);
       return [];

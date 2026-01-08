@@ -350,6 +350,10 @@ export class HabboApiService {
           const contentType = fullResponse.headers.get('content-type');
           if (contentType && contentType.includes('application/json')) {
             const text = await fullResponse.text();
+            // Verificar se não é HTML (página de erro 404)
+            if (text.trim().startsWith('<!')) {
+              throw new Error('Arquivo não encontrado (resposta HTML)');
+            }
             try {
               const fullData = JSON.parse(text);
               // Converter formato completo para formato simples
@@ -374,6 +378,10 @@ export class HabboApiService {
           const contentType = response.headers.get('content-type');
           if (contentType && contentType.includes('application/json')) {
             const text = await response.text();
+            // Verificar se não é HTML (página de erro 404)
+            if (text.trim().startsWith('<!')) {
+              throw new Error('Arquivo não encontrado (resposta HTML)');
+            }
             try {
               return JSON.parse(text);
             } catch (parseError) {

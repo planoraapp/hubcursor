@@ -205,16 +205,32 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
       // Fallback: tentar carregar do arquivo local
       try {
         const response = await fetch('/handitems/handitems.json');
-        const localData = await response.json();
-        const localHanditems: HabboHanditem[] = localData.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          category: 'outros'
-        }));
-        setHanditems(localHanditems);
+        if (response.ok) {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const text = await response.text();
+            // Verificar se não é HTML (página de erro 404)
+            if (!text.trim().startsWith('<!')) {
+              const localData = JSON.parse(text);
+              const localHanditems: HabboHanditem[] = localData.map((item: any) => ({
+                id: item.id,
+                name: item.name,
+                category: 'outros'
+              }));
+              setHanditems(localHanditems);
+              toast({
+                title: "Dados carregados (modo offline)",
+                description: `Usando dados locais: ${localHanditems.length} handitems`,
+              });
+              return;
+            }
+          }
+        }
+        // Se chegou aqui, não conseguiu carregar arquivo
         toast({
-          title: "Dados carregados (modo offline)",
-          description: `Usando dados locais: ${localHanditems.length} handitems`,
+          title: "Erro ao carregar dados",
+          description: "Não foi possível carregar handitems",
+          variant: "destructive",
         });
       } catch (fallbackError) {
         toast({

@@ -1505,6 +1505,10 @@ const CurrentCatalog: React.FC = () => {
             const contentType = fileResponse.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) {
               const text = await fileResponse.text();
+              // Verificar se não é HTML (página de erro 404)
+              if (text.trim().startsWith('<!')) {
+                throw new Error('Arquivo não encontrado (resposta HTML)');
+              }
               try {
                 synced = JSON.parse(text);
                 console.log('📦 Handitems carregados diretamente do arquivo handitems-full.json:', synced.length);
@@ -1531,6 +1535,7 @@ const CurrentCatalog: React.FC = () => {
             console.log('📦 Handitems sincronizados carregados via serviço (fallback):', synced.length);
           } catch (syncError) {
             console.error('❌ Erro ao sincronizar handitems:', syncError);
+            // Último fallback: usar dados locais hardcoded se disponível
             synced = [];
           }
         }
@@ -2803,28 +2808,38 @@ const HanditemToolFixed: React.FC = () => {
     const loadCatalogIndex = async () => {
       try {
         const res = await fetch('/handitems/handitems.json');
-        const data = await res.json();
-        const index: CatalogHanditemIndex = {};
-        if (Array.isArray(data)) {
-          for (const it of data) {
-            const nm = (it?.name || it?.nome || '').toString().trim();
-            const idNum = Number(it?.id);
-            if (nm && Number.isFinite(idNum)) {
-              index[nm.toLowerCase()] = { id: idNum, name: nm };
+        if (res.ok) {
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const text = await res.text();
+            // Verificar se não é HTML (página de erro 404)
+            if (text.trim().startsWith('<!')) {
+              return; // Silenciosamente falhar se receber HTML
             }
-          }
-        } else if (data?.handitems && Array.isArray(data.handitems)) {
-          for (const it of data.handitems) {
-            const nm = (it?.name || it?.nome || '').toString().trim();
-            const idNum = Number(it?.id);
-            if (nm && Number.isFinite(idNum)) {
-              index[nm.toLowerCase()] = { id: idNum, name: nm };
+            const data = JSON.parse(text);
+            const index: CatalogHanditemIndex = {};
+            if (Array.isArray(data)) {
+              for (const it of data) {
+                const nm = (it?.name || it?.nome || '').toString().trim();
+                const idNum = Number(it?.id);
+                if (nm && Number.isFinite(idNum)) {
+                  index[nm.toLowerCase()] = { id: idNum, name: nm };
+                }
+              }
+            } else if (data?.handitems && Array.isArray(data.handitems)) {
+              for (const it of data.handitems) {
+                const nm = (it?.name || it?.nome || '').toString().trim();
+                const idNum = Number(it?.id);
+                if (nm && Number.isFinite(idNum)) {
+                  index[nm.toLowerCase()] = { id: idNum, name: nm };
+                }
+              }
             }
+            setHanditemByName(index);
           }
         }
-        setHanditemByName(index);
       } catch (e) {
-        // silencioso
+        // silencioso - fallback para dados internos se disponível
       }
     };
     loadCatalogIndex();
