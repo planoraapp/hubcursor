@@ -1276,7 +1276,7 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
                               size="sm"
                               variant="ghost"
                               className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-na página console,                              onClick={(e) => {
+                              onClick={(e) => {
                                 e.stopPropagation();
                                 copyHanditemId(handitem);
                               }}
