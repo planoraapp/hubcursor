@@ -1131,7 +1131,8 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
           ) : (
             <div ref={handitemsContainerRef} className="relative grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 auto-rows-min">
               {console.log('🎯 Renderizando filteredHanditems no UnifiedCatalog:', filteredHanditems.length)}
-              {filteredHanditems.map((handitem) => {
+              {filteredHanditems.map((handitem, index) => {
+                console.log(`🎯 Renderizando handitem ${index}:`, handitem.id, handitem.name);
                 const isCopied = copiedHanditems.has(handitem.id);
                 const canAlternate = canHaveBothActions(handitem.id);
                 
