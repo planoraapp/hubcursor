@@ -44,8 +44,9 @@ interface UnifiedCatalogProps {
   hideHeader?: boolean; // oculta barra de busca/ações e filtros de categoria
 }
 
-export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({ 
-  onHanditemSelect, 
+
+export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
+  onHanditemSelect,
   onFurniSelect,
   externalSearchTerm,
   externalCategory,
@@ -124,17 +125,6 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
   useEffect(() => {
     loadData();
   }, []);
-
-  // Debounce para evitar re-renderizações excessivas
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (handitems.length > 0) {
-        setIsLoading(false);
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [handitems.length]);
 
   // Centralizar a janela no handitem clicado quando expandido
   useLayoutEffect(() => {
@@ -932,6 +922,64 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
     return getHanditemImageUrl(handitem);
   };
 
+  // Componente separado para evitar re-renders desnecessários
+  const AnimatedAvatarPreview: React.FC<{ handitemId: number; canAlternate: boolean }> = ({ handitemId, canAlternate }) => {
+    const [currentAction, setCurrentAction] = useState<'drk' | 'crr'>(handitemId >= 1000 ? 'crr' : 'drk');
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const imgRef = useRef<HTMLImageElement>(null);
+
+    // URL inicial
+    const initialUrl = useMemo(() => {
+      return canAlternate
+        ? generateAvatarUrlWithAction(handitemId, currentAction)
+        : generateAvatarUrl(handitemId);
+    }, [handitemId, canAlternate]);
+
+    // Atualizar src da imagem quando a ação mudar, sem causar re-render
+    useEffect(() => {
+      if (canAlternate && imgRef.current) {
+        const newUrl = generateAvatarUrlWithAction(handitemId, currentAction);
+        // Atualizar src diretamente sem causar re-render do componente pai
+        imgRef.current.src = `${newUrl}${newUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`;
+      }
+    }, [currentAction, canAlternate, handitemId]);
+
+    useEffect(() => {
+      if (canAlternate) {
+        // Alternar entre drk e crr a cada 2 segundos
+        intervalRef.current = setInterval(() => {
+          setCurrentAction(prev => prev === 'drk' ? 'crr' : 'drk');
+        }, 2000);
+      }
+
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
+      };
+    }, [canAlternate]);
+
+    return (
+      <img
+        ref={imgRef}
+        key={`handitem-popover-${handitemId}`}
+        src={`${initialUrl}${initialUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`}
+        alt="Avatar com handitem"
+        className="w-auto h-auto max-w-none object-scale-down"
+        style={{ imageRendering: 'pixelated' }}
+        onError={(e) => {
+          const target = e.currentTarget;
+          console.error(`❌ Erro ao carregar avatar com handitem:`, {
+            handitemId: handitemId,
+            currentAction,
+            url: target.src
+          });
+          target.style.display = 'none';
+        }}
+      />
+    );
+  };
+
   const copyHanditemId = async (handitem: HabboHanditem) => {const textToCopy = handitem.id.toString();
     
     try {
@@ -1086,71 +1134,6 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
                 const canAlternate = canHaveBothActions(handitem.id);
                 
                 // Componente interno para animação alternada
-                const AnimatedAvatarPreview: React.FC<{ handitemId: number; canAlternate: boolean }> = ({ handitemId, canAlternate }) => {
-                  const [currentAction, setCurrentAction] = useState<'drk' | 'crr'>(handitemId >= 1000 ? 'crr' : 'drk');
-                  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-                  const imgRef = useRef<HTMLImageElement>(null);
-                  
-                  // URL inicial
-                  const initialUrl = useMemo(() => {
-                    return canAlternate 
-                      ? generateAvatarUrlWithAction(handitemId, currentAction)
-                      : generateAvatarUrl(handitemId);
-                  }, [handitemId, canAlternate]);
-                  
-                  // Atualizar src da imagem quando a ação mudar, sem causar re-render
-                  useEffect(() => {
-                    if (canAlternate && imgRef.current) {
-                      const newUrl = generateAvatarUrlWithAction(handitemId, currentAction);
-                      // Atualizar src diretamente sem causar re-render do componente pai
-                      imgRef.current.src = `${newUrl}${newUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`;
-                    }
-                  }, [currentAction, canAlternate, handitemId]);
-                  
-                  useEffect(() => {
-                    if (canAlternate) {
-                      // Alternar entre drk e crr a cada 2 segundos
-                      intervalRef.current = setInterval(() => {
-                        setCurrentAction(prev => prev === 'drk' ? 'crr' : 'drk');
-                      }, 2000);
-                    }
-                    
-                    return () => {
-                      if (intervalRef.current) {
-                        clearInterval(intervalRef.current);
-                      }
-                    };
-                  }, [canAlternate]);
-                  
-                  return (
-                    <img
-                      ref={imgRef}
-                      key={`handitem-popover-${handitemId}`}
-                      src={`${initialUrl}${initialUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`}
-                      alt="Avatar com handitem"
-                      className="w-auto h-auto max-w-none object-scale-down"
-                      style={{ imageRendering: 'pixelated' }}
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        console.error(`❌ Erro ao carregar avatar com handitem:`, {
-                          handitemId: handitemId,
-                          currentAction,
-                          url: target.src
-                        });
-                        const fallbackHabboName = habboAccount?.habbo_name || 'habbohub';
-                        const fallbackFigureString = habboAccount?.figure_string;
-                        const fallbackGender = extractGenderFromFigureString(fallbackFigureString);
-                        const fallbackUrl = avatarPreview.generateAvatarUrl(fallbackHabboName, handitemId, {
-                          size: 'l',
-                          hotel: 'com.br',
-                          figureString: fallbackFigureString,
-                          gender: fallbackGender
-                        });
-                        target.src = `${fallbackUrl}${fallbackUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`;
-                      }}
-                    />
-                  );
-                };
                 
                 const isExpanded = expandedHanditemId === handitem.id;
                 
