@@ -176,6 +176,9 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
   const loadData = async () => {
     setIsLoading(true);
     try {
+      // 0. Inicializar o mapper de ações dos handitems
+      await handitemActionMapper.initialize();
+
       // 1. Carregar handitems sincronizados (com traduções e novos)
       const synced = await handitemSyncService.sync();
       setSyncedHanditems(synced);
