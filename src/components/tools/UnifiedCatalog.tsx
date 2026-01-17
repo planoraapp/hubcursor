@@ -1120,6 +1120,7 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
         )}
 
         <ScrollArea className="h-[600px]">
+          {console.log('🎯 UnifiedCatalog render:', { isLoading, filteredHanditemsCount: filteredHanditems.length })}
           {isLoading ? (
             <div className="flex items-center justify-center h-32">
               <div className="flex flex-col items-center gap-2">
@@ -1129,6 +1130,7 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
             </div>
           ) : (
             <div ref={handitemsContainerRef} className="relative grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 auto-rows-min">
+              {console.log('🎯 Renderizando filteredHanditems no UnifiedCatalog:', filteredHanditems.length)}
               {filteredHanditems.map((handitem) => {
                 const isCopied = copiedHanditems.has(handitem.id);
                 const canAlternate = canHaveBothActions(handitem.id);
