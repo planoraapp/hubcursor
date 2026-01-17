@@ -1489,38 +1489,28 @@ const CurrentCatalog: React.FC = () => {
   // Load catalog data and sync handitems
   useEffect(() => {
     const loadCatalogData = async () => {
-      console.log('🔄 Iniciando carregamento de dados do catálogo...');
       setLoading(true);
       try {
         // Load from the JSON file we created
-        console.log('📂 Carregando catalog-data.json...');
         const response = await fetch('/catalog-data.json');
-        console.log('📄 Response status:', response.status);
         const data = await response.json();
-        console.log('📦 Dados carregados:', data?.handitems?.length || 0, 'handitems');
         setCatalogData(data);
         
         // Carregar handitems sincronizados
         // Primeiro tentar carregar diretamente do arquivo (mais confiável)
-        console.log('🔄 Carregando handitems sincronizados...');
         let synced: SyncedHanditemData[] = [];
         try {
-          console.log('📂 Tentando carregar handitems-full.json...');
           const fileResponse = await fetch('/handitems/handitems-full.json');
-          console.log('📄 File response status:', fileResponse.status);
           if (fileResponse.ok) {
             const contentType = fileResponse.headers.get('content-type');
-            console.log('📋 Content type:', contentType);
             if (contentType && contentType.includes('application/json')) {
               const text = await fileResponse.text();
-              console.log('📝 Texto carregado, tamanho:', text.length);
               // Verificar se não é HTML (página de erro 404)
               if (text.trim().startsWith('<!')) {
                 throw new Error('Arquivo não encontrado (resposta HTML)');
               }
               try {
                 synced = JSON.parse(text);
-                console.log('📦 Handitems carregados diretamente do arquivo handitems-full.json:', synced.length);
               } catch (parseError) {
                 console.error('❌ Erro ao fazer parse do JSON:', parseError);
                 console.error('Primeiros 200 caracteres do conteúdo:', text.substring(0, 200));
@@ -1534,14 +1524,12 @@ const CurrentCatalog: React.FC = () => {
             console.warn(`⚠️ Arquivo não encontrado, status: ${fileResponse.status}`);
             // Fallback: usar serviço de sincronização
             synced = await handitemSyncService.sync();
-            console.log('📦 Handitems sincronizados carregados via serviço:', synced.length);
           }
         } catch (fileError: any) {
           console.error('❌ Erro ao carregar arquivo handitems-full.json:', fileError.message);
           // Fallback: usar serviço de sincronização
           try {
             synced = await handitemSyncService.sync();
-            console.log('📦 Handitems sincronizados carregados via serviço (fallback):', synced.length);
           } catch (syncError) {
             console.error('❌ Erro ao sincronizar handitems:', syncError);
             // Último fallback: usar dados locais hardcoded se disponível
@@ -1550,8 +1538,6 @@ const CurrentCatalog: React.FC = () => {
         }
         
         const newHanditems = synced.filter(h => h.isNew);
-        console.log('🆕 Handitems novos encontrados:', newHanditems.length, newHanditems.map(h => `ID ${h.id}: ${h.names.pt || h.names.en}`));
-        console.log('🔄 Definindo syncedHanditems no estado:', synced.length);
         setSyncedHanditems(synced);
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
@@ -1604,7 +1590,6 @@ const CurrentCatalog: React.FC = () => {
     syncedHanditems.forEach(synced => {
       if (!allHanditems.has(synced.id)) {
         const translatedName = synced.names[language] || synced.names.en || synced.names.pt;
-        console.log(`➕ Adicionando handitem novo que não está no catalog: ID ${synced.id}, isNew: ${synced.isNew}`);
         allHanditems.set(synced.id, {
           id: synced.id,
           name: translatedName,
@@ -1620,7 +1605,6 @@ const CurrentCatalog: React.FC = () => {
         const existing = allHanditems.get(synced.id);
         if (existing && synced.isNew) {
           existing.isNew = true;
-          console.log(`🆕 Atualizando handitem existente como novo: ID ${synced.id}`);
         }
       }
     });
@@ -1819,7 +1803,6 @@ const CurrentCatalog: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {console.log('🎯 Renderizando filteredHanditems:', filteredHanditems.length, 'itens')}
               {filteredHanditems.map((handitem) => (
                 <div key={handitem.id} className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow relative">
                   {/* Badge "Novo" no canto superior direito */}
@@ -2606,7 +2589,6 @@ export const HanditemTool: React.FC = () => {
 };
 
 const HanditemToolFixed: React.FC = () => {
-  console.log('🔧 HanditemToolFixed renderizado');
   const [activeTab, setActiveTab] = useState<'catalog' | 'unified' | 'current' | 'trax'>('catalog');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<keyof typeof MAIN_CATEGORIES>('Todos');
