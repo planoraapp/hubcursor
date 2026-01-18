@@ -49,7 +49,7 @@ import {
   Cherry,
   Apple
 } from 'lucide-react';
-import { habboOfficialService, type HabboCategory, type HabboClothingItem, type AvatarState } from '@/services/HabboOfficialService';
+import { habboOfficialService, type HabboCategory, type HabboClothingItem, type AvatarState } from '@/services/habboOfficialService';
 import { useHabboPublicAPI } from '@/hooks/useHabboPublicAPI';
 
 // Componente para imagem com fallback
