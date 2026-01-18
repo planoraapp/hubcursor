@@ -3913,6 +3913,40 @@ export class HabboOfficialService {
   }
 
   /**
+   * Gera URL de thumbnail usando habbo-imaging
+   */
+  private generateThumbnailUrl(category: string, figureId: string, colorId: string, gender: 'M' | 'F' | 'U' = 'M'): string {
+    // Avatar base para preview focado na categoria
+    const baseAvatar = this.getBaseAvatarForCategory(category);
+    const fullFigure = `${baseAvatar}.${category}-${figureId}-${colorId}`;
+
+    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${fullFigure}&gender=${gender}&direction=2&head_direction=2&size=s&img_format=png&gesture=std&action=std`;
+  }
+
+  /**
+   * Gera avatar base focado na categoria específica
+   */
+  private getBaseAvatarForCategory(category: string): string {
+    const baseAvatars = {
+      'hd': 'hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
+      'hr': 'hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
+      'ch': 'hd-180-1.hr-828-45.lg-3116-92.sh-3297-92',
+      'cc': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
+      'lg': 'hd-180-1.hr-828-45.ch-3216-92.sh-3297-92',
+      'sh': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92',
+      'ha': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
+      'ea': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
+      'fa': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
+      'he': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
+      'ca': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
+      'cp': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
+      'wa': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92'
+    };
+
+    return baseAvatars[category as keyof typeof baseAvatars] || 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92';
+  }
+
+  /**
    * Fallback para dados mock se o arquivo não estiver disponível
    */
   private getFallbackMockData(): { palettes: HabboPalette[], categories: HabboCategory[] } {

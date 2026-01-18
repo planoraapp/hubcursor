@@ -53,6 +53,10 @@ habbo-hub
 !components.json
 !postcss.config.js
 !eslint.config.js
+# Permitir arquivos JSON necessários para o funcionamento do app
+!public/complete_mock_data.json
+!src/services/habbo_item_names.json
+!src/data/furnidata.json
 
 # Excluir arquivos de teste
 test-*
