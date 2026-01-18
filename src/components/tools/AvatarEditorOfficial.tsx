@@ -1422,31 +1422,68 @@ const AvatarEditorClean = () => {
                       const paletteId = getPaletteIdForCategory(selectedCategory);
                       const paletteColors = colorPalettes[paletteId];
 
+                      // Separar cores gratuitas e HC
+                      const freeColors = paletteColors ? Object.entries(paletteColors).filter(([, colorData]: [string, any]) => colorData.club === '0') : [];
+                      const hcColors = paletteColors ? Object.entries(paletteColors).filter(([, colorData]: [string, any]) => colorData.club === '2') : [];
+
                       return (
                         <>
-                          <div>
-                            <h4 className="text-sm font-medium text-gray-700 mb-2">
-                              Cores Disponíveis
-                            </h4>
-                            <div className="grid grid-cols-4 gap-2">
-                              {paletteColors && Object.keys(paletteColors).length > 0 ? Object.entries(paletteColors).map(([colorId, colorData]: [string, any]) => (
-                                <div
-                                  key={`color-${colorId}`}
-                                  className={`relative w-8 h-8 rounded border-2 cursor-pointer transition-all hover:scale-110 ${
-                                    primaryColor === colorId
-                                      ? 'border-blue-500 ring-2 ring-blue-300'
-                                      : 'border-gray-300 hover:border-gray-400'
-                                  }`}
-                                  style={{ backgroundColor: colorData.hex }}
-                                  onClick={() => setPrimaryColor(colorId)}
-                                  title={`Cor ${colorId}`}
-                                />
-                              )) : (
-                                <div className="col-span-4 text-center text-gray-500 text-sm">
-                                  Nenhuma cor disponível
-                                </div>
-                              )}
+                          {/* Cores Gratuitas */}
+                          {freeColors.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-2">
+                                Cores Gratuitas ({freeColors.length})
+                              </h4>
+                              <div className="grid grid-cols-4 gap-2">
+                                {freeColors.map(([colorId, colorData]: [string, any]) => (
+                                  <div
+                                    key={`color-${colorId}`}
+                                    className={`relative w-8 h-8 rounded border-2 cursor-pointer transition-all hover:scale-110 ${
+                                      primaryColor === colorId
+                                        ? 'border-blue-500 ring-2 ring-blue-300'
+                                        : 'border-gray-300 hover:border-gray-400'
+                                    }`}
+                                    style={{ backgroundColor: colorData.hex }}
+                                    onClick={() => setPrimaryColor(colorId)}
+                                    title={`Roupa Gratuita ${colorId} - #${colorData.hex}`}
+                                  />
+                                ))}
+                              </div>
                             </div>
+                          )}
+
+                          {/* Cores Club */}
+                          {hcColors.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-2">
+                                Cores Club ({hcColors.length})
+                              </h4>
+                              <div className="grid grid-cols-4 gap-2">
+                                {hcColors.map(([colorId, colorData]: [string, any]) => (
+                                  <div
+                                    key={`color-${colorId}`}
+                                    className={`relative w-8 h-8 rounded border-2 cursor-pointer transition-all hover:scale-110 ${
+                                      primaryColor === colorId
+                                        ? 'border-yellow-500 ring-2 ring-yellow-300'
+                                        : 'border-yellow-400 hover:border-yellow-500'
+                                    }`}
+                                    style={{ backgroundColor: colorData.hex }}
+                                    onClick={() => setPrimaryColor(colorId)}
+                                    title={`Roupa HC ${colorId} - #${colorData.hex}`}
+                                  >
+                                    {/* Badge HC */}
+                                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                                      <span className="text-xs text-white font-bold">HC</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Info sobre a paleta */}
+                          <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+                            Paleta {paletteId}: Cores para roupas e acessórios ({(freeColors.length + hcColors.length)} cores: {freeColors.length} gratuitas + {hcColors.length} HC)
                           </div>
                         </>
                       );
