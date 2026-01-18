@@ -46,7 +46,7 @@ export interface HabboOfficialClothingData {
 // Mapeamento das 13 categorias oficiais do Habbo
 export const HABBO_CATEGORIES = {
   'hd': { name: 'Rosto e Corpo', paletteId: '1', icon: '👤' },
-  'hr': { name: 'Cabelo/Penteados', paletteId: '2', icon: '💇' },
+  'hr': { name: 'Cabelo/Penteados', paletteId: '3', icon: '💇' },
   'ch': { name: 'Camisas', paletteId: '3', icon: '👕' },
   'cc': { name: 'Casacos/Vestidos/Jaquetas', paletteId: '3', icon: '🧥' },
   'cp': { name: 'Estampas/Impressões', paletteId: '3', icon: '🎨' },

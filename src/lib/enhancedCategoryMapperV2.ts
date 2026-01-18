@@ -98,6 +98,11 @@ export const isValidColorForCategory = (colorId: string, category: string): bool
 
 // Função para obter a primeira cor válida para uma categoria
 export const getDefaultColorForCategory = (category: string): string => {
+  // Usar cor de pele do personagem habbohub (.com.br)
+  if (category === 'hd') {
+    return '1'; // Cor de pele clara (usada pelo habbohub)
+  }
+
   const palette = getCategoryPalette(category);
   return palette.colors[0]?.id || '1';
 };

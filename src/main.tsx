@@ -148,6 +148,10 @@ const router = createBrowserRouter([
     element: withSuspense(HanditemCatalog),
   },
   {
+    path: "/avatar-editor",
+    element: <Navigate to="/ferramentas/avatar-editor" replace />,
+  },
+  {
     path: "/ferramentas/avatar-editor",
     element: withSuspense(AvatarEditor),
   },
