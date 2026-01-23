@@ -660,7 +660,6 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
               </div>
             </div>
           )}
->>>>>>> f2485240b282ed8bea2d89d861bd43f5e5e294dd
         </div>
       );
 };
