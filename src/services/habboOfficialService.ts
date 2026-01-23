@@ -51,6 +51,11 @@ export interface AvatarState {
   cp?: string;
   ca?: string;
   wa?: string;
+  // Direções do avatar (0-7, onde 0=direita, 2=baixo padrão)
+  direction?: number;      // Direção do corpo (0-7)
+  headDirection?: number;  // Direção da cabeça (0-7)
+  gender?: 'M' | 'F' | 'U';
+  size?: 's' | 'm' | 'l' | 'headonly';
 }
 
 export class HabboOfficialService {
@@ -3925,25 +3930,44 @@ export class HabboOfficialService {
 
   /**
    * Gera avatar base focado na categoria específica
+   * Sempre usa cor de pele 1 (cor padrão para novos usuários do Habbo)
    */
-  private getBaseAvatarForCategory(category: string): string {
-    const baseAvatars = {
-      'hd': 'hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
-      'hr': 'hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
-      'ch': 'hd-180-1.hr-828-45.lg-3116-92.sh-3297-92',
-      'cc': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
-      'lg': 'hd-180-1.hr-828-45.ch-3216-92.sh-3297-92',
-      'sh': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92',
-      'ha': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
-      'ea': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
-      'fa': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
-      'he': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
-      'ca': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
-      'cp': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
-      'wa': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92'
-    };
-
-    return baseAvatars[category as keyof typeof baseAvatars] || 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92';
+  private getBaseAvatarForCategory(category: string, gender: 'M' | 'F' | 'U' = 'M'): string {
+    // Avatar base padrão por gênero
+    // Masculino: sem cabelo, sem camiseta - apenas rosto, calça e sapato
+    // Feminino: com cabelo padrão (hr-9534-1408), com camiseta básica - rosto, cabelo, camiseta, calça e sapato
+    const baseAvatarM = 'hd-180-1.lg-270-82.sh-290-1408'; // Masculino: sem cabelo, sem camiseta
+    const baseAvatarF = 'hd-600-1.hr-9534-1408.ch-710-66.lg-870-82.sh-290-1408'; // Feminino: com cabelo padrão, com camiseta básica
+    
+    // Usar avatar base baseado no gênero
+    let baseAvatar = gender === 'F' ? baseAvatarF : baseAvatarM;
+    
+    // Para categoria hd (rosto), remover o hd do base pois será substituído pelo item específico
+    if (category === 'hd') {
+      baseAvatar = baseAvatar.split('.').filter(part => !part.startsWith('hd-')).join('.');
+    }
+    
+    // Para categoria hr (cabelo), remover o hr do base pois será substituído pelo item específico
+    if (category === 'hr') {
+      baseAvatar = baseAvatar.split('.').filter(part => !part.startsWith('hr-')).join('.');
+    }
+    
+    // Para categoria ch (camiseta), remover o ch do base pois será substituído pelo item específico
+    if (category === 'ch') {
+      baseAvatar = baseAvatar.split('.').filter(part => !part.startsWith('ch-')).join('.');
+    }
+    
+    // Para categoria lg (calça), remover o lg do base pois será substituído pelo item específico
+    if (category === 'lg') {
+      baseAvatar = baseAvatar.split('.').filter(part => !part.startsWith('lg-')).join('.');
+    }
+    
+    // Para categoria sh (sapato), remover o sh do base pois será substituído pelo item específico
+    if (category === 'sh') {
+      baseAvatar = baseAvatar.split('.').filter(part => !part.startsWith('sh-')).join('.');
+    }
+    
+    return baseAvatar;
   }
 
   /**
@@ -4082,17 +4106,48 @@ export class HabboOfficialService {
   /**
    * Gera URL do avatar para preview
    */
-  generateAvatarUrl(state: AvatarState): string {
+  generateAvatarUrl(state: AvatarState & { gender?: 'M' | 'F' | 'U' }): string {
     const figureString = this.stateToFigureString(state);
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&size=l&direction=2&head_direction=2&action=std&gesture=std`;
+    const gender = state.gender || 'M'; // Usar gênero do estado ou padrão M
+    const direction = state.direction ?? 2; // Usar direção do estado ou padrão 2 (baixo)
+    const headDirection = state.headDirection ?? 2; // Usar direção da cabeça do estado ou padrão 2
+    const size = state.size || 'l'; // Usar tamanho do estado ou padrão 'l'
+    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&gender=${gender}&size=${size}&direction=${direction}&head_direction=${headDirection}&action=std&gesture=std`;
   }
 
   /**
    * Gera URL de miniatura para um item específico
+   * Usa avatar base completo com pele padrão (cor 1) para melhor visualização
    */
-  generateItemThumbnailUrl(type: string, id: string, color: string): string {
-    // Sempre mostrar corpo completo para melhor visualização dos itens
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${type}-${id}-${color}&size=m&headonly=0`;
+  generateItemThumbnailUrl(type: string, id: string, color: string, gender: 'M' | 'F' | 'U' = 'M'): string {
+    // Usar avatar base mínimo: apenas corpo básico sem itens de cabeça
+    let baseAvatar = this.getBaseAvatarForCategory(type, gender);
+    
+    // Garantir que nenhum item de cabeça (ha, he, ea, fa) apareça no avatar base
+    // exceto se a categoria atual for uma dessas (pois é o item sendo visualizado)
+    const headAccessoryCategories = ['ha', 'he', 'ea', 'fa'];
+    if (!headAccessoryCategories.includes(type)) {
+      // Remover todos os itens de cabeça do avatar base
+      baseAvatar = baseAvatar.split('.').filter(part => {
+        return !part.startsWith('ha-') && 
+               !part.startsWith('he-') && 
+               !part.startsWith('ea-') && 
+               !part.startsWith('fa-');
+      }).join('.');
+    } else {
+      // Se a categoria atual é um acessório de cabeça, remover os outros acessórios de cabeça
+      baseAvatar = baseAvatar.split('.').filter(part => {
+        if (type === 'ha') return !part.startsWith('he-') && !part.startsWith('ea-') && !part.startsWith('fa-');
+        if (type === 'he') return !part.startsWith('ha-') && !part.startsWith('ea-') && !part.startsWith('fa-');
+        if (type === 'ea') return !part.startsWith('ha-') && !part.startsWith('he-') && !part.startsWith('fa-');
+        if (type === 'fa') return !part.startsWith('ha-') && !part.startsWith('he-') && !part.startsWith('ea-');
+        return true;
+      }).join('.');
+    }
+    
+    const fullFigure = `${baseAvatar}.${type}-${id}-${color}`;
+    
+    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${fullFigure}&gender=${gender}&size=m&headonly=0`;
   }
 
 
