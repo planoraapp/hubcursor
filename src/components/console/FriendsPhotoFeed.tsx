@@ -600,45 +600,6 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
                   hotel: hotel, // Passar código do hotel como fallback
                   userUniqueId: photo.userUniqueId // Passar uniqueId do usuário para navegação
                 } as EnhancedPhoto}
-<<<<<<< HEAD
-                onUserClick={onNavigateToProfile}
-                onLikesClick={(photoId) => {
-                  if (onLikesClick) {
-                    onLikesClick({
-                      id: photo.id,
-                      photo_id: photo.id,
-                      userName: photo.userName,
-                      imageUrl: photo.imageUrl,
-                      date: photo.date,
-                      likes: [],
-                      likesCount: photo.likes,
-                      userLiked: false,
-                      type: 'PHOTO' as const,
-                      caption: photo.caption || '',
-                      roomName: photo.roomName || '',
-                      timestamp: photo.timestamp
-                    } as EnhancedPhoto);
-                  }
-                }}
-                onCommentsClick={(photoId) => {
-                  if (onCommentsClick) {
-                    onCommentsClick({
-                      id: photo.id,
-                      photo_id: photo.id,
-                      userName: photo.userName,
-                      imageUrl: photo.imageUrl,
-                      date: photo.date,
-                      likes: [],
-                      likesCount: photo.likes,
-                      userLiked: false,
-                      type: 'PHOTO' as const,
-                      caption: photo.caption || '',
-                      roomName: photo.roomName || '',
-                      timestamp: photo.timestamp
-                    } as EnhancedPhoto);
-                  }
-                }}
-=======
                 onUserClick={handleNavigateToProfile}
                 onLikesClick={() => {}}
                 onCommentsClick={() => setCommentsModalPhoto({
