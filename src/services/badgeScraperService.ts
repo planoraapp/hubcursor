@@ -66,26 +66,57 @@ async function fetchExternalFlashTexts(hotel: HotelConfig): Promise<string | nul
 
 /**
  * Extrai badges do texto external_flash_texts
- * Procura por padrões: badge_desc_{CODE}=descrição
+ * Procura por padrões: badge_name_{CODE}=nome e badge_desc_{CODE}=descrição
+ * Agrupa os dados por código do emblema
  */
 function extractBadgesFromText(text: string, hotel: HotelConfig): BadgeInfo[] {
-  const badges: BadgeInfo[] = [];
+  const badgeMap = new Map<string, { name?: string; description?: string }>();
   const lines = text.split('\n');
-  const badgePattern = /^badge_desc_([A-Z0-9_]+)=(.+)$/;
+
+  // Padrões para badge_name e badge_desc (case insensitive)
+  const namePattern = /^badge_name_([A-Za-z0-9_]+)=(.+)$/;
+  const descPattern = /^badge_desc_([A-Za-z0-9_]+)=(.+)$/;
 
   for (const line of lines) {
-    const match = line.match(badgePattern);
+    // Verificar se é badge_name
+    let match = line.match(namePattern);
+    if (match) {
+      const code = match[1];
+      const name = match[2].trim();
+
+      if (!badgeMap.has(code)) {
+        badgeMap.set(code, {});
+      }
+      badgeMap.get(code)!.name = name;
+      continue;
+    }
+
+    // Verificar se é badge_desc
+    match = line.match(descPattern);
     if (match) {
       const code = match[1];
       const description = match[2].trim();
-      
-      badges.push({
-        code,
-        description,
-        hotel: hotel.code,
-        discoveredAt: new Date().toISOString(),
-      });
+
+      if (!badgeMap.has(code)) {
+        badgeMap.set(code, {});
+      }
+      badgeMap.get(code)!.description = description;
     }
+  }
+
+  // Converter o mapa em array de BadgeInfo
+  const badges: BadgeInfo[] = [];
+  for (const [code, data] of badgeMap.entries()) {
+    // Usar nome se disponível, senão usar o código como nome
+    const name = data.name || code;
+    const description = data.description || '';
+
+    badges.push({
+      code,
+      description: `${name}: ${description}`.trim(), // Combinar nome e descrição
+      hotel: hotel.code,
+      discoveredAt: new Date().toISOString(),
+    });
   }
 
   return badges;

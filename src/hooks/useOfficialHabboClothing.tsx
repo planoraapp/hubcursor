@@ -319,11 +319,11 @@ const findClothingClassification = (clothingRarity: Record<string, any[]>, categ
 
 // Função para gerar URL de thumbnail oficial
 const generateOfficialThumbnailUrl = (category: string, itemId: string, colorId: string, gender: 'M' | 'F' | 'U'): string => {
-  // Gerar avatar base focado na categoria específica
-  const baseAvatar = getBaseAvatarForCategory(category);
-  const fullFigure = `${baseAvatar}.${category}-${itemId}-${colorId}`;
-  
-  return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${fullFigure}&gender=${gender}&direction=2&head_direction=2&size=m&img_format=png&gesture=std&action=std`;
+  // Para thumbnails nos grids, mostrar apenas a peça individual
+  // Isso evita mostrar "mocks" e permite ver cada item isoladamente
+  const figureString = `${category}-${itemId}-${colorId}`;
+
+  return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&gender=${gender}&direction=2&head_direction=2&size=m&img_format=png&gesture=std&action=std`;
 };
 
 // Função para gerar avatar base focado na categoria específica

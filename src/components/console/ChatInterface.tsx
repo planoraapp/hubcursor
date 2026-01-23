@@ -4,15 +4,20 @@ import { useChat, Conversation } from '@/hooks/useChat';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/contexts/I18nContext';
 import { cn } from '@/lib/utils';
+import { getAvatarUrl } from '@/utils/avatarHelpers';
+import { SendMessageModal } from './modals/SendMessageModal';
+import { UserNotRegisteredModal } from './modals/UserNotRegisteredModal';
+import { CompactLoginForm } from './CompactLoginForm';
 
 interface ChatInterfaceProps {
   friends: any[];
   onNavigateToProfile: (username: string) => void;
+  onBackToList?: () => void;
 }
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigateToProfile }) => {
-  const { t } = useI18n();
-  const { habboAccount } = useAuth();
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigateToProfile, onBackToList }) => {
+  const { t, language } = useI18n();
+  const { habboAccount, isLoggedIn } = useAuth();
   const userId = habboAccount?.supabase_user_id;
   
   const { 
@@ -42,6 +47,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
   const [speakingAvatar, setSpeakingAvatar] = useState<string | null>(null);
   const [currentGesture, setCurrentGesture] = useState<string>('nrm');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSendMessageModal, setShowSendMessageModal] = useState(false);
+  const [showUserNotRegisteredModal, setShowUserNotRegisteredModal] = useState(false);
+  const [notRegisteredUsername, setNotRegisteredUsername] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll para o final quando novas mensagens chegarem
@@ -74,7 +82,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
 
   const selectedConversation = displayConversations.find(c => c.userId === currentChat) || (currentChat ? {
     userId: currentChat,
-    username: 'Carregando...',
+                  username: t('pages.console.chat.loading'),
     figureString: undefined,
     lastMessage: '',
     lastMessageTime: new Date().toISOString(),
@@ -89,7 +97,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
     const user = await findUserByName(habboName);
     
     if (!user) {
-      alert('⚠️ O usuário ainda não se cadastrou no HabboHub, que tal convidá-lo? :)');
+      setNotRegisteredUsername(habboName);
+      setShowUserNotRegisteredModal(true);
       return false;
     }
     
@@ -117,13 +126,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
     return true;
   };
 
-  // Expor função globalmente para ser usada pelo botão "Mensagem"
+  // Expor funções globalmente para serem usadas por outros componentes
   useEffect(() => {
     (window as any).startChatWith = startConversationWith;
+    // Expor função para voltar à lista de chats
+    (window as any).backToChatList = () => {
+      setCurrentChat(null);
+      if (onBackToList) {
+        onBackToList();
+      }
+    };
+    // Expor informações sobre a conversa ativa para o contexto de notificações
+    (window as any).currentChatUserId = currentChat;
+    (window as any).activeChatTab = 'chat'; // Sempre 'chat' quando está no ChatInterface
+    
     return () => {
       delete (window as any).startChatWith;
+      delete (window as any).backToChatList;
+      delete (window as any).currentChatUserId;
+      delete (window as any).activeChatTab;
     };
-  }, [findUserByName]);
+  }, [findUserByName, onBackToList, currentChat]);
 
   const startSpeakingAnimation = (avatarType: 'user' | 'friend') => {
     setSpeakingAvatar(avatarType);
@@ -166,24 +189,52 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffSecs < 10) return 'Agora mesmo';
-    if (diffSecs < 60) return `${diffSecs} segundos atrás`;
-    if (diffMins < 60) return `${diffMins} minuto${diffMins > 1 ? 's' : ''} atrás`;
-    if (diffHours < 24) return `${diffHours} hora${diffHours > 1 ? 's' : ''} atrás`;
-    if (diffDays < 7) return `${diffDays} dia${diffDays > 1 ? 's' : ''} atrás`;
-    return date.toLocaleDateString('pt-BR');
+    if (diffSecs < 10) return t('pages.console.chat.now');
+    if (diffSecs < 60) return t('pages.console.chat.secondsAgo', { seconds: diffSecs });
+    if (diffMins < 60) return t('pages.console.chat.minutesAgo', { minutes: diffMins, plural: diffMins > 1 ? 's' : '' });
+    if (diffHours < 24) return t('pages.console.chat.hoursAgo', { hours: diffHours, plural: diffHours > 1 ? 's' : '' });
+    if (diffDays < 7) return t('pages.console.chat.daysAgo', { days: diffDays, plural: diffDays > 1 ? 's' : '' });
+    return date.toLocaleDateString(language === 'en' ? 'en-US' : language === 'es' ? 'es-ES' : 'pt-BR');
   };
 
+  // Verificar se está logado
+  if (!isLoggedIn || !habboAccount) {
+    return (
+      <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
+        <div className="flex-1 flex items-center justify-center py-12">
+          <div className="text-center w-full max-w-md px-4">
+            <div className="mb-6">
+              <img 
+                src="/assets/pwrup_qm.gif" 
+                alt="" 
+                className="mx-auto mb-4"
+                style={{ imageRendering: 'pixelated' }}
+              />
+              <p className="text-white/80 mb-2 font-semibold">
+                {t('pages.console.loginRequired')}
+              </p>
+              <p className="text-white/60 text-sm">
+                {t('pages.console.loginRequiredDescription')}
+              </p>
+            </div>
+            <CompactLoginForm />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="relative rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
-      {/* Campo de busca - apenas quando não está em uma conversa */}
+    <>
+      <div className="relative rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
+        {/* Campo de busca - apenas quando não está em uma conversa */}
       {!currentChat && (
         <div className="p-3 border-b border-white/20">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
             <input
               type="text"
-              placeholder="Buscar conversas ou mensagens..."
+              placeholder={t('pages.console.chat.searchConversations')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-white/40"
@@ -194,9 +245,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
 
       {!currentChat ? (
         /* Lista de conversas */
-        <div className="flex-1 overflow-y-auto scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
+        <div className="flex-1 overflow-y-auto scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent relative">
           {filteredConversations.length > 0 ? (
-            <div>
+            <div className="pb-16">
               {filteredConversations.map((conv, index) => (
                 <div key={conv.userId}>
                   {/* Linha tracejada divisória (exceto na primeira conversa) */}
@@ -209,24 +260,25 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                       setCurrentChat(conv.userId);
                       fetchMessages(conv.userId);
                     }}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 cursor-pointer transition-colors relative"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 cursor-pointer transition-colors relative"
                   >
                   {/* Avatar - Apenas cabeça */}
                   <div className="relative flex-shrink-0">
                     <img
                       src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${conv.username}&size=l&direction=2&head_direction=2&headonly=1`}
                       alt={conv.username}
-                      className="w-20 h-20 object-cover"
+                      className="w-16 h-16 object-contain"
                       style={{ imageRendering: 'pixelated' }}
                     />
+                    {/* Indicador de estado online/offline no canto inferior direito */}
                     <div className={cn(
-                      "absolute bottom-0 right-0 w-4 h-4 border-2 border-[#1a1a1a] rounded-full",
+                      "absolute bottom-0 right-0 w-3 h-3 border-2 border-[#1a1a1a] rounded-full",
                       conv.isOnline ? "bg-green-500" : "bg-gray-500"
                     )}></div>
                   </div>
 
                   {/* Info da conversa */}
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-bold text-white truncate">{conv.username}</span>
                       <span className="text-xs text-white/40">{formatTime(conv.lastMessageTime)}</span>
@@ -236,8 +288,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
 
                   {/* Badge de não lidas */}
                   {conv.unreadCount > 0 && (
-                    <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                      {conv.unreadCount}
+                    <div className={cn(
+                      "absolute bottom-2 right-2 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center",
+                      conv.unreadCount > 99 ? "px-1.5 py-0.5" : "w-5 h-5"
+                    )}>
+                      {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
                     </div>
                   )}
                   </div>
@@ -245,13 +300,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
               ))}
             </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center p-8">
+            <div className="flex-1 flex items-center justify-center p-8 pb-24">
               <div className="text-center text-white/60">
-                <p className="text-sm">Nenhuma conversa encontrada</p>
-                <p className="text-xs mt-2">Envie mensagens para seus amigos!</p>
+                <p className="text-sm">{t('pages.console.chat.noConversations')}</p>
+                <p className="text-xs mt-2">{t('pages.console.chat.sendMessageToFriends')}</p>
               </div>
             </div>
           )}
+          
+          {/* Botão Enviar mensagem para um amigo - Fixo na parte inferior */}
+          <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-center z-10 pointer-events-none">
+            <button
+              onClick={() => setShowSendMessageModal(true)}
+              className="py-1 px-4 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center pointer-events-auto shadow-lg"
+            >
+              <Send className="w-4 h-4" />
+              {t('pages.console.chat.sendMessageToFriend')}
+            </button>
+          </div>
         </div>
       ) : (
         /* Área de conversa ativa */
@@ -270,7 +336,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                   {selectedConversation?.username}
                 </div>
                 <div className="text-xs text-white/60">
-                  {selectedConversation?.isOnline ? '🟢 Online' : '🔴 Offline'}
+                  {selectedConversation?.isOnline ? `🟢 ${t('status.online')}` : `🔴 ${t('status.offline')}`}
                 </div>
               </div>
             </div>
@@ -283,7 +349,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                 onClick={() => onNavigateToProfile(selectedConversation?.username || '')}
               >
                 <img
-                  src={`https://www.habbo.com.br/habbo-imaging/avatarimage?${selectedConversation?.figureString ? `figure=${selectedConversation.figureString}` : `user=${selectedConversation?.username}`}&size=m&direction=2&head_direction=3&action=std`}
+                  src={getAvatarUrl(
+                    selectedConversation?.username,
+                    selectedConversation?.hotel || 'br',
+                    selectedConversation?.figureString,
+                    {
+                      size: 'm',
+                      direction: 2,
+                      headDirection: 3,
+                      action: 'std'
+                    }
+                  )}
                   alt={`Avatar de ${selectedConversation?.username}`}
                   className="absolute"
                   style={{ 
@@ -317,7 +393,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                     className="w-full text-left px-3 py-2 text-sm hover:bg-white/10 rounded flex items-center gap-2"
                   >
                     <AlertCircle className="w-4 h-4" />
-                    Ver Perfil
+                    {t('pages.console.viewProfile')}
                   </button>
                   <button
                     onClick={() => {
@@ -328,7 +404,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                     className="w-full text-left px-3 py-2 text-sm hover:bg-white/10 rounded flex items-center gap-2 text-amber-400"
                   >
                     <Flag className="w-4 h-4" />
-                    Denunciar Conversa
+                    {t('pages.console.chat.reportConversation')}
                   </button>
                   <button
                     onClick={() => {
@@ -340,7 +416,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                     className="w-full text-left px-3 py-2 text-sm hover:bg-white/10 rounded flex items-center gap-2 text-red-400"
                   >
                     <Ban className="w-4 h-4" />
-                    {isUserBlocked ? 'Desbloquear' : 'Bloquear Usuário'}
+                    {isUserBlocked ? t('pages.console.chat.unblockUser') : t('pages.console.chat.blockUser')}
                   </button>
                   <div className="border-t border-white/10 my-1"></div>
                   <button
@@ -351,7 +427,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                     className="w-full text-left px-3 py-2 text-sm hover:bg-white/10 rounded flex items-center gap-2 text-red-600"
                   >
                     <X className="w-4 h-4" />
-                    Deletar Conversa
+                    {t('pages.console.chat.deleteConversation')}
                   </button>
                 </div>
               )}
@@ -360,13 +436,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
           </div>
 
           {/* Área de mensagens */}
-          <div className="flex-1 overflow-y-auto p-2 space-y-2 scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
+          <div className="flex-1 overflow-y-auto px-2 py-3 space-y-2 scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
             {isUserBlocked ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center text-white/60">
                   <Ban className="w-12 h-12 mx-auto mb-2 text-red-400" />
-                  <p className="text-sm font-semibold">Usuário Bloqueado</p>
-                  <p className="text-xs mt-1">Você bloqueou este usuário</p>
+                  <p className="text-sm font-semibold">{t('pages.console.chat.userBlocked')}</p>
+                  <p className="text-xs mt-1">{t('pages.console.chat.userBlockedDescription')}</p>
                 </div>
               </div>
             ) : displayMessages.length > 0 ? (
@@ -377,9 +453,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                 if (!shouldShow) return null;
 
                 return (
-                  <div key={msg.id} className={cn("flex gap-2 w-full", isOwn ? "flex-row-reverse" : "flex-row")}>
+                  <div key={msg.id} className={cn("flex gap-2 w-full items-start", isOwn ? "flex-row-reverse" : "flex-row")}>
                     {/* Avatar - Apenas cabeça */}
-                    <div className="relative flex-shrink-0 self-end">
+                    <div className="relative flex-shrink-0">
                       <img
                         src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${isOwn ? habboAccount?.habbo_name : selectedConversation?.username}&size=l&direction=${isOwn ? 4 : 2}&head_direction=${isOwn ? 4 : 2}&headonly=1&gesture=${speakingAvatar === (isOwn ? 'user' : 'friend') ? currentGesture : 'nrm'}`}
                         alt={isOwn ? habboAccount?.habbo_name : selectedConversation?.username}
@@ -422,8 +498,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
             ) : (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center text-white/60">
-                  <p className="text-sm">Nenhuma mensagem ainda</p>
-                  <p className="text-xs mt-1">Seja o primeiro a enviar!</p>
+                  <p className="text-sm">{t('pages.console.chat.noMessages')}</p>
+                  <p className="text-xs mt-1">{t('pages.console.chat.beFirstToSend')}</p>
                 </div>
               </div>
             )}
@@ -435,7 +511,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
             <div className="px-3 py-1.5 bg-blue-500/10 border-t border-blue-500/20 relative">
               <p className="text-xs text-blue-200/80 flex items-center gap-2 pr-6">
                 <AlertCircle className="w-3 h-3 flex-shrink-0" />
-                Todas as mensagens ficam registradas para sua segurança. Denúncias são analisadas pela moderação. Não divulgue informações pessoais.
+                {t('pages.console.chat.securityWarning')}
               </p>
               <button
                 onClick={() => setShowSecurityWarning(false)}
@@ -456,7 +532,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Digite sua mensagem..."
+                  placeholder={t('pages.console.chat.typeMessage')}
                   className="flex-1 px-3 py-1.5 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-white/40"
                   disabled={isUserBlocked}
                 />
@@ -479,11 +555,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
           <div className="bg-[#1a1a1a] rounded-lg w-full max-w-md p-4 border border-white/20 shadow-xl">
             <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
               <Flag className="w-5 h-5 text-amber-400" />
-              Denunciar Mensagem
+              {t('pages.console.chat.reportMessage')}
             </h3>
             
             <p className="text-sm text-white/60 mb-3">
-              Descreva o motivo da denúncia. Nossa equipe irá analisar.
+              {t('pages.console.chat.reportDescription')}
             </p>
 
             <textarea
@@ -502,19 +578,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                 }}
                 className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
               >
-                Cancelar
+                {t('buttons.cancel')}
               </button>
               <button
                 onClick={handleReportMessage}
                 disabled={!reportReason.trim()}
                 className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-white/10 disabled:cursor-not-allowed rounded-lg transition-colors"
               >
-                Enviar Denúncia
+                {t('pages.console.chat.sendReport')}
               </button>
             </div>
 
             <p className="text-xs text-white/40 mt-3 text-center">
-              ⚠️ Denúncias falsas podem resultar em punições
+              {t('pages.console.chat.falseReportWarning')}
             </p>
           </div>
         </div>
@@ -526,15 +602,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
           <div className="bg-[#1a1a1a] rounded-lg w-full max-w-md p-6 border border-white/20 shadow-xl">
             <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
               <AlertCircle className="w-6 h-6 text-red-500" />
-              Deletar Conversa
+              {t('pages.console.chat.deleteConversation')}
             </h3>
             
             <p className="text-sm text-white/80 mb-2">
-              Tem certeza que deseja deletar toda a conversa com <span className="font-bold text-white">{selectedConversation?.username}</span>?
+              {t('pages.console.chat.confirmDeleteConversation', { username: selectedConversation?.username || '' }).replace('{username}', '')}
+              <span className="font-bold text-white">{selectedConversation?.username}</span>?
             </p>
             
             <p className="text-sm text-red-400 mb-6">
-              ⚠️ Esta ação é permanente e não pode ser desfeita. Todas as mensagens serão apagadas do sistema.
+              {t('pages.console.chat.deletePermanentWarning')}
             </p>
 
             <div className="flex gap-3">
@@ -542,7 +619,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                 onClick={() => setShowDeleteModal(false)}
                 className="flex-1 px-4 py-2.5 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-white font-medium"
               >
-                Cancelar
+                {t('buttons.cancel')}
               </button>
               <button
                 onClick={() => {
@@ -553,13 +630,47 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                 }}
                 className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-white font-medium"
               >
-                Deletar Conversa
+                {t('pages.console.chat.deleteConversation')}
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+
+        {/* Modal para enviar mensagem a um amigo OU modal de usuário não registrado */}
+        {showSendMessageModal && !showUserNotRegisteredModal && (
+          <SendMessageModal
+            friends={friends || []}
+            isOpen={showSendMessageModal}
+            onClose={() => setShowSendMessageModal(false)}
+            onSelectFriend={async (friendName: string) => {
+              await startConversationWith(friendName);
+            }}
+          />
+        )}
+        
+        {/* Modal para usuário não registrado - substitui o modal de envio */}
+        {showUserNotRegisteredModal && (
+          <UserNotRegisteredModal
+            isOpen={showUserNotRegisteredModal}
+            onClose={() => {
+              setShowUserNotRegisteredModal(false);
+              setNotRegisteredUsername('');
+              setShowSendMessageModal(false); // Fechar também o modal de envio
+            }}
+            onBack={() => {
+              setShowUserNotRegisteredModal(false);
+              setNotRegisteredUsername('');
+              // Garantir que o modal de envio permanece aberto
+              if (!showSendMessageModal) {
+                setShowSendMessageModal(true);
+              }
+            }}
+            username={notRegisteredUsername}
+          />
+        )}
+      </div>
+    </>
   );
 };
 

@@ -162,6 +162,7 @@ export interface EnhancedPhoto {
   contentHeight?: number;
   caption?: string;
   roomName?: string;
+  roomId?: string | number; // ID do quarto quando disponível
   s3_url?: string;
   preview_url?: string;
   taken_date?: string;
@@ -169,6 +170,7 @@ export interface EnhancedPhoto {
   timestamp?: number;
   hotel?: string;
   hotelDomain?: string;
+  userUniqueId?: string; // uniqueId do usuário que postou a foto
 }
 
 export interface PhotoCardProps {
@@ -178,4 +180,7 @@ export interface PhotoCardProps {
   onCommentsClick: (photoId: string) => void;
   showDivider?: boolean;
   className?: string;
+  onRoomClick?: (elementRef: React.RefObject<HTMLElement>, photoId: string) => void;
+  onRoomModalOpen?: (photoId: string) => void;
+  isRoomModalOpen?: boolean;
 }

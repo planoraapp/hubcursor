@@ -5,12 +5,13 @@ import path from "path";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    port: 3000,
+    port: 3001,
     host: true,
     open: false,
     cors: true,
+    strictPort: true,
     hmr: {
-      port: 3000
+      port: 3001
     },
     fs: {
       allow: ['..']
@@ -21,7 +22,6 @@ export default defineConfig(({ mode }) => ({
         target: 'https://www.habbo.com.br',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/habbo/, ''),
-        // Logs removidos para melhor performance em desenvolvimento
       }
     },
     // OTIMIZAÇÃO: Não assistir arquivos estáticos pesados

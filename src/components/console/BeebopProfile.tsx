@@ -7,6 +7,7 @@ import { BadgesModal } from './modals/BadgesModal';
 import { RoomsModal } from './modals/RoomsModal';
 import { FriendsModal } from './modals/FriendsModal';
 import { GroupsModal } from './modals/GroupsModal';
+import { LoadingSpinner } from './LoadingSpinner';
 
 
 interface UserProfileProps {
@@ -29,7 +30,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ username }) => {
   // Usar o username do usuário logado se não for especificado
   // useMemo para estabilizar o valor e evitar recarregamentos desnecessários
   const targetUsername = useMemo(() => {
-    return username || habboAccount?.habbo_name || 'Beebop';
+    return username || habboAccount?.habbo_name || undefined;
   }, [username, habboAccount?.habbo_name]);
   
   const { userData, badges, rooms, groups, friends, photos, isLoading, error, refreshData, refreshBadges, refreshRooms, refreshGroups, refreshFriends } = useHabboPublicAPI(targetUsername);
@@ -86,7 +87,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ username }) => {
     return (
       <Card className="bg-transparent text-white border-0 shadow-none h-full flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <LoadingSpinner className="mx-auto mb-4" />
           <p className="text-white/60">Carregando perfil...</p>
         </div>
       </Card>
@@ -340,8 +341,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ username }) => {
   );
 };
 
-// Componente específico para Beebop (mantido para compatibilidade)
-export const BeebopProfile: React.FC = () => {
-  return <UserProfile username="Beebop" />;
-};
+// Componente removido - não deve ser usado diretamente
+// Use UserProfile com username específico se necessário
 

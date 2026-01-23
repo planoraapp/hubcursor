@@ -2,17 +2,22 @@ import React from 'react';
 import { Crown, Star, Gem } from 'lucide-react';
 
 interface RarityBadgeProps {
-  rarity: 'NORMAL' | 'HC' | 'VIP' | 'LTD';
+  rarity: 'NORMAL' | 'HC' | 'VIP' | 'LTD' | 'CLUB';
   className?: string;
 }
 
 export const RarityBadge: React.FC<RarityBadgeProps> = ({ rarity, className = "" }) => {
   if (rarity === 'NORMAL') return null;
-  
+
   const badges = {
     HC: (
       <div className={`absolute bottom-1 left-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center ${className}`}>
-        <Crown className="w-2.5 h-2.5 text-white" />
+        <Crown className="w-2.5 h-2.5 text-black" />
+      </div>
+    ),
+    CLUB: (
+      <div className={`absolute bottom-1 left-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center ${className}`}>
+        <Crown className="w-2.5 h-2.5 text-black" />
       </div>
     ),
     VIP: (
@@ -26,6 +31,6 @@ export const RarityBadge: React.FC<RarityBadgeProps> = ({ rarity, className = ""
       </div>
     )
   };
-  
+
   return badges[rarity] || null;
 };

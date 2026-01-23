@@ -81,9 +81,10 @@ const Console: React.FC = () => {
               <div className="max-w-7xl mx-auto">
                 {/* Banner com fundo padrão e formatação correta */}
                 <PageBanner 
-                  title="🖥️ Console do Habbo"
+                  title="Console do Habbo"
                   subtitle="Gerencie sua experiência no HabboHub"
                   backgroundImage={getBannerImageBySeed('console')}
+                  icon="/assets/consoleoff.gif"
                 />
                 
                 {/* Console e informações (responsivo) */}

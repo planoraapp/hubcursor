@@ -31,6 +31,13 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
   const [allPhotos, setAllPhotos] = useState<EnhancedPhoto[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
+  // Resetar quando o hotel mudar
+  useEffect(() => {
+    setCursor(undefined);
+    setAllPhotos([]);
+    setIsLoadingMore(false);
+  }, [hotel]);
+
   // Cache key baseado em timestamp
   const getCacheKey = useCallback(() => {
     const now = new Date();
@@ -70,34 +77,15 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
         };
       }
       
-      // Debug: verificar usuários únicos
-      if (data.photos && data.photos.length > 0) {
-        const uniqueUsers = [...new Set(data.photos.map((p: any) => p.userName))];
-        const pageOffset = currentCursor ? parseInt(currentCursor) : 0;
-        console.log(
-          `[🌍 GLOBAL FEED] Página ${pageOffset}: ${data.photos.length} fotos, usuários únicos: ${uniqueUsers.length} (${uniqueUsers
-            .slice(0, 5)
-            .join(', ')}${uniqueUsers.length > 5 ? '...' : ''})`,
-        );
-
-        // Apenas log de diversidade para debug (não bloqueia feed)
-        if (uniqueUsers.length < 2 && data.photos.length >= 10) {
-          console.warn(
-            `[🌍 GLOBAL FEED] ⚠️ Baixa diversidade: apenas ${uniqueUsers.length} usuário(s) único(s) em ${data.photos.length} fotos`,
-          );
-        }
-      } else if (currentCursor) {
-        const pageOffset = parseInt(currentCursor);
-        console.log(`[🌍 GLOBAL FEED] Nenhuma foto encontrada para página ${pageOffset}`);
-      }
-
-      return {
+      const result = {
         photos: data.photos || [],
         nextCursor: data.nextCursor || null,
         hasMore: data.hasMore || false,
         totalCount: data.totalCount || 0,
         cursor: data.cursor || currentCursor || '0'
       };
+      
+      return result;
 
     } catch (error) {
       console.error('[🌍 GLOBAL FEED] Error:', error);
@@ -115,10 +103,12 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
   // Query principal
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['global-photo-feed', hotel, cursor],
-    queryFn: () => fetchGlobalPhotos(cursor),
+    queryFn: () => {
+      return fetchGlobalPhotos(cursor);
+    },
     enabled: true,
-    staleTime: cacheTime * 60 * 1000, // Cache por X minutos
-    gcTime: (cacheTime + 5) * 60 * 1000, // Manter em memória por mais tempo
+    staleTime: 0, // Não usar cache para garantir que sempre busque dados frescos quando cursor muda
+    gcTime: 5 * 60 * 1000, // Manter em memória por 5 minutos
     retry: 2,
     retryDelay: 1000,
     refetchOnWindowFocus: false,
@@ -127,26 +117,33 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
 
   // Função para carregar mais fotos com debounce
   const loadMore = useCallback(async () => {
+    // Verificar condições antes de fazer qualquer coisa
     if (isLoadingMore) {
-      console.log('[🌍 GLOBAL FEED] Already loading more, skipping...');
       return;
     }
     
     if (!data?.hasMore) {
-      console.log('[🌍 GLOBAL FEED] No more photos available');
       return;
     }
     
     const nextCursor = data.nextCursor;
     if (!nextCursor) {
-      console.log('[🌍 GLOBAL FEED] No next cursor available');
       return;
     }
 
-    const pageOffset = parseInt(nextCursor);
+    // Verificar se já estamos carregando essa página (evitar duplicatas)
+    const nextPageOffset = parseInt(nextCursor);
+    const currentPageOffset = cursor ? parseInt(cursor) : 0;
+    
+    if (nextPageOffset <= currentPageOffset) {
+      // Já estamos nessa página ou além dela
+      return;
+    }
+    
     console.log(
-      `[🌍 GLOBAL FEED] Loading more photos (page offset: ${pageOffset})...`,
+      `[🌍 GLOBAL FEED] Loading more photos (page offset: ${nextPageOffset}, hotel: ${hotel})...`,
     );
+    
     setIsLoadingMore(true);
     
     try {
@@ -158,7 +155,7 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
       console.error('[🌍 GLOBAL FEED] Error loading more:', error);
       setIsLoadingMore(false);
     }
-  }, [data?.hasMore, data?.nextCursor, isLoadingMore]);
+  }, [data?.hasMore, data?.nextCursor, isLoadingMore, data, cursor, hotel]);
 
   // Função para resetar o feed
   const resetFeed = useCallback(() => {
@@ -168,17 +165,69 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
     setIsLoadingMore(false);
   }, []);
 
-  // Função para refresh manual
+  // Função para refresh manual (reseta tudo)
   const refreshFeed = useCallback(async () => {
     resetFeed();
     await refetch();
   }, [resetFeed, refetch]);
 
+  // Função para verificar e adicionar apenas novas fotos no topo (sem resetar o feed)
+  const checkForNewPhotos = useCallback(async (): Promise<{ count: number; newPhotoIds: string[] }> => {
+    try {
+      console.log('[🌍 GLOBAL FEED] Checking for new photos (preserving existing feed)...');
+      
+      // Buscar apenas a primeira página (cursor=0) para verificar novas fotos
+      const hotelCode = hotel === 'com.br' ? 'br' : hotel;
+      const { data, error } = await supabase.functions.invoke('habbo-global-feed', {
+        body: {
+          cursor: '0',
+          limit,
+          hotel: hotelCode
+        }
+      });
+
+      if (error || !data || !data.photos) {
+        console.log('[🌍 GLOBAL FEED] No new photos found or error occurred');
+        return { count: 0, newPhotoIds: [] };
+      }
+
+      // Comparar com fotos existentes e pegar apenas as novas (que não estão no feed)
+      const existingPhotoIds = new Set(allPhotos.map(p => p.id || p.photo_id));
+      const newPhotos = data.photos.filter((p: EnhancedPhoto) => {
+        const photoId = p.id || p.photo_id;
+        return !existingPhotoIds.has(photoId);
+      });
+
+      if (newPhotos.length > 0) {
+        console.log(`[🌍 GLOBAL FEED] Found ${newPhotos.length} new photos, adding to top`);
+        
+        // Extrair IDs das novas fotos
+        const newPhotoIds = newPhotos.map(p => p.id || p.photo_id).filter(Boolean) as string[];
+        
+        // Adicionar novas fotos no INÍCIO do array (topo do feed)
+        setAllPhotos(prev => [...newPhotos, ...prev]);
+        
+        return { count: newPhotos.length, newPhotoIds };
+      } else {
+        console.log('[🌍 GLOBAL FEED] No new photos found');
+        return { count: 0, newPhotoIds: [] };
+      }
+    } catch (error) {
+      console.error('[🌍 GLOBAL FEED] Error checking for new photos:', error);
+      return { count: 0, newPhotoIds: [] };
+    }
+  }, [hotel, limit, allPhotos]);
+
   // Atualizar lista de fotos quando dados mudarem
   useEffect(() => {
     if (data?.photos) {
       setAllPhotos(prev => {
-        if (cursor && cursor !== '0') {
+        // Detectar se é primeira carga: cursor é undefined ou '0' (ou primeiro carregamento)
+        const currentCursor = cursor || '0';
+        const isFirstLoad = currentCursor === '0' || currentCursor === undefined || prev.length === 0;
+        
+        // Se não for primeira carga e já temos fotos, adicionar novas fotos
+        if (!isFirstLoad && prev.length > 0) {
           // Adicionar novas fotos ao final, evitando duplicatas
           const existingPhotoIds = new Set(prev.map(p => p.id || p.photo_id));
           const newPhotos = data.photos.filter((p: EnhancedPhoto) => {
@@ -187,15 +236,14 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
           });
           
           if (newPhotos.length > 0) {
-            console.log(`[🌍 GLOBAL FEED] Adding ${newPhotos.length} new photos (${data.photos.length - newPhotos.length} duplicates filtered)`);
+            console.log(`[🌍 GLOBAL FEED] Adding ${newPhotos.length} new photos (cursor: ${currentCursor}, ${data.photos.length - newPhotos.length} duplicates filtered)`);
             return [...prev, ...newPhotos];
           } else {
-            console.log(`[🌍 GLOBAL FEED] All ${data.photos.length} photos were duplicates, not adding`);
+            console.log(`[🌍 GLOBAL FEED] All ${data.photos.length} photos were duplicates, not adding (cursor: ${currentCursor})`);
             return prev;
           }
         } else {
           // Substituir todas as fotos (refresh ou primeira carga)
-          console.log(`[🌍 GLOBAL FEED] Setting ${data.photos.length} photos (refresh/first load)`);
           return data.photos;
         }
       });
@@ -204,8 +252,9 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
       if (isLoadingMore) {
         setIsLoadingMore(false);
       }
-    } else if (data && !data.photos && isLoadingMore) {
+    } else if (data && (!data.photos || data.photos.length === 0) && isLoadingMore) {
       // Se não há fotos mas a query completou, resetar loading
+      console.log('[🌍 GLOBAL FEED] No photos in response, resetting loading state');
       setIsLoadingMore(false);
     }
   }, [data, cursor, isLoadingMore]);
@@ -285,6 +334,7 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
     loadMore,
     resetFeed,
     refreshFeed,
+    checkForNewPhotos,
     stats: {
       ...stats,
       currentPageOffset,

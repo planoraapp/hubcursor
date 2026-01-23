@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Users } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Users, X } from 'lucide-react';
 import { UserProfileModal } from '@/components/UserProfileModal';
 import { useI18n } from '@/contexts/I18nContext';
 
@@ -12,7 +12,7 @@ interface FriendsModalProps {
   onClose: () => void;
   friends: any[];
   userName: string;
-  onNavigateToProfile?: (username: string) => void;
+  onNavigateToProfile?: (username: string, hotelOrUniqueId?: string) => void;
 }
 
 export const FriendsModal: React.FC<FriendsModalProps> = ({ 
@@ -24,21 +24,34 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({
 }) => {
   const { t } = useI18n();
   const [selectedFriend, setSelectedFriend] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Limpar pesquisa quando o modal fechar
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchTerm('');
+    }
+  }, [isOpen]);
+
+  // Filtrar amigos baseado no termo de pesquisa
+  const filteredFriends = useMemo(() => {
+    if (!searchTerm.trim()) return friends;
+    const term = searchTerm.toLowerCase();
+    return friends.filter((friend) => 
+      friend.name?.toLowerCase().includes(term) ||
+      friend.motto?.toLowerCase().includes(term)
+    );
+  }, [friends, searchTerm]);
 
   const getAvatarUrl = (username: string) => {
     return `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${username}&size=m&direction=2&head_direction=2&action=std`;
   };
 
-  // Debug: verificar dados dos amigos
-  if (friends && friends.length > 0) {
-    console.log('Friends data:', friends[0]);
-    console.log('Friend profileVisible:', friends[0].profileVisible);
-  }
 
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl max-h-[80vh] bg-transparent border-0 p-0 overflow-hidden rounded-lg" style={{
+        <DialogContent className="max-w-4xl max-h-[80vh] bg-transparent border-0 p-0 overflow-hidden rounded-lg [&>button]:hidden" style={{
           backgroundImage: 'repeating-linear-gradient(0deg, #333333, #333333 1px, #222222 1px, #222222 2px)',
           backgroundSize: '100% 2px'
         }}>
@@ -49,12 +62,25 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({
           }}>
             <div className="pixel-pattern absolute inset-0 opacity-20"></div>
             <DialogHeader className="p-4 relative z-10">
-              <DialogTitle className="flex items-center gap-2 text-white font-bold text-sm" style={{
-                textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
-              }}>
-                <Users className="w-5 h-5 text-white" />
-                {t('pages.console.friendsOf', { username: userName, count: friends.length })}
-              </DialogTitle>
+              <div className="flex items-center justify-between">
+                <DialogTitle className="flex items-center gap-2 text-white font-bold text-sm" style={{
+                  textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+                }}>
+                  <Users className="w-5 h-5 text-white" />
+                  {t('pages.console.friendsOf', { username: userName, count: friends.length })}
+                </DialogTitle>
+                <DialogClose asChild>
+                  <button
+                    onClick={onClose}
+                    className="text-black hover:bg-white/20 p-1 rounded transition-colors"
+                    aria-label="Fechar"
+                  >
+                    <X className="w-5 h-5" style={{
+                      textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+                    }} />
+                  </button>
+                </DialogClose>
+              </div>
             </DialogHeader>
           </div>
           
@@ -65,14 +91,39 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({
             height: '60vh'
           }}>
             <div className="relative z-10">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
-                {Array.isArray(friends) ? friends.map((friend) => (
+              {/* Barra de pesquisa */}
+              <div className="p-4 pb-2">
+                <div className="relative flex items-center bg-white/10 border border-white/20 rounded focus-within:border-white/60 transition-colors">
+                  <Input
+                    type="text"
+                    placeholder="Pesquisar amigos..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="flex-1 bg-transparent border-0 text-white placeholder:text-white/50 focus:outline-none focus:ring-0"
+                  />
+                  <button
+                    className="px-2 py-1 text-white/60 hover:text-white transition-colors flex items-center justify-center flex-shrink-0"
+                    title="Buscar"
+                  >
+                    <img 
+                      src="/assets/console/search.png" 
+                      alt="Buscar" 
+                      className="w-5 h-5"
+                      style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
+                    />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-4 pb-4">
+                {Array.isArray(filteredFriends) ? filteredFriends.map((friend) => (
                   <div 
                     key={friend.uniqueId}
                     className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer transition-colors"
                     onClick={() => {
                       if (onNavigateToProfile) {
-                        onNavigateToProfile(friend.name);
+                        // Passar uniqueId para permitir extração do hotel
+                        onNavigateToProfile(friend.name, friend.uniqueId);
                       } else {
                         setSelectedFriend(friend.name);
                       }
@@ -137,10 +188,10 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({
                 )) : null}
               </div>
               
-              {(!Array.isArray(friends) || friends.length === 0) && (
+              {(!Array.isArray(filteredFriends) || filteredFriends.length === 0) && (
                 <div className="text-center text-white/60 py-8">
                   <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p>Nenhum amigo encontrado</p>
+                  <p>{searchTerm ? 'Nenhum amigo encontrado para sua pesquisa' : 'Nenhum amigo encontrado'}</p>
                 </div>
             )}
             </div>

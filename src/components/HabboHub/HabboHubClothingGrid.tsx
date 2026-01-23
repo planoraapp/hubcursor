@@ -1,71 +1,62 @@
 import React, { useState, useMemo } from 'react';
-import { useHybridClothingSystem } from '@/hooks/useHybridClothingSystem';
+import { useHabboData } from '@/hooks/useHabboData';
 import { Input } from '@/components/ui/input';
-import { Loader2, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { RarityBadge } from './RarityBadge';
+import { getItemVisualName } from '@/services/HabboData';
 
 interface HabboHubClothingGridProps {
-  selectedCategory: string;
-  selectedGender: string;
+  activeCategory: string; // Alterado de selectedCategory para activeCategory
+  selectedGender: 'M' | 'F' | 'U' | 'all';
   selectedColor: string;
   onItemSelect: (itemId: string) => void;
   selectedItem?: string;
 }
 
 export const HabboHubClothingGrid: React.FC<HabboHubClothingGridProps> = ({
-  selectedCategory,
+  activeCategory,
   selectedGender,
   selectedColor,
   onItemSelect,
   selectedItem,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  
-  const { data: clothingData, isLoading, error } = useHybridClothingSystem();
+
+  const { selectedCategoryData, filteredSets, generateImageUrl } = useHabboData({
+    selectedCategory: activeCategory,
+    selectedGender,
+    showClubOnly: false
+  });
 
   const filteredItems = useMemo(() => {
-    if (!clothingData || !clothingData[selectedCategory]) return [];
-    
-    let items = clothingData[selectedCategory];
-    
-    // Filter by gender if not 'all'
-    if (selectedGender !== 'all') {
-      items = items.filter(item => 
-        item.gender === 'U' || item.gender === selectedGender
-      );
-    }
-    
-    // Filter by search term
+    if (!selectedCategoryData) return [];
+
+    let items = filteredSets;
+
+    // Filter by search term (filtrar por ID)
     if (searchTerm) {
-      items = items.filter(item => 
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.figureId.includes(searchTerm)
+      items = items.filter(item =>
+        item.id.toString().includes(searchTerm)
       );
     }
-    
+
     return items;
-  }, [clothingData, selectedCategory, selectedGender, searchTerm]);
+  }, [filteredSets, searchTerm]);
 
   const getItemThumbnail = (item: any) => {
-    const gender = selectedGender === 'all' ? 'M' : selectedGender;
-    const color = selectedColor || '1';
-    const headOnly = ['hr', 'hd', 'fa'].includes(item.category) ? '&headonly=1' : '';
-    
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-${color}&gender=${gender}&size=l${headOnly}`;
+    // Para o grid, usar sempre 'ch' como tipo e uma cor padrão fixa (1408 - cinza claro)
+    // conforme especificado para miniaturas consistentes
+    const fixedColor = '1408'; // Cor padrão para grid - cinza claro
+    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=ch-${item.id}-${fixedColor}&size=s`;
   };
 
-  if (isLoading) {
+  // Se não há categoria selecionada
+  if (!selectedCategoryData) {
     return (
       <div className="flex items-center justify-center h-48">
-        <Loader2 className="w-8 h-8 animate-spin text-habbo-yellow" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center text-red-500 p-4">
-        Erro ao carregar itens: {error.message}
+        <div className="text-center text-white/70">
+          <p>Selecione uma categoria para visualizar os itens</p>
+        </div>
       </div>
     );
   }
@@ -76,7 +67,7 @@ export const HabboHubClothingGrid: React.FC<HabboHubClothingGridProps> = ({
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
-            placeholder={`Pesquisar itens de ${selectedCategory.toUpperCase()}...`}
+            placeholder={`Pesquisar itens de ${selectedCategoryData.label}...`}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50"
@@ -86,28 +77,46 @@ export const HabboHubClothingGrid: React.FC<HabboHubClothingGridProps> = ({
           {filteredItems.length} itens
         </div>
       </div>
-      
+
       <div className="grid grid-cols-8 gap-2 max-h-96 overflow-y-auto">
-        {filteredItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onItemSelect(item.id)}
-            className={`relative aspect-square bg-white/10 rounded border-2 transition-all duration-200 hover:bg-white/20 hover:scale-105 ${
-              selectedItem === item.id 
-                ? 'border-habbo-yellow shadow-lg scale-105' 
-                : 'border-transparent'
-            }`}
-          >
-            <img
-              src={getItemThumbnail(item)}
-              alt={item.name}
-              className="w-full h-full object-cover rounded"
-              loading="lazy"
-            />
-            <RarityBadge rarity={item.rarity} />
-          </button>
-        ))}
+        {filteredItems.map((item) => {
+          const itemName = getItemVisualName(activeCategory, item.id);
+          return (
+            <button
+              key={`${activeCategory}-${item.id}`}
+              onClick={() => onItemSelect(item.id.toString())}
+              title={itemName || `${activeCategory}-${item.id}`}
+              className={`relative aspect-square bg-white/10 rounded border-2 transition-all duration-200 hover:bg-white/20 hover:scale-105 ${
+                selectedItem === item.id.toString()
+                  ? 'border-habbo-yellow shadow-lg scale-105'
+                  : 'border-transparent'
+              }`}
+            >
+              <img
+                src={getItemThumbnail(item)}
+                alt={`${selectedCategoryData.label} ${item.id}`}
+                className="w-full h-full object-cover rounded"
+                loading="lazy"
+                onError={(e) => {
+                  // Fallback para imagem de erro
+                  const target = e.target as HTMLImageElement;
+                  target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjMyIiB5PSIzMiIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEwIiBmaWxsPSIjOUI5QkE0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iMC4zZW0iPkVSUk9SPC90ZXh0Pgo8L3RleHQ+Cjwvc3ZnPg==';
+                }}
+              />
+              {/* Badge HC para itens do Habbo Club */}
+              {item.club && (
+                <RarityBadge rarity="CLUB" />
+              )}
+            </button>
+          );
+        })}
       </div>
+
+      {filteredItems.length === 0 && (
+        <div className="text-center text-white/70 py-8">
+          <p>Nenhum item encontrado para esta categoria</p>
+        </div>
+      )}
     </div>
   );
 };

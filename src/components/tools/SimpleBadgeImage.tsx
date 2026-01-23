@@ -4,7 +4,7 @@ interface SimpleBadgeImageProps {
   code: string;
   name?: string;
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'natural';
 }
 
 const SimpleBadgeImage = ({ 
@@ -20,23 +20,37 @@ const SimpleBadgeImage = ({
   const sizeClasses = {
     sm: 'w-6 h-6',    // Reduzido de 8 para 6 (25% menor)
     md: 'w-10 h-10',  // Reduzido de 12 para 10 (17% menor)
-    lg: 'w-13 h-13'   // Reduzido de 16 para 13 (19% menor)
+    lg: 'w-13 h-13',  // Reduzido de 16 para 13 (19% menor)
+    natural: 'w-auto h-auto max-w-12 max-h-12' // Tamanho natural limitado
   };
 
   // URLs reais para badges do Habbo com múltiplos fallbacks
   const getBadgeUrls = useCallback((badgeCode: string) => {
     // Formato correto: os códigos de badges Habbo são sempre maiúsculos
     const upperCode = badgeCode.toUpperCase();
-    
-    return [
+
+    const urls: string[] = [
       // URL principal - images.habbo.com (mais confiável e sem CORS)
       `https://images.habbo.com/c_images/album1584/${upperCode}.gif`,
       `https://images.habbo.com/c_images/album1584/${upperCode}.png`,
-      
-      // URLs alternativas (podem retornar 403, mas tentamos mesmo assim)
-      `https://www.habbo.com.br/habbo-imaging/badge/${upperCode}`,
-      `https://www.habbo.com/habbo-imaging/badge/${upperCode}`,
     ];
+
+    // Se o código tiver sufixo de hotel (ex: AC4_HHUK), tentar versão sem sufixo
+    if (upperCode.includes('_')) {
+      const baseCode = upperCode.split('_')[0]; // Remove tudo após o primeiro _
+      urls.push(
+        `https://images.habbo.com/c_images/album1584/${baseCode}.gif`,
+        `https://images.habbo.com/c_images/album1584/${baseCode}.png`
+      );
+    }
+
+    // URLs alternativas (podem retornar 403, mas tentamos mesmo assim)
+    urls.push(
+      `https://www.habbo.com.br/habbo-imaging/badge/${upperCode}`,
+      `https://www.habbo.com/habbo-imaging/badge/${upperCode}`
+    );
+
+    return urls;
   }, []);
 
   const badgeUrls = getBadgeUrls(code);
@@ -82,12 +96,13 @@ const SimpleBadgeImage = ({
       <img
         src={badgeUrls[currentUrlIndex]}
         alt={name || `Emblema ${code}`}
-        className={`w-full h-full object-contain ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+        className={`${size === 'natural' ? '' : 'w-full h-full object-contain'} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
         style={{ imageRendering: 'pixelated' }}
         onError={handleImageError}
         onLoad={handleImageLoad}
         key={currentUrlIndex}
         loading="lazy"
+        decoding="async"
       />
     </div>
   );

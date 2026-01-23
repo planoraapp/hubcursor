@@ -102,7 +102,7 @@ interface HabboProfile {
   rooms: HabboRoom[];
 }
 
-export const useHabboPublicAPI = (username: string = 'Beebop', country: string = 'br') => {
+export const useHabboPublicAPI = (username: string = '', country: string = 'br') => {
   const [userData, setUserData] = useState<HabboUser | null>(null);
   const [profileData, setProfileData] = useState<HabboProfile | null>(null);
   const [badges, setBadges] = useState<HabboBadge[]>([]);

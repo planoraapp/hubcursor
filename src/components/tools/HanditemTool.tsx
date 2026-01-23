@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,13 @@ import { handitemDiscovery, DiscoveredHanditem } from '@/utils/handitemDiscovery
 import { avatarPreview, AvatarOptions } from '@/utils/avatarPreview';
 import { UnifiedCatalog } from './UnifiedCatalog';
 import { HabboHanditem, HabboFurni } from '@/services/HabboAPIService';
+import { handitemSyncService, HanditemData as SyncedHanditemData } from '@/services/HanditemSyncService';
+import { useI18n } from '@/contexts/I18nContext';
 import * as handitemImages from './handitemImages';
+import { AnimatedAvatarPreview } from './AnimatedAvatarPreview';
+import { extractGenderFromFigureString } from '@/utils/userNormalizer';
+import { handitemActionMapper } from '@/utils/handitemActionMapper';
+import { HabboFurniService } from '@/services/HabboFurniService';
 // Trax removido deste contexto
 
 interface HanditemData {
@@ -35,6 +41,70 @@ interface MobiData {
   function: string;
   handitems: HanditemData[];
 }
+
+// Cache de mobis grandes baseado nas dimensões da API
+const largeMobisCache = new Map<string, boolean>();
+
+// Função para verificar se um mobi é grande baseado nas dimensões da API
+// Um mobi é considerado grande se xdim > 1 ou ydim > 1 (ocupa mais de 1 quadrado)
+const isLargeMobi = async (furniId: string): Promise<boolean> => {
+  // Verificar cache primeiro
+  if (largeMobisCache.has(furniId)) {
+    return largeMobisCache.get(furniId) || false;
+  }
+  
+  try {
+    // Buscar dados do mobi na API HabboFurni
+    const mobiData = await HabboFurniService.getFurnitureByClassname(furniId);
+    
+    if (mobiData?.swf_data) {
+      const { xdim, ydim } = mobiData.swf_data;
+      // Se xdim > 1 ou ydim > 1, o mobi ocupa mais de 1 quadrado
+      const isLarge = (xdim > 1) || (ydim > 1);
+      largeMobisCache.set(furniId, isLarge);
+      return isLarge;
+    }
+  } catch (error) {
+    // Se houver erro na API, retornar false (tamanho padrão)
+    console.warn(`⚠️ Erro ao buscar dimensões do mobi ${furniId}:`, error);
+  }
+  
+  // Fallback: retornar false se não conseguir determinar
+  largeMobisCache.set(furniId, false);
+  return false;
+};
+
+// Lista de fallback para mobis conhecidos como grandes (caso a API não esteja disponível)
+const FALLBACK_LARGE_MOBIS: string[] = [
+  'bar_polyfon',              // Frigobar
+  'ktchn_fridge',             // Geladeira
+  'hosptl_bed',               // Cama hospitalar
+  'hc17_11',                  // Mobis grandes do HC17
+  'hc21_11',                  // Mobis grandes do HC21
+  'hblooza_kiosk',            // Quiosque
+  'hblooza14_drinkstall',     // Barraca de bebidas
+  'hosp_c19_drinksvend',      // Máquina de vendas hospitalar
+  'hosptl_cab1',              // Armário hospitalar
+  'silo_c24_silofridge*8',    // Geladeira Silo
+  'habbo25_sc25_drinksdispenser', // Dispensador de bebidas
+  'olympics_r16_vendingmchn', // Máquina de vendas
+  'tokyo_c18_bugsmachine',    // Máquina de bugs
+  'lido_kiosk',               // Quiosque Lido
+  'bling_fridge',             // Geladeira Bling
+  'summer_icebox',            // Caixa de gelo
+  'xmas_c17_candyshop',       // Loja de doces
+];
+
+// Mapeamento de categorias para handitems representativos (IDs)
+const CATEGORY_HANDITEM_IDS: { [key: string]: number } = {
+  'Todos': 1053, // Pato
+  'Alimentos': 103, // Banana
+  'Bebidas': 2, // Café (mantido)
+  'Doces': 75, // Sorvete de Morango
+  'Utensílios': 1058, // Lampião
+  'Eletrônicos': 1104, // H-Phone
+  'Outros': 1095 // Coração
+};
 
 const MAIN_CATEGORIES = {
   'Todos': { label: 'Todos', icon: Package, subCategories: [] },
@@ -1207,14 +1277,63 @@ const getSubCategoryForItem = (categoryType: string): string => {
 const generateHanditemAvatarUrl = (
   habboName: string, 
   handitemId: number | null, 
-  size: string = 'm'
+  size: string = 'm',
+  figureString?: string,
+  gender?: 'M' | 'F'
 ): string => {
-  const direction = 2;
-  const headDirection = 2;
-  const gesture = 'nrm';
-  const actionParam = handitemId && handitemId !== 0 ? `crr=${handitemId}` : '';
+  // Usar avatarPreview para gerar URL corretamente
+  // Priorizar figurestring quando disponível (formato correto do Habbo)
+  // Usar habbohub como padrão se o nome estiver vazio
+  const userName = habboName && habboName.trim() ? habboName.trim() : 'habbohub';
+  return avatarPreview.generateAvatarUrl(userName, handitemId, { 
+    size: size as 's' | 'm' | 'l' | 'xl',
+    hotel: 'com.br' as any, // TypeScript workaround
+    figureString: figureString,
+    gender: gender
+  });
+};
+
+// Verificar se um handitem pode ter ambas as ações (drk e crr)
+const canHaveBothActions = (handitemId: number): boolean => {
+  // Itens com ID < 1000 são UseItems (drk) por padrão
+  // Itens com ID >= 1000 são CarryItems (crr) por padrão
+  // Mas alguns itens podem ter ambas as ações mapeadas no XML
+  const hasDrkMapping = handitemActionMapper.hasMapping(handitemId, 'drk');
+  const hasCrrMapping = handitemActionMapper.hasMapping(handitemId, 'crr');
   
-  return `https://www.habbo.com/habbo-imaging/avatarimage?user=${habboName}&direction=${direction}&head_direction=${headDirection}&action=${actionParam}&gesture=${gesture}&size=${size}`;
+  // Se tem mapeamento para ambas, pode alternar
+  // Ou se é um UseItem (ID < 1000) que também tem mapeamento crr
+  return (hasDrkMapping && hasCrrMapping) || (handitemId < 1000 && hasCrrMapping);
+};
+
+// Gerar URL do avatar com ação específica (drk ou crr)
+const generateAvatarUrlWithAction = (
+  habboName: string,
+  handitemId: number,
+  actionType: 'drk' | 'crr',
+  size: string = 'l',
+  figureString?: string,
+  gender?: 'M' | 'F'
+): string => {
+  // Gerar URL base
+  let avatarUrl = avatarPreview.generateAvatarUrl(habboName, handitemId, {
+    size: size as 's' | 'm' | 'l' | 'xl',
+    hotel: 'com.br' as any,
+    figureString: figureString,
+    gender: gender
+  });
+  
+  // Substituir a ação na URL pela ação desejada
+  const mappedValue = handitemActionMapper.getMappedValue(handitemId, actionType);
+  if (avatarUrl.includes('action=std,drk=')) {
+    avatarUrl = avatarUrl.replace(/action=std,drk=\d+/, `action=std,${actionType}=${mappedValue}`);
+  } else if (avatarUrl.includes('action=std,crr=')) {
+    avatarUrl = avatarUrl.replace(/action=std,crr=\d+/, `action=std,${actionType}=${mappedValue}`);
+  } else if (avatarUrl.includes('action=std')) {
+    avatarUrl = avatarUrl.replace('action=std', `action=std,${actionType}=${mappedValue}`);
+  }
+  
+  return avatarUrl;
 };
 
 // Dados estruturados baseados nas fontes oficiais do Habbo
@@ -1354,7 +1473,9 @@ const HANDITEM_DATA = [
 
 // Componente para o catálogo atual (handitems e mobis)
 const CurrentCatalog: React.FC = () => {
+  const { language } = useI18n();
   const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<'all' | 'handitems' | 'mobis'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -1363,8 +1484,9 @@ const CurrentCatalog: React.FC = () => {
     handitems: any[];
     mobis: any[];
   }>({ handitems: [], mobis: [] });
+  const [syncedHanditems, setSyncedHanditems] = useState<SyncedHanditemData[]>([]);
 
-  // Load catalog data
+  // Load catalog data and sync handitems
   useEffect(() => {
     const loadCatalogData = async () => {
       setLoading(true);
@@ -1373,8 +1495,53 @@ const CurrentCatalog: React.FC = () => {
         const response = await fetch('/catalog-data.json');
         const data = await response.json();
         setCatalogData(data);
+        
+        // Carregar handitems sincronizados
+        // Primeiro tentar carregar diretamente do arquivo (mais confiável)
+        let synced: SyncedHanditemData[] = [];
+        try {
+          const fileResponse = await fetch('/handitems/handitems-full.json');
+          if (fileResponse.ok) {
+            const contentType = fileResponse.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+              const text = await fileResponse.text();
+              // Verificar se não é HTML (página de erro 404)
+              if (text.trim().startsWith('<!')) {
+                throw new Error('Arquivo não encontrado (resposta HTML)');
+              }
+              try {
+                synced = JSON.parse(text);
+              } catch (parseError) {
+                console.error('❌ Erro ao fazer parse do JSON:', parseError);
+                console.error('Primeiros 200 caracteres do conteúdo:', text.substring(0, 200));
+                throw parseError;
+              }
+            } else {
+              console.warn('⚠️ Resposta não é JSON, content-type:', contentType);
+              throw new Error('Resposta não é JSON');
+            }
+          } else {
+            console.warn(`⚠️ Arquivo não encontrado, status: ${fileResponse.status}`);
+            // Fallback: usar serviço de sincronização
+            synced = await handitemSyncService.sync();
+          }
+        } catch (fileError: any) {
+          console.error('❌ Erro ao carregar arquivo handitems-full.json:', fileError.message);
+          // Fallback: usar serviço de sincronização
+          try {
+            synced = await handitemSyncService.sync();
+          } catch (syncError) {
+            console.error('❌ Erro ao sincronizar handitems:', syncError);
+            // Último fallback: usar dados locais hardcoded se disponível
+            synced = [];
+          }
+        }
+        
+        const newHanditems = synced.filter(h => h.isNew);
+        setSyncedHanditems(synced);
       } catch (error) {
-              } finally {
+        console.error('Erro ao carregar dados:', error);
+      } finally {
         setLoading(false);
       }
     };
@@ -1382,9 +1549,68 @@ const CurrentCatalog: React.FC = () => {
     loadCatalogData();
   }, []);
 
+  // Função para sincronizar handitems manualmente
+  const handleSyncHanditems = useCallback(async () => {
+    setSyncing(true);
+    try {
+      // Forçar sincronização (ignorar cache)
+      const result = await handitemSyncService.sync(true);
+      setSyncedHanditems(result);
+    } catch (error) {
+      console.error('Erro ao sincronizar handitems:', error);
+    } finally {
+      setSyncing(false);
+    }
+  }, []);
+
   // Filter data based on search and filters
   const filteredHanditems = useMemo(() => {
-    return catalogData.handitems.filter(item => {
+    // Criar um mapa de handitems do catalogData
+    const catalogMap = new Map(catalogData.handitems.map(item => [item.id, item]));
+    
+    // Combinar handitems do catalogData com handitems sincronizados
+    // Incluir handitems que estão apenas no syncedHanditems (novos handitems)
+    const allHanditems = new Map();
+    
+    // Adicionar handitems do catalogData
+    catalogData.handitems.forEach(item => {
+      const synced = syncedHanditems.find(s => s.id === item.id);
+      const translatedName = synced 
+        ? synced.names[language] || synced.names.en || item.name
+        : item.name;
+      
+      allHanditems.set(item.id, {
+        ...item,
+        name: translatedName,
+        isNew: synced?.isNew || false
+      });
+    });
+    
+    // Adicionar handitems sincronizados que não estão no catalogData (novos handitems)
+    syncedHanditems.forEach(synced => {
+      if (!allHanditems.has(synced.id)) {
+        const translatedName = synced.names[language] || synced.names.en || synced.names.pt;
+        allHanditems.set(synced.id, {
+          id: synced.id,
+          name: translatedName,
+          description: `Handitem ID: ${synced.id}`,
+          category: 'outros',
+          subcategory: 'diversos',
+          rarity: 'common',
+          spriteUrl: `https://images.habbotemplarios.com/web/avatargen/hand_water.png`,
+          isNew: synced.isNew || false
+        });
+      } else {
+        // Atualizar isNew mesmo se já existe no catalog
+        const existing = allHanditems.get(synced.id);
+        if (existing && synced.isNew) {
+          existing.isNew = true;
+        }
+      }
+    });
+    
+    // Converter para array e filtrar
+    return Array.from(allHanditems.values()).filter(item => {
       const matchesSearch = (item.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
                            (item.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
       const matchesType = selectedType === 'all' || selectedType === 'handitems';
@@ -1393,7 +1619,7 @@ const CurrentCatalog: React.FC = () => {
       
       return matchesSearch && matchesType && matchesCategory && matchesRarity;
     });
-  }, [catalogData.handitems, searchTerm, selectedType, selectedCategory, selectedRarity]);
+  }, [catalogData.handitems, syncedHanditems, language, searchTerm, selectedType, selectedCategory, selectedRarity]);
 
   const filteredMobis = useMemo(() => {
     return catalogData.mobis.filter(item => {
@@ -1440,12 +1666,25 @@ const CurrentCatalog: React.FC = () => {
       {/* Header */}
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="volter-font text-2xl text-primary">
-            🏪 Catálogo Completo - Handitems e Mobis
-          </CardTitle>
-          <p className="text-muted-foreground volter-font">
-            Explore todos os handitems e mobis disponíveis no Habbo!
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="volter-font text-2xl text-primary">
+                🏪 Catálogo Completo - Handitems e Mobis
+              </CardTitle>
+              <p className="text-muted-foreground volter-font">
+                Explore todos os handitems e mobis disponíveis no Habbo!
+              </p>
+            </div>
+            <Button
+              onClick={handleSyncHanditems}
+              disabled={syncing}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Sincronizando...' : 'Sincronizar Handitems'}
+            </Button>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
             <div className="bg-muted/50 rounded-lg p-3 text-center">
               <div className="text-2xl font-bold text-primary">{catalogData.handitems.length}</div>
@@ -1565,7 +1804,15 @@ const CurrentCatalog: React.FC = () => {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {filteredHanditems.map((handitem) => (
-                <div key={handitem.id} className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div key={handitem.id} className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow relative">
+                  {/* Badge "Novo" no canto superior direito */}
+                  {handitem.isNew && (
+                    <img
+                      src="/assets/new.png"
+                      alt="Novo"
+                      className="absolute top-2 right-2 w-8 h-8 z-10"
+                    />
+                  )}
                   <div className="aspect-square mb-3 bg-muted rounded-lg flex items-center justify-center">
                     <HanditemImage
                       handitem={handitem}
@@ -1747,7 +1994,12 @@ const UnifiedHanditemCatalog: React.FC = () => {
 
   // Função para gerar URL de avatar com handitem
   const generateAvatarUrl = (habboName: string, handitemId: number, size: 's' | 'm' | 'l' | 'xl' = 'l') => {
-    return avatarPreview.generateAvatarUrl(habboName, handitemId, { size });
+    // Usar habbohub como padrão se o nome estiver vazio
+    const userName = habboName && habboName.trim() ? habboName.trim() : 'habbohub';
+    return avatarPreview.generateAvatarUrl(userName, handitemId, { 
+      size,
+      hotel: 'com.br' as any
+    });
   };
 
   const fetchUnifiedData = async () => {
@@ -2089,7 +2341,249 @@ const UnifiedHanditemCatalog: React.FC = () => {
   );
 };
 
+// Componente para preview do mobi com tamanho dinâmico baseado na API
+const MobiPreviewWithSize: React.FC<{ mobi: MobiData }> = ({ mobi }) => {
+  const [isLarge, setIsLarge] = useState<boolean | null>(null);
+  
+  useEffect(() => {
+    // Verificar cache primeiro
+    if (largeMobisCache.has(mobi.furniId)) {
+      setIsLarge(largeMobisCache.get(mobi.furniId) || false);
+      return;
+    }
+    
+    // Verificar lista de fallback enquanto busca na API
+    if (FALLBACK_LARGE_MOBIS.includes(mobi.furniId)) {
+      setIsLarge(true);
+      largeMobisCache.set(mobi.furniId, true);
+    }
+    
+    // Buscar dados da API para determinar tamanho
+    isLargeMobi(mobi.furniId).then((large) => {
+      setIsLarge(large);
+    });
+  }, [mobi.furniId]);
+  
+  // Usar fallback enquanto carrega ou se API não disponível
+  const isLargeMobiValue = isLarge ?? FALLBACK_LARGE_MOBIS.includes(mobi.furniId);
+  const mobiSizeClass = isLargeMobiValue 
+    ? 'w-48 h-48 md:w-64 md:h-64'  // 100% maior: 192px/256px (mobile/desktop)
+    : 'w-24 h-24 md:w-32 md:h-32'; // Tamanho normal: 96px/128px
+  
+  return (
+    <div className={`${mobiSizeClass} flex-shrink-0 flex items-center justify-center`}>
+      <img
+        src={mobi.imageUrl}
+        alt={mobi.name}
+        className="w-full h-full object-contain"
+        style={{ imageRendering: 'pixelated' }}
+      />
+    </div>
+  );
+};
+
+// Componente para TabTrigger com imagem de handitem
+const CategoryTabTriggerWithImage: React.FC<{
+  value: string;
+  categoryLabel: string;
+  categoryImageUrl: string | null;
+  Icon: React.ComponentType<{ className?: string }>;
+}> = ({ value, categoryLabel, categoryImageUrl, Icon }) => {
+  const [imageError, setImageError] = useState(false);
+  
+  return (
+    <TabsTrigger 
+      value={value}
+      className="flex items-center justify-center gap-1.5 text-xs volter-font h-full py-0"
+    >
+      {/* Ícone/Imagem - no mobile: oculto quando ativo, visível quando inativo */}
+      {categoryImageUrl && !imageError ? (
+        <img 
+          src={categoryImageUrl} 
+          alt={categoryLabel}
+          className="category-icon max-w-10 max-h-10 w-auto h-auto object-contain"
+          style={{ imageRendering: 'pixelated' }}
+          onError={() => {
+            setImageError(true);
+          }}
+        />
+      ) : (
+        <Icon className="category-icon w-3 h-3" />
+      )}
+      {/* Texto - no mobile: visível quando ativo, oculto quando inativo */}
+      <span className="category-text">{categoryLabel}</span>
+    </TabsTrigger>
+  );
+};
+
 // Versão temporária simplificada para resolver loading infinito
+// Componente para o conteúdo do modal de mobi
+const MobiModalContent: React.FC<{
+  selectedMobi: MobiData;
+  mobiPreviewHanditem: HanditemData | null;
+  setMobiPreviewHanditem: (item: HanditemData) => void;
+  habboAccount: any;
+  handleCopyHanditemId: (item: HanditemData) => void;
+  isTracked: (itemClassname: string) => boolean;
+  getCorrectedHanditem: (item: HanditemData) => any;
+  resolveMobiHanditemImage: (id: number) => string;
+}> = ({
+  selectedMobi,
+  mobiPreviewHanditem,
+  setMobiPreviewHanditem,
+  habboAccount,
+  handleCopyHanditemId,
+  isTracked,
+  getCorrectedHanditem,
+  resolveMobiHanditemImage
+}) => {
+  const habboName = habboAccount?.habbo_name || 'habbohub';
+  const figureString = habboAccount?.figure_string;
+  const gender = extractGenderFromFigureString(figureString);
+  
+  // Componente interno para animação alternada (mesma lógica do UnifiedCatalog)
+  const MobiAnimatedAvatarPreview: React.FC<{ handitemId: number | null }> = ({ handitemId }) => {
+    const [currentAction, setCurrentAction] = useState<'drk' | 'crr'>(handitemId && handitemId >= 1000 ? 'crr' : 'drk');
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const imgRef = useRef<HTMLImageElement>(null);
+    
+    // URL inicial
+    const initialUrl = useMemo(() => {
+      if (!handitemId || handitemId === 0) {
+        return generateHanditemAvatarUrl(habboName, null, 'l', figureString, gender);
+      }
+      const canAlternate = canHaveBothActions(handitemId);
+      return canAlternate 
+        ? generateAvatarUrlWithAction(habboName, handitemId, currentAction, 'l', figureString, gender)
+        : generateHanditemAvatarUrl(habboName, handitemId, 'l', figureString, gender);
+    }, [handitemId, habboName, figureString, gender, currentAction]);
+    
+    // Atualizar src da imagem quando a ação mudar
+    useEffect(() => {
+      if (handitemId && handitemId !== 0 && imgRef.current) {
+        const canAlternate = canHaveBothActions(handitemId);
+        if (canAlternate) {
+          const newUrl = generateAvatarUrlWithAction(habboName, handitemId, currentAction, 'l', figureString, gender);
+          imgRef.current.src = `${newUrl}${newUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`;
+        }
+      }
+    }, [currentAction, handitemId, habboName, figureString, gender]);
+    
+    useEffect(() => {
+      if (handitemId && handitemId !== 0) {
+        const canAlternate = canHaveBothActions(handitemId);
+        if (canAlternate) {
+          // Alternar entre drk e crr a cada 2 segundos
+          intervalRef.current = setInterval(() => {
+            setCurrentAction(prev => prev === 'drk' ? 'crr' : 'drk');
+          }, 2000);
+        }
+      }
+      
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
+      };
+    }, [handitemId]);
+    
+    return (
+      <img
+        ref={imgRef}
+        key={`mobi-preview-${handitemId || 'default'}`}
+        src={`${initialUrl}${initialUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`}
+        alt={handitemId ? "Avatar com handitem" : "Avatar"}
+        className="w-auto h-auto max-w-full max-h-full object-scale-down"
+        style={{ imageRendering: 'pixelated' }}
+        onError={(e) => {
+          const target = e.currentTarget;
+          const fallbackUrl = generateHanditemAvatarUrl(habboName, handitemId, 'l', figureString, gender);
+          if (target.src !== fallbackUrl) {
+            target.src = `${fallbackUrl}${fallbackUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`;
+          }
+        }}
+      />
+    );
+  };
+  
+  return (
+    <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+      {/* Left: Preview Combinado: Mobi + Avatar no mesmo background */}
+      <div className="w-full md:w-auto md:flex-shrink-0">
+        <div className="bg-muted rounded-lg p-4 md:p-6">
+          <h4 className="volter-font font-bold text-sm md:text-base mb-3 text-center">
+            Preview
+          </h4>
+          <div className="flex items-end justify-center gap-4 md:gap-6">
+            {/* Mobi - lado esquerdo */}
+            {/* Mobis grandes (mais de 1 quadrado) têm o dobro de tamanho - determinado pela API */}
+            <MobiPreviewWithSize mobi={selectedMobi} />
+            
+            {/* Avatar - lado direito, alinhado na base */}
+            <div className="flex-shrink-0 flex items-end">
+              <MobiAnimatedAvatarPreview handitemId={mobiPreviewHanditem?.inGameId || null} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right: Handitems Table */}
+      <div className="flex-1 space-y-2 md:space-y-4 min-w-0">
+        <h4 className="volter-font font-bold text-sm md:text-lg">Itens de Mão Entregues:</h4>
+        
+        <ScrollArea className="h-64 md:h-80">
+          <div className="space-y-2">
+            {selectedMobi.handitems.map((item) => {
+              const itemClassname = `handitem_${item.webId}`;
+              const isItemTracked = isTracked(itemClassname);
+              const corrected = getCorrectedHanditem(item);
+              
+              return (
+                <Card
+                  key={`${item.inGameId}-${corrected.id}`}
+                  className="p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => {
+                    handleCopyHanditemId(item);
+                    setMobiPreviewHanditem(item);
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={resolveMobiHanditemImage(corrected.id)}
+                      alt={corrected.name}
+                      className="w-8 h-8 border border-border rounded"
+                      loading="lazy"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (target.src !== '/assets/handitem_placeholder.png') {
+                          target.src = '/assets/handitem_placeholder.png';
+                        }
+                      }}
+                    />
+                    <div className="flex-1">
+                      <h5 className="volter-font font-bold text-sm">{corrected.name}</h5>
+                      <p className="text-xs text-muted-foreground">
+                        ID: {corrected.id} • {item.categoryType}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Copy className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </ScrollArea>
+        
+        <p className="text-xs text-muted-foreground text-center volter-font">
+          💡 Clique em qualquer item para copiar seu ID e ver no avatar
+        </p>
+      </div>
+    </div>
+  );
+};
+
 export const HanditemTool: React.FC = () => {
   return <HanditemToolFixed />;
 };
@@ -2100,10 +2594,10 @@ const HanditemToolFixed: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<keyof typeof MAIN_CATEGORIES>('Todos');
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('Todos');
   const [selectedMobi, setSelectedMobi] = useState<MobiData | null>(null);
-  const [selectedHanditem, setSelectedHanditem] = useState<HanditemData | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [previewAvatar, setPreviewAvatar] = useState<string>('');
   const [selectedHanditemId, setSelectedHanditemId] = useState<number | null>(null);
+  const [mobiPreviewHanditem, setMobiPreviewHanditem] = useState<HanditemData | null>(null);
   
   // Sistema de Trax
   const [isPlaying, setIsPlaying] = useState(false);
@@ -2119,7 +2613,8 @@ const HanditemToolFixed: React.FC = () => {
   // Sistema de Itens Rastreados
   const { trackedItems, trackItem, untrackItem, isTracked } = useTrackedItems('br');
 
-  const defaultHabboName = habboAccount?.habbo_name || "Beebop";
+  // Usar habbohub como padrão, ou o nome do usuário logado se disponível
+  const defaultHabboName = habboAccount?.habbo_name || "habbohub";
 
   // Funções do Sistema de Trax
   const handlePlayPause = () => {
@@ -2205,7 +2700,12 @@ const HanditemToolFixed: React.FC = () => {
 
   // Função para gerar URL de avatar com handitem
   const generateAvatarUrl = (habboName: string, handitemId: number, size: 's' | 'm' | 'l' | 'xl' = 'l') => {
-    return avatarPreview.generateAvatarUrl(habboName, handitemId, { size });
+    // Usar habbohub como padrão se o nome estiver vazio
+    const userName = habboName && habboName.trim() ? habboName.trim() : 'habbohub';
+    return avatarPreview.generateAvatarUrl(userName, handitemId, { 
+      size,
+      hotel: 'com.br' as any
+    });
   };
 
   const filteredMobis = useMemo(() => {
@@ -2240,7 +2740,6 @@ const HanditemToolFixed: React.FC = () => {
 
   const handleCopyHanditemId = useCallback((handitem: HanditemData) => {
     navigator.clipboard.writeText(handitem.inGameId.toString());
-    setSelectedHanditem(handitem);
     toast({
       title: "ID Copiado!",
       description: `ID ${handitem.inGameId} do item "${handitem.name}" foi copiado.`
@@ -2252,12 +2751,37 @@ const HanditemToolFixed: React.FC = () => {
     setSelectedSubCategory('Todos');
   }, []);
 
-  const avatarUrl = useMemo(() => {
-    return generateHanditemAvatarUrl(
-      defaultHabboName,
-      selectedHanditem?.inGameId || null
-    );
-  }, [defaultHabboName, selectedHanditem]);
+  // Função para obter a URL da imagem do handitem representativo da categoria
+  const getCategoryHanditemImage = useCallback((categoryKey: string): string | null => {
+    const handitemId = CATEGORY_HANDITEM_IDS[categoryKey];
+    if (!handitemId) return null;
+    
+    // Mapeamento direto de imagens para IDs de categorias
+    const categoryImages: { [key: number]: string } = {
+      1053: 'https://i.imgur.com/3EL82RT.png', // Pato (Todos)
+      103: 'https://i.imgur.com/6BKn94N.png', // Banana (Alimentos)
+      2: 'https://i.imgur.com/1BGBH0d.png', // Café (Bebidas)
+      75: 'https://i.imgur.com/4UyBReh.png', // Sorvete de Morango (Doces)
+      1058: 'https://i.imgur.com/DqBzgIQ.png', // Lampião (Utensílios)
+      1104: 'https://i.imgur.com/Ey281Fk.png', // H-Phone (Eletrônicos)
+      1095: 'https://i.imgur.com/WB20uCW.png', // Coração (Outros)
+    };
+    
+    // Retornar URL direta se disponível
+    if (categoryImages[handitemId]) {
+      return categoryImages[handitemId];
+    }
+    
+    // Fallback: usar a função de resolução de imagem
+    try {
+      const imageUrl = handitemImages.getHanditemImageById(handitemId);
+      return imageUrl && !imageUrl.includes('placeholder') ? imageUrl : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // Usar a função importada de userNormalizer
 
   const resolveMobiHanditemImage = useCallback((handitemId: number) => {
     // Usar mapeamento centralizado de imagens
@@ -2277,28 +2801,38 @@ const HanditemToolFixed: React.FC = () => {
     const loadCatalogIndex = async () => {
       try {
         const res = await fetch('/handitems/handitems.json');
-        const data = await res.json();
-        const index: CatalogHanditemIndex = {};
-        if (Array.isArray(data)) {
-          for (const it of data) {
-            const nm = (it?.name || it?.nome || '').toString().trim();
-            const idNum = Number(it?.id);
-            if (nm && Number.isFinite(idNum)) {
-              index[nm.toLowerCase()] = { id: idNum, name: nm };
+        if (res.ok) {
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const text = await res.text();
+            // Verificar se não é HTML (página de erro 404)
+            if (text.trim().startsWith('<!')) {
+              return; // Silenciosamente falhar se receber HTML
             }
-          }
-        } else if (data?.handitems && Array.isArray(data.handitems)) {
-          for (const it of data.handitems) {
-            const nm = (it?.name || it?.nome || '').toString().trim();
-            const idNum = Number(it?.id);
-            if (nm && Number.isFinite(idNum)) {
-              index[nm.toLowerCase()] = { id: idNum, name: nm };
+            const data = JSON.parse(text);
+            const index: CatalogHanditemIndex = {};
+            if (Array.isArray(data)) {
+              for (const it of data) {
+                const nm = (it?.name || it?.nome || '').toString().trim();
+                const idNum = Number(it?.id);
+                if (nm && Number.isFinite(idNum)) {
+                  index[nm.toLowerCase()] = { id: idNum, name: nm };
+                }
+              }
+            } else if (data?.handitems && Array.isArray(data.handitems)) {
+              for (const it of data.handitems) {
+                const nm = (it?.name || it?.nome || '').toString().trim();
+                const idNum = Number(it?.id);
+                if (nm && Number.isFinite(idNum)) {
+                  index[nm.toLowerCase()] = { id: idNum, name: nm };
+                }
+              }
             }
+            setHanditemByName(index);
           }
         }
-        setHanditemByName(index);
       } catch (e) {
-        // silencioso
+        // silencioso - fallback para dados internos se disponível
       }
     };
     loadCatalogIndex();
@@ -2345,23 +2879,32 @@ const HanditemToolFixed: React.FC = () => {
             />
           </div>
 
-          <Tabs value={selectedCategory} onValueChange={handleCategoryChange}>
-            <TabsList className="grid grid-cols-7 w-full">
+          <>
+            <style>{`
+              @media (max-width: 767px) {
+                [data-state="active"] .category-icon { display: none !important; }
+                [data-state="inactive"] .category-text { display: none !important; }
+              }
+            `}</style>
+            <Tabs value={selectedCategory} onValueChange={handleCategoryChange}>
+              <TabsList className="grid grid-cols-7 w-full h-10 items-center justify-center">
               {Object.entries(MAIN_CATEGORIES).map(([key, category]) => {
+                const categoryImageUrl = getCategoryHanditemImage(key);
                 const Icon = category.icon;
+                
                 return (
-                  <TabsTrigger 
-                    key={key} 
+                  <CategoryTabTriggerWithImage
+                    key={key}
                     value={key}
-                    className="flex items-center gap-1 text-xs volter-font"
-                  >
-                    <Icon className="w-3 h-3" />
-                    {category.label}
-                  </TabsTrigger>
+                    categoryLabel={category.label}
+                    categoryImageUrl={categoryImageUrl}
+                    Icon={Icon}
+                  />
                 );
               })}
             </TabsList>
           </Tabs>
+          </>
 
           {currentSubCategories.length > 0 && (
             <div className="flex flex-wrap gap-2">
@@ -2389,6 +2932,41 @@ const HanditemToolFixed: React.FC = () => {
 
       {/* Catálogos lado a lado */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Coluna Esquerda: Catálogo Unificado (Handitems) com scroll próprio */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="volter-font text-xl">Handitems</CardTitle>
+          </CardHeader>
+          <CardContent className="p-2">
+            <UnifiedCatalog 
+              externalSearchTerm={searchTerm}
+              externalCategory={selectedCategory}
+              hideHeader 
+              onHanditemSelect={(handitem) => {
+                // Quando um handitem é selecionado, atualizar o preview
+                const handitemId = handitem.id;
+                const habboName = habboAccount?.habbo_name || 'habbohub';
+                
+                // Atualizar o handitem selecionado
+                // Converter HabboHanditem para HanditemData se necessário
+                // Obter URL da imagem usando o serviço de imagens
+                const iconUrl = handitemImages.getHanditemImageById(handitem.id);
+                
+                const handitemData: HanditemData = {
+                  name: handitem.name,
+                  webId: handitem.id,
+                  inGameId: handitem.id,
+                  iconUrl: iconUrl,
+                  categoryType: handitem.type || (handitem.id >= 1000 ? 'CarryItem' : 'UseItem')
+                };
+                
+                // Handitem selecionado - agora o popover é gerenciado pelo UnifiedCatalog
+              }}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Coluna Direita: Mobis */}
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="volter-font text-xl">Mobis</CardTitle>
@@ -2477,16 +3055,7 @@ const HanditemToolFixed: React.FC = () => {
             </ScrollArea>
           </CardContent>
         </Card>
-
-        {/* Coluna Direita: Catálogo Unificado (Handitems) com scroll próprio */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="volter-font text-xl">Handitems</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2">
-            <UnifiedCatalog externalSearchTerm={searchTerm} hideHeader />
-          </CardContent>
-        </Card>
+      </div>
       </div>
 
       {/* Modal */}
@@ -2494,7 +3063,7 @@ const HanditemToolFixed: React.FC = () => {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="volter-font text-xl">
-              {selectedMobi?.name} - {selectedMobi?.function}
+              {selectedMobi?.name}
             </DialogTitle>
             <DialogDescription>
               Visualize os handitems entregues por este mobi e teste no avatar
@@ -2502,126 +3071,19 @@ const HanditemToolFixed: React.FC = () => {
           </DialogHeader>
           
           {selectedMobi && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left: Mobi Info and Avatar */}
-              <div className="space-y-4">
-                <div className="aspect-square bg-muted rounded-lg overflow-hidden">
-                  <img
-                    src={selectedMobi.imageUrl}
-                    alt={selectedMobi.name}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                
-                <div className="text-center space-y-2">
-                  <h4 className="volter-font font-bold">Avatar Preview ({defaultHabboName})</h4>
-                  <div className="w-32 h-40 mx-auto bg-muted rounded-lg overflow-hidden">
-                    <img
-                      src={avatarUrl}
-                      alt="Avatar com handitem"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  {selectedHanditem && (
-                    <div className="flex items-center justify-center gap-2">
-                      <img
-                        src={resolveMobiHanditemImage(selectedHanditem.inGameId)}
-                        alt={selectedHanditem.name}
-                        className="w-6 h-6"
-                        loading="lazy"
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          if (target.src !== '/assets/handitem_placeholder.png') {
-                            target.src = '/assets/handitem_placeholder.png';
-                          }
-                        }}
-                      />
-                      <span className="text-sm volter-font">{selectedHanditem.name}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Right: Handitems Table */}
-              <div className="space-y-4">
-                <h4 className="volter-font font-bold text-lg">Itens de Mão Entregues:</h4>
-                
-                <ScrollArea className="h-80">
-                  <div className="space-y-2">
-                    {selectedMobi.handitems.map((item) => {
-                      const itemClassname = `handitem_${item.webId}`;
-                      const isItemTracked = isTracked(itemClassname);
-                      const corrected = getCorrectedHanditem(item);
-                      
-                      return (
-                        <Card
-                          key={`${item.inGameId}-${corrected.id}`}
-                          className="p-3 cursor-pointer hover:bg-muted/50 transition-colors"
-                          onClick={() => handleCopyHanditemId(item)}
-                        >
-                          <div className="flex items-center gap-3">
-                             <img
-                              src={resolveMobiHanditemImage(corrected.id)}
-                              alt={corrected.name}
-                              className="w-8 h-8 border border-border rounded"
-                              loading="lazy"
-                              onError={(e) => {
-                                const target = e.currentTarget;
-                                if (target.src !== '/assets/handitem_placeholder.png') {
-                                  target.src = '/assets/handitem_placeholder.png';
-                                }
-                              }}
-                            />
-                            <div className="flex-1">
-                              <h5 className="volter-font font-bold text-sm">{corrected.name}</h5>
-                              <p className="text-xs text-muted-foreground">
-                                ID: {corrected.id} • {item.categoryType}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {isItemTracked ? (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleUntrackItem(itemClassname);
-                                  }}
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  <Eye className="w-3 h-3" />
-                                </Button>
-                              ) : (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleTrackItem(item);
-                                  }}
-                                  className="text-blue-600 hover:text-blue-700"
-                                >
-                                  <Eye className="w-3 h-3" />
-                                </Button>
-                              )}
-                              <Copy className="w-4 h-4 text-muted-foreground" />
-                            </div>
-                          </div>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-                
-                <p className="text-xs text-muted-foreground text-center volter-font">
-                  💡 Clique em qualquer item para copiar seu ID e ver no avatar
-                </p>
-              </div>
-            </div>
+            <MobiModalContent 
+              selectedMobi={selectedMobi}
+              mobiPreviewHanditem={mobiPreviewHanditem}
+              setMobiPreviewHanditem={setMobiPreviewHanditem}
+              habboAccount={habboAccount}
+              handleCopyHanditemId={handleCopyHanditemId}
+              isTracked={isTracked}
+              getCorrectedHanditem={getCorrectedHanditem}
+              resolveMobiHanditemImage={resolveMobiHanditemImage}
+            />
           )}
         </DialogContent>
       </Dialog>
-        </div>
 
       {/* Modal de Preview de Avatar */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
@@ -2707,6 +3169,7 @@ const HanditemToolFixed: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 };

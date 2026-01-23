@@ -51,12 +51,44 @@
   }
 }
 
+/* Animação para novas fotos no feed (deslizam de cima) */
+@keyframes slidePhotoFromTop {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animação de slide up (de baixo para cima) para modais */
+@keyframes slideUpFade {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-in {
   animation: slideInFromTop 0.3s ease-out;
 }
 
 .animate-out {
   animation: slideOutToTop 0.2s ease-in;
+}
+
+.animate-new-photo {
+  animation: slidePhotoFromTop 0.5s ease-out forwards;
+}
+
+.animate-slide-up-fade {
+  animation: slideUpFade 0.3s ease-out forwards;
 }
 
 .line-clamp-2 {
@@ -814,6 +846,30 @@
 .scrollbar-thin {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* Custom scrollbar for room description in modal */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.05);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
 }
 
 /* Hide scrollbar for horizontal scroll containers */

@@ -134,14 +134,14 @@ async function fetchBadgesFromAPI(): Promise<HabboApiBadgeItem[]> {
             code,
             name: ach.name || `Achievement ${code}`,
             description: `Nível ${level.level || index + 1} - ${ach.category || 'achievement'}`,
-            imageUrl: `https://www.habbo.com.br/habbo-imaging/badge/${code}`,
+            imageUrl: buildBadgeImageUrl(code),
             category: categorizeBadge(code),
             rarity: getRarity(code),
             source: 'api-achievements',
             scrapedAt: new Date().toISOString()
           });
         });
-        
+
         // Também adicionar badge base (nível 1)
         if (levels.length === 0) {
           const code = `ACH_${ach.name}1`;
@@ -150,7 +150,7 @@ async function fetchBadgesFromAPI(): Promise<HabboApiBadgeItem[]> {
             code,
             name: ach.name || `Achievement ${code}`,
             description: ach.category ? `Categoria: ${ach.category}` : 'Badge de conquista',
-            imageUrl: `https://www.habbo.com.br/habbo-imaging/badge/${code}`,
+            imageUrl: buildBadgeImageUrl(code),
             category: categorizeBadge(code),
             rarity: getRarity(code),
             source: 'api-achievements',
@@ -189,7 +189,7 @@ function getKnownNonAchievementBadges(): HabboApiBadgeItem[] {
       code: badge.code,
       name: badge.name,
       description: badge.description,
-      imageUrl: `https://www.habbo.com.br/habbo-imaging/badge/${badge.code}`,
+      imageUrl: buildBadgeImageUrl(badge.code),
       category: 'official',
       rarity: 'legendary',
       source: 'known-list',
@@ -235,7 +235,7 @@ function getKnownNonAchievementBadges(): HabboApiBadgeItem[] {
         code,
         name: `${country.name} ${i}`,
         description: `Badge de ${country.name}`,
-        imageUrl: `https://images.habbo.com/c_images/album1584/${code}.gif`,
+        imageUrl: buildBadgeImageUrl(code),
         category: 'fansites',
         rarity: 'common',
         source: 'known-list',
@@ -283,7 +283,7 @@ function getKnownNonAchievementBadges(): HabboApiBadgeItem[] {
       code,
       name: `Badge ${code}`,
       description: `Badge especial ${code}`,
-      imageUrl: `https://images.habbo.com/c_images/album1584/${code}.gif`,
+      imageUrl: buildBadgeImageUrl(code),
       category: 'others',
       rarity: 'common',
       source: 'known-list',
@@ -294,14 +294,35 @@ function getKnownNonAchievementBadges(): HabboApiBadgeItem[] {
   return badges;
 }
 
+// Função para construir URL da imagem do emblema com fallback para sufixos de hotel
+function buildBadgeImageUrl(code: string): string {
+  // Usar images.habbo.com/c_images/album1584/ conforme especificação
+  return `https://images.habbo.com/c_images/album1584/${code}.gif`;
+}
+
+// Função para obter URL da imagem com fallback (usada no componente)
+export function getBadgeImageUrl(code: string): string {
+  // Primeiro tenta com código completo, depois sem sufixo se houver _
+  const baseUrl = 'https://images.habbo.com/c_images/album1584/';
+
+  // Se tiver sufixo de hotel (ex: AC4_HHUK), retorna URL com código completo
+  // O componente SimpleBadgeImage pode implementar lógica de fallback
+  return `${baseUrl}${code}.gif`;
+}
+
 // Função para converter BadgeInfo em HabboApiBadgeItem
 function convertBadgeInfoToItem(badgeInfo: BadgeInfo, hotelDomain: string): HabboApiBadgeItem {
+  // Extrair nome e descrição da string combinada (formato: "Nome: Descrição")
+  const [namePart, ...descParts] = badgeInfo.description.split(': ');
+  const name = namePart && namePart !== badgeInfo.code ? namePart : badgeInfo.code;
+  const description = descParts.join(': ').trim() || '';
+
   return {
     id: `scraped_${badgeInfo.code}_${badgeInfo.hotel}`,
     code: badgeInfo.code,
-    name: badgeInfo.code, // Usar código como nome se não houver nome específico
-    description: badgeInfo.description,
-    imageUrl: `https://www.${hotelDomain}/habbo-imaging/badge/${badgeInfo.code}`,
+    name: name,
+    description: description,
+    imageUrl: buildBadgeImageUrl(badgeInfo.code),
     category: categorizeBadge(badgeInfo.code),
     rarity: getRarity(badgeInfo.code),
     source: `scraped-${badgeInfo.hotel}`,

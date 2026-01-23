@@ -14,7 +14,8 @@
     "badge:check": "node scripts/daily-badge-checker.cjs",
     "badge:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-daily-badge-monitoring.ps1",
     "trax:upload": "node scripts/upload-trax-samples.js",
-    "test:keep-alive": "node scripts/test-keep-alive.js"
+    "test:keep-alive": "node scripts/test-keep-alive.js",
+    "handitems:sync": "node scripts/sync-handitems-daily.cjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.886.0",

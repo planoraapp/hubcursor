@@ -39,10 +39,15 @@ interface AdminStats {
   totalStickers: number;
   totalPhotoLikes: number;
   totalPhotoComments: number;
-  totalPhotos: number;
+  totalPhotos?: number;
   totalGuestbookEntries: number;
   totalHomeRatings: number;
   averageHomeRating: number;
+  activeUsers?: number;
+  visitsToday?: number;
+  uniquePhotosWithLikes?: number;
+  uniquePhotosWithComments?: number;
+  interactionsLast24h?: number;
 }
 
 export const AdminDashboard: React.FC = () => {
@@ -65,10 +70,11 @@ export const AdminDashboard: React.FC = () => {
     totalStickers: 0,
     totalPhotoLikes: 0,
     totalPhotoComments: 0,
-    totalPhotos: 0,
     totalGuestbookEntries: 0,
     totalHomeRatings: 0,
-    averageHomeRating: 0
+    averageHomeRating: 0,
+    activeUsers: 0,
+    interactionsLast24h: 0
   });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -82,60 +88,76 @@ export const AdminDashboard: React.FC = () => {
     try {
       setLoading(true);
 
-      // Carregar estatísticas em paralelo das tabelas reais
-      const [
-        usersResult,
-        homesResult,
-        widgetsResult,
-        stickersResult,
-        photoLikesResult,
-        photoCommentsResult,
-        photosResult,
-        guestbookResult,
-        ratingsResult,
-        ratingsDataResult
-      ] = await Promise.all([
-        supabase.from('habbo_accounts').select('*', { count: 'exact', head: true }),
-        supabase.from('user_home_backgrounds').select('*', { count: 'exact', head: true }),
-        supabase.from('user_home_widgets').select('*', { count: 'exact', head: true }),
-        supabase.from('user_stickers').select('*', { count: 'exact', head: true }),
-        supabase.from('photo_likes').select('*', { count: 'exact', head: true }),
-        supabase.from('photo_comments').select('*', { count: 'exact', head: true }),
-        supabase.from('photos').select('*', { count: 'exact', head: true }),
-        supabase.from('guestbook_entries').select('*', { count: 'exact', head: true }),
-        supabase.from('user_home_ratings').select('*', { count: 'exact', head: true }),
-        supabase.from('user_home_ratings').select('rating')
-      ]);
+      // Tentar buscar da materialized view primeiro (mais eficiente)
+      // Se não existir ainda, usar queries individuais como fallback
+      const { data: materializedData, error: materializedError } = await supabase
+        .from('admin_stats')
+        .select('*')
+        .limit(1)
+        .single();
 
-      const totalUsers = usersResult.count || 0;
-      const totalHomes = homesResult.count || 0;
-      const totalWidgets = widgetsResult.count || 0;
-      const totalStickers = stickersResult.count || 0;
-      const totalPhotoLikes = photoLikesResult.count || 0;
-      const totalPhotoComments = photoCommentsResult.count || 0;
-      const totalPhotos = photosResult.count || 0;
-      const totalGuestbookEntries = guestbookResult.count || 0;
-      const totalHomeRatings = ratingsResult.count || 0;
+      if (!materializedError && materializedData) {
+        // Mapear dados da materialized view (snake_case -> camelCase)
+        setStats({
+          totalUsers: materializedData.total_users ?? 0,
+          totalHomes: materializedData.total_homes ?? 0,
+          totalWidgets: materializedData.total_widgets ?? 0,
+          totalStickers: materializedData.total_stickers ?? 0,
+          totalPhotoLikes: materializedData.total_photo_likes ?? 0,
+          totalPhotoComments: materializedData.total_photo_comments ?? 0,
+          totalGuestbookEntries: materializedData.total_guestbook_entries ?? 0,
+          totalHomeRatings: materializedData.total_home_ratings ?? 0,
+          averageHomeRating: Math.round((materializedData.average_home_rating ?? 0) * 10) / 10,
+          activeUsers: materializedData.active_users ?? 0,
+          uniquePhotosWithLikes: materializedData.unique_photos_with_likes ?? 0,
+          uniquePhotosWithComments: materializedData.unique_photos_with_comments ?? 0,
+          interactionsLast24h: materializedData.interactions_last_24h ?? 0,
+        });
+      } else {
+        // Fallback: carregar estatísticas em paralelo das tabelas reais
+        const [
+          usersResult,
+          homesResult,
+          widgetsResult,
+          stickersResult,
+          photoLikesResult,
+          photoCommentsResult,
+          guestbookResult,
+          ratingsResult,
+          ratingsDataResult,
+          activeUsersResult
+        ] = await Promise.all([
+          supabase.from('habbo_accounts').select('*', { count: 'exact', head: true }),
+          supabase.from('user_home_backgrounds').select('*', { count: 'exact', head: true }),
+          supabase.from('user_home_widgets').select('*', { count: 'exact', head: true }),
+          supabase.from('user_stickers').select('*', { count: 'exact', head: true }),
+          supabase.from('photo_likes').select('*', { count: 'exact', head: true }),
+          supabase.from('photo_comments').select('*', { count: 'exact', head: true }),
+          supabase.from('guestbook_entries').select('*', { count: 'exact', head: true }),
+          supabase.from('user_home_ratings').select('*', { count: 'exact', head: true }),
+          supabase.from('user_home_ratings').select('rating'),
+          supabase.from('habbo_accounts').select('*', { count: 'exact', head: true }).eq('is_online', true)
+        ]);
 
-      // Calcular média de avaliações
-      let averageHomeRating = 0;
-      if (ratingsDataResult.data && ratingsDataResult.data.length > 0) {
-        const sum = ratingsDataResult.data.reduce((acc, r) => acc + r.rating, 0);
-        averageHomeRating = sum / ratingsDataResult.data.length;
+        // Calcular média de avaliações
+        const ratings = ratingsDataResult.data || [];
+        const averageHomeRating = ratings.length > 0
+          ? ratings.reduce((acc: number, r: any) => acc + (r.rating || 0), 0) / ratings.length
+          : 0;
+
+        setStats({
+          totalUsers: usersResult.count ?? 0,
+          totalHomes: homesResult.count ?? 0,
+          totalWidgets: widgetsResult.count ?? 0,
+          totalStickers: stickersResult.count ?? 0,
+          totalPhotoLikes: photoLikesResult.count ?? 0,
+          totalPhotoComments: photoCommentsResult.count ?? 0,
+          totalGuestbookEntries: guestbookResult.count ?? 0,
+          totalHomeRatings: ratingsResult.count ?? 0,
+          averageHomeRating: Math.round(averageHomeRating * 10) / 10,
+          activeUsers: activeUsersResult.count ?? 0,
+        });
       }
-
-      setStats({
-        totalUsers,
-        totalHomes,
-        totalWidgets,
-        totalStickers,
-        totalPhotoLikes,
-        totalPhotoComments,
-        totalPhotos,
-        totalGuestbookEntries,
-        totalHomeRatings,
-        averageHomeRating: Math.round(averageHomeRating * 10) / 10
-      });
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
     } finally {
@@ -262,7 +284,7 @@ export const AdminDashboard: React.FC = () => {
                     <Activity className="h-8 w-8 text-purple-600" />
                     <div className="ml-4">
                       <p className="text-sm font-medium text-gray-600 volter-font">Usuários Ativos</p>
-                      <p className="text-2xl font-bold text-gray-900">{stats.activeUsers}</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.activeUsers || 0}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -271,8 +293,8 @@ export const AdminDashboard: React.FC = () => {
                   <CardContent className="flex items-center p-6">
                     <TrendingUp className="h-8 w-8 text-orange-600" />
                     <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600 volter-font">Visitas Hoje</p>
-                      <p className="text-2xl font-bold text-gray-900">{stats.visitsToday}</p>
+                      <p className="text-sm font-medium text-gray-600 volter-font">Interações (24h)</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.interactionsLast24h || 0}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -392,27 +414,27 @@ export const AdminDashboard: React.FC = () => {
                           <span className="text-xs text-gray-600 volter-font">Likes</span>
                           <div className="flex items-center gap-2">
                             <div className="w-20 bg-gray-200 rounded-full h-2">
-                              <div className="bg-red-500 h-2 rounded-full" style={{width: `${Math.min((stats.totalLikes / Math.max(stats.totalUsers, 1)) * 20, 100)}%`}}></div>
+                              <div className="bg-red-500 h-2 rounded-full" style={{width: `${Math.min((stats.totalPhotoLikes / Math.max(stats.totalUsers, 1)) * 20, 100)}%`}}></div>
                             </div>
-                            <span className="text-xs font-bold text-gray-800 volter-font">{stats.totalLikes}</span>
+                            <span className="text-xs font-bold text-gray-800 volter-font">{stats.totalPhotoLikes}</span>
                           </div>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-gray-600 volter-font">Comentários</span>
                           <div className="flex items-center gap-2">
                             <div className="w-20 bg-gray-200 rounded-full h-2">
-                              <div className="bg-blue-500 h-2 rounded-full" style={{width: `${Math.min((stats.totalComments / Math.max(stats.totalUsers, 1)) * 20, 100)}%`}}></div>
+                              <div className="bg-blue-500 h-2 rounded-full" style={{width: `${Math.min((stats.totalPhotoComments / Math.max(stats.totalUsers, 1)) * 20, 100)}%`}}></div>
                             </div>
-                            <span className="text-xs font-bold text-gray-800 volter-font">{stats.totalComments}</span>
+                            <span className="text-xs font-bold text-gray-800 volter-font">{stats.totalPhotoComments}</span>
                           </div>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-600 volter-font">Fotos</span>
+                          <span className="text-xs text-gray-600 volter-font">Fotos com Interação</span>
                           <div className="flex items-center gap-2">
                             <div className="w-20 bg-gray-200 rounded-full h-2">
-                              <div className="bg-purple-500 h-2 rounded-full" style={{width: `${Math.min((stats.totalPhotos / Math.max(stats.totalUsers, 1)) * 20, 100)}%`}}></div>
+                              <div className="bg-purple-500 h-2 rounded-full" style={{width: `${Math.min(((stats.uniquePhotosWithLikes || 0) / Math.max(stats.totalUsers, 1)) * 20, 100)}%`}}></div>
                             </div>
-                            <span className="text-xs font-bold text-gray-800 volter-font">{stats.totalPhotos}</span>
+                            <span className="text-xs font-bold text-gray-800 volter-font">{stats.uniquePhotosWithLikes || 0}</span>
                           </div>
                         </div>
                       </div>

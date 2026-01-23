@@ -1,7 +1,7 @@
 // src/hooks/useUnifiedHabboClothing.tsx
 import { useState, useEffect } from 'react';
 import { UnifiedClothingData, UnifiedHabboClothingItem, ColorPalettes } from '../types/clothing';
-import { viaJovemCompleteService } from '../services/ViaJovemCompleteService';
+import { habboHubCompleteService } from '../services/HabboHubCompleteService';
 import { mapSWFToHabboCategory, isValidHabboCategory } from '../utils/clothingCategoryMapper';
 
 // Função para obter nome de exibição da categoria
@@ -25,22 +25,13 @@ const getCategoryDisplayName = (category: string): string => {
 };
 
 // Função para gerar URL de thumbnail baseada na documentação oficial do Habbo
+// Mostrar apenas a peça individual, não um avatar completo
 const generateThumbnailUrl = (category: string, itemId: string, color: string, gender: string): string => {
-  const baseAvatars: Record<string, string> = {
-    'hd': 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
-    'hr': 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
-    'sh': 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
-    'lg': 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
-    'ha': 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
-    'he': 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
-    'ea': 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
-    'fa': 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
-    'cp': 'hr-828-45.hd-180-1.lg-3116-92.sh-3297-92',
-    'cc': 'hr-828-45.hd-180-1.lg-3116-92.sh-3297-92',
-    'ca': 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
-    'wa': 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92'
-  };
-  return baseAvatars[category] || 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92';
+  // Para thumbnails nos grids, mostrar apenas a peça individual
+  // Isso evita mostrar "mocks" e permite ver cada item isoladamente
+  const figureString = `${category}-${itemId}-${color}`;
+
+  return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&gender=${gender}&direction=2&head_direction=2&size=m&img_format=png`;
 };
 
 // Função para gerar URL SWF baseada no tutorial
@@ -67,23 +58,20 @@ export const useUnifiedHabboClothing = () => {
     const loadData = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
-        // USAR APENAS DADOS REAIS DO HABBO via ViaJovemCompleteService
-        console.log('🎯 [useUnifiedHabboClothing] Carregando apenas dados reais do Habbo...');
-        const viaJovemData = await viaJovemCompleteService.getCategories();
-        const convertedData = convertViaJovemCompleteToUnified(viaJovemData);
-        
-        setData(convertedData);
+        // USAR APENAS DADOS REAIS DO HABBO via HabboHubCompleteService
+        const habboHubData = await habboHubCompleteService.getCategories();
+        const convertedData = convertHabboHubCompleteToUnified(habboHubData);
+
+        // Filtrar apenas categorias que têm itens
+        const filteredData = filterCategoriesWithItems(convertedData);
+        console.log('🎯 [useUnifiedHabboClothing] Categorias filtradas (apenas com itens):', Object.keys(filteredData));
+
+        setData(filteredData);
         setColorPalettes({});
         setError(null);
-        
-        // Log de estatísticas por categoria
-        console.log(`📊 [useUnifiedHabboClothing] Estatísticas por categoria:`);
-        Object.entries(convertedData).forEach(([category, items]) => {
-          console.log(`  ${category} (${getCategoryDisplayName(category)}): ${items.length} itens`);
-        });
-        
+
       } catch (error) {
         console.error('❌ [useUnifiedHabboClothing] Erro ao carregar dados reais:', error);
         setError('Erro ao carregar dados oficiais do Habbo');
@@ -108,17 +96,31 @@ export const useUnifiedHabboClothing = () => {
   };
 };
 
-// Função para converter dados completos da ViaJovem para formato unificado
-const convertViaJovemCompleteToUnified = (viaJovemData: any[]): UnifiedClothingData => {
+// Função para filtrar apenas categorias que têm itens
+const filterCategoriesWithItems = (data: UnifiedClothingData): UnifiedClothingData => {
+  const filtered: UnifiedClothingData = {};
+
+  Object.keys(data).forEach(categoryId => {
+    if (data[categoryId] && data[categoryId].length > 0) {
+      filtered[categoryId] = data[categoryId];
+    }
+  });
+
+  return filtered;
+};
+
+// Função para converter dados completos do HabboHub para formato unificado
+const convertHabboHubCompleteToUnified = (habboHubData: any[]): UnifiedClothingData => {
   const unifiedData: UnifiedClothingData = {};
-  
-  viaJovemData.forEach(category => {
+
+  habboHubData.forEach(category => {
     if (category && category.items) {
       // Aplicar mapeamento correto para a categoria
       const mappedCategory = mapSWFToHabboCategory(category.id);
-      
+
       // Validar categoria usando o mapeamento
       if (!isValidHabboCategory(mappedCategory)) {
+        console.log(`⚠️ [convert] Categoria inválida pulada: ${mappedCategory}`);
         return; // Pular categoria inválida
       }
       
@@ -129,12 +131,12 @@ const convertViaJovemCompleteToUnified = (viaJovemData: any[]): UnifiedClothingD
         gender: item.gender,
         colors: item.colors,
         name: item.name,
-        source: 'viajovem-complete',
+        source: 'habbohub-complete',
         imageUrl: item.imageUrl,
         isColorable: item.isColorable,
         isSelectable: item.isSelectable,
         club: item.club === '2' ? 'HC' : 'FREE',
-        // Propriedades de raridade baseadas na categorização da ViaJovem
+        // Propriedades de raridade baseadas na categorização do HabboHub
         isNFT: item.categoryType === 'NFT',
         isLTD: item.categoryType === 'LTD',
         isRare: item.categoryType === 'RARE',
@@ -147,7 +149,7 @@ const convertViaJovemCompleteToUnified = (viaJovemData: any[]): UnifiedClothingD
                 item.categoryType === 'RARE' ? 'rare' : 'normal',
         colorable: item.isColorable,
         isDuotone: item.isDuotone,
-        // Metadados adicionais da ViaJovem
+        // Metadados adicionais do HabboHub
         furnidataClass: item.furnidataClass,
         furnidataFurniline: item.furnidataFurniline,
         duotoneImageUrl: item.duotoneImageUrl

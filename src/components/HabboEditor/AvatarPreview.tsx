@@ -167,7 +167,7 @@ const AvatarPreview = ({
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Digite o nome do usuário (ex: Beebop)"
+              placeholder="Digite o nome do usuário"
               className="habbo-input flex-1"
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {

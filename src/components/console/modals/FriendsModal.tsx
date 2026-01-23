@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Users, X, MessageSquare } from 'lucide-react';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface Friend {
   uniqueId: string;
@@ -16,6 +17,7 @@ interface FriendsModalProps {
 }
 
 export const FriendsModal: React.FC<FriendsModalProps> = ({ friends, isOpen, onClose }) => {
+  const { t } = useI18n();
   if (!isOpen) return null;
 
   return (
@@ -59,7 +61,7 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({ friends, isOpen, onC
                     <div className={`text-xs px-2 py-1 rounded ${
                       friend.online ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"
                     }`}>
-                      {friend.online ? '🟢 Online' : '🔴 Offline'}
+                      {friend.online ? `🟢 ${t('status.online')}` : `🔴 ${t('status.offline')}`}
                     </div>
                     <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1">
                       <MessageSquare className="w-3 h-3" />

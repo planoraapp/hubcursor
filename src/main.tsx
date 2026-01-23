@@ -7,7 +7,9 @@ import { AuthProvider } from '@/hooks/useAuth'
 import { I18nProvider } from '@/contexts/I18nContext'
 import { NotificationProvider, useNotification } from '@/hooks/useNotification'
 import { NotificationContainer } from '@/components/ui/notification'
-import { Analytics } from '@vercel/analytics/react'
+import { ChatNotificationProvider } from '@/contexts/ChatNotificationContext'
+import { useKeepOnline } from '@/hooks/useKeepOnline'
+// import { Analytics } from '@vercel/analytics/react' // Desativado
 import './index.css'
 import './styles/widget-skins.css'
 
@@ -146,6 +148,10 @@ const router = createBrowserRouter([
     element: withSuspense(HanditemCatalog),
   },
   {
+    path: "/avatar-editor",
+    element: <Navigate to="/ferramentas/avatar-editor" replace />,
+  },
+  {
     path: "/ferramentas/avatar-editor",
     element: withSuspense(AvatarEditor),
   },
@@ -165,15 +171,21 @@ const router = createBrowserRouter([
     path: "*",
     element: <NotFound />,
   },
-]);
+], {
+  future: {
+    v7_startTransition: true,
+  },
+});
 
 // Componente principal com notificações
 const AppWithNotifications = () => {
   const { notifications, addNotification, removeNotification } = useNotification();
+  // Manter usuário online enquanto usar o site
+  useKeepOnline();
 
   return (
     <>
-      <RouterProvider router={router} />
+      <RouterProvider router={router} future={{ v7_startTransition: true }} />
       <NotificationContainer 
         notifications={notifications}
         onClose={removeNotification}
@@ -189,8 +201,10 @@ root.render(
     <I18nProvider>
       <AuthProvider>
         <NotificationProvider>
-          <AppWithNotifications />
-          <Analytics />
+          <ChatNotificationProvider>
+            <AppWithNotifications />
+            {/* <Analytics /> */}
+          </ChatNotificationProvider>
         </NotificationProvider>
       </AuthProvider>
     </I18nProvider>

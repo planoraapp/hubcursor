@@ -1,46 +1,46 @@
 "use client";
 import {
   VisuallyHidden
-} from "./chunk-6QLJED3S.js";
+} from "./chunk-WLB37CB6.js";
 import {
   createCollection
-} from "./chunk-FTTBNHQ5.js";
+} from "./chunk-VBW2LMQW.js";
 import {
   Branch,
   Portal,
-  Root,
-  useControllableState
-} from "./chunk-PLKJLKDV.js";
+  Root
+} from "./chunk-NSTKCQZZ.js";
 import {
   Presence
-} from "./chunk-FPYOFELJ.js";
+} from "./chunk-7DUBBY2X.js";
 import {
-  composeEventHandlers
-} from "./chunk-XY4SNB44.js";
-import {
-  createContextScope,
-  useCallbackRef,
-  useLayoutEffect2
-} from "./chunk-TOL7XQBR.js";
+  useControllableState
+} from "./chunk-DGTJWPSE.js";
 import {
   Primitive,
+  composeEventHandlers,
+  createContextScope,
   dispatchDiscreteCustomEvent
-} from "./chunk-X27JR763.js";
+} from "./chunk-SWXSNV6O.js";
+import {
+  useCallbackRef,
+  useLayoutEffect2
+} from "./chunk-2LTPHA6P.js";
 import {
   useComposedRefs
-} from "./chunk-S4MXMZ6H.js";
+} from "./chunk-PF6AD44X.js";
 import {
   require_jsx_runtime
-} from "./chunk-G7Y47P27.js";
+} from "./chunk-67WGWSRF.js";
 import {
   require_react_dom
-} from "./chunk-UR7M4CTY.js";
+} from "./chunk-GZTOERBL.js";
 import {
   require_react
-} from "./chunk-FXJVXTVJ.js";
+} from "./chunk-2CLD7BNN.js";
 import {
   __toESM
-} from "./chunk-4B2QHNJT.js";
+} from "./chunk-WOOG5QLI.js";
 
 // node_modules/@radix-ui/react-toast/dist/index.mjs
 var React = __toESM(require_react(), 1);
@@ -249,7 +249,6 @@ var FocusProxy = React.forwardRef(
     return (0, import_jsx_runtime.jsx)(
       VisuallyHidden,
       {
-        "aria-hidden": true,
         tabIndex: 0,
         ...proxyProps,
         ref: forwardedRef,
@@ -273,10 +272,11 @@ var TOAST_SWIPE_END = "toast.swipeEnd";
 var Toast = React.forwardRef(
   (props, forwardedRef) => {
     const { forceMount, open: openProp, defaultOpen, onOpenChange, ...toastProps } = props;
-    const [open = true, setOpen] = useControllableState({
+    const [open, setOpen] = useControllableState({
       prop: openProp,
-      defaultProp: defaultOpen,
-      onChange: onOpenChange
+      defaultProp: defaultOpen ?? true,
+      onChange: onOpenChange,
+      caller: TOAST_NAME
     });
     return (0, import_jsx_runtime.jsx)(Presence, { present: forceMount || open, children: (0, import_jsx_runtime.jsx)(
       ToastImpl,
@@ -402,7 +402,6 @@ var ToastImpl = React.forwardRef(
           __scopeToast,
           role: "status",
           "aria-live": type === "foreground" ? "assertive" : "polite",
-          "aria-atomic": true,
           children: announceTextContent
         }
       ),
@@ -418,9 +417,6 @@ var ToastImpl = React.forwardRef(
             children: (0, import_jsx_runtime.jsx)(
               Primitive.li,
               {
-                role: "status",
-                "aria-live": "off",
-                "aria-atomic": true,
                 tabIndex: 0,
                 "data-state": open ? "open" : "closed",
                 "data-swipe-direction": context.swipeDirection,

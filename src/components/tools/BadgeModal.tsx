@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,7 @@ import { Search, X, RefreshCw } from 'lucide-react';
 import SimpleBadgeImage from './SimpleBadgeImage';
 import BadgeTooltip from './BadgeTooltip';
 import { useHabboApiBadges } from '@/hooks/useHabboApiBadges';
+import { useBadgeTranslation } from '@/hooks/useBadgeTranslations';
 
 // Interface para BadgeItem
 interface BadgeItem {
@@ -26,6 +27,50 @@ interface BadgeModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+// Componente individual para cada badge com tradução
+const BadgeGridItem: React.FC<{ badge: BadgeItem }> = ({ badge }) => {
+  const { data: translationData } = useBadgeTranslation({
+    badgeCode: badge.code
+  });
+
+  // Usar tradução se disponível, senão usar dados originais
+  const displayName = translationData?.success ? translationData.translation.name : badge.name;
+  const displayDescription = translationData?.success
+    ? translationData.translation.description || badge.description
+    : badge.description;
+
+  return (
+    <BadgeTooltip
+      key={`badge-${badge.code}-${badge.id}`}
+      code={badge.code}
+      name={displayName}
+      description={displayDescription}
+    >
+      <div
+        className="group cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg relative"
+        onClick={() => navigator.clipboard.writeText(badge.code)}
+      >
+        {/* Imagem do emblema - tamanho natural */}
+        <div className="relative bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200 group-hover:border-blue-300 flex items-center justify-center min-h-[40px] min-w-[40px]">
+          <SimpleBadgeImage
+            code={badge.code}
+            name={displayName || badge.code}
+            size="natural"
+            className=""
+          />
+
+          {/* Tag NEW para badges novos */}
+          {badge.isNew && (
+            <div className="absolute -top-1 -right-1 bg-green-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full z-10 shadow-md">
+              NEW
+            </div>
+          )}
+        </div>
+      </div>
+    </BadgeTooltip>
+  );
+};
 
 // Lista de hotéis com bandeiras
 const BADGE_HOTELS = [
@@ -70,7 +115,37 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
 
   const currentBadges = badgesData?.badges || [];
   const hasMore = badgesData?.metadata?.hasMore || false;
-  
+
+  // Filtrar por hotel
+  const filteredBadges = useMemo(() => {
+    let result = [...allBadges];
+
+    if (selectedHotel !== 'all') {
+      result = result.filter(badge => {
+        // Usar campo hotel se disponível
+        if (badge.hotel) {
+          return badge.hotel === selectedHotel;
+        }
+
+        // Fallback: inferir hotel pelo código
+        const code = badge.code.toUpperCase();
+        if (selectedHotel === 'com.br' && (code.startsWith('BR') || code.startsWith('PT'))) return true;
+        if (selectedHotel === 'com' && code.startsWith('US')) return true;
+        if (selectedHotel === 'es' && code.startsWith('ES')) return true;
+        if (selectedHotel === 'fr' && code.startsWith('FR')) return true;
+        if (selectedHotel === 'de' && code.startsWith('DE')) return true;
+        if (selectedHotel === 'it' && code.startsWith('IT')) return true;
+        if (selectedHotel === 'nl' && code.startsWith('NL')) return true;
+        if (selectedHotel === 'com.tr' && code.startsWith('TR')) return true;
+        if (selectedHotel === 'fi' && code.startsWith('FI')) return true;
+
+        return false;
+      });
+    }
+
+    return result;
+  }, [allBadges, selectedHotel]);
+
   // Acumular badges para scroll infinito
   useEffect(() => {
     if (currentBadges.length > 0) {
@@ -90,36 +165,6 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
     setAllBadges([]);
   }, [searchTerm, selectedCategory, selectedHotel]);
 
-  // Filtrar por hotel
-  const filteredBadges = useMemo(() => {
-    let result = [...allBadges];
-    
-    if (selectedHotel !== 'all') {
-      result = result.filter(badge => {
-        // Usar campo hotel se disponível
-        if (badge.hotel) {
-          return badge.hotel === selectedHotel;
-        }
-        
-        // Fallback: inferir hotel pelo código
-        const code = badge.code.toUpperCase();
-        if (selectedHotel === 'com.br' && (code.startsWith('BR') || code.startsWith('PT'))) return true;
-        if (selectedHotel === 'com' && code.startsWith('US')) return true;
-        if (selectedHotel === 'es' && code.startsWith('ES')) return true;
-        if (selectedHotel === 'fr' && code.startsWith('FR')) return true;
-        if (selectedHotel === 'de' && code.startsWith('DE')) return true;
-        if (selectedHotel === 'it' && code.startsWith('IT')) return true;
-        if (selectedHotel === 'nl' && code.startsWith('NL')) return true;
-        if (selectedHotel === 'com.tr' && code.startsWith('TR')) return true;
-        if (selectedHotel === 'fi' && code.startsWith('FI')) return true;
-        
-        return false;
-      });
-    }
-    
-    return result;
-  }, [allBadges, selectedHotel]);
-
   // Carregar mais badges (scroll infinito)
   const loadMore = useCallback(() => {
     if (hasMore && !isLoading && !isFetchingNextPage) {
@@ -127,9 +172,6 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
     }
   }, [hasMore, isLoading, isFetchingNextPage]);
 
-  const handleBadgeClick = (badge: BadgeItem) => {
-    navigator.clipboard.writeText(badge.code);
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -239,8 +281,8 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
           )}
         </div>
 
-        {/* Conteúdo com Scroll Infinito */}
-        <div 
+          {/* Conteúdo com Scroll Infinito */}
+        <div
           className="flex-1 overflow-y-auto"
           onScroll={(e) => {
             const target = e.target as HTMLElement;
@@ -256,42 +298,27 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
               <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
             </div>
           ) : (
-            <div className="grid grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2 p-2">
-              {filteredBadges.map((badge) => (
-                <BadgeTooltip
-                  key={`badge-${badge.code}-${badge.id}`}
-                  code={badge.code}
-                  name={badge.name}
-                  description={badge.description}
-                >
-                  <div
-                    className="relative cursor-pointer p-2 rounded-lg hover:bg-gray-100 transition-colors group"
-                    onClick={() => handleBadgeClick(badge)}
-                  >
-                    {/* Tag NEW para badges novos */}
-                    {badge.isNew && (
-                      <div className="absolute -top-1 -right-1 bg-green-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full z-10 shadow-md">
-                        NEW
-                      </div>
-                    )}
-                    <SimpleBadgeImage code={badge.code} name={badge.name} size="md" />
+            <div className="p-4">
+              {/* Grid de emblemas - apenas imagens lado a lado */}
+              <div className="grid grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-3">
+                {filteredBadges.map((badge) => (
+                  <BadgeGridItem key={`badge-${badge.code}-${badge.id}`} badge={badge} />
+                ))}
+
+                {/* Loading indicator para próxima página da API */}
+                {isFetchingNextPage && (
+                  <div className="col-span-full flex items-center justify-center py-4">
+                    <RefreshCw className="w-6 h-6 animate-spin text-blue-500" />
                   </div>
-                </BadgeTooltip>
-              ))}
-              
-              {/* Loading indicator para próxima página */}
-              {isFetchingNextPage && (
-                <div className="col-span-full flex items-center justify-center py-4">
-                  <RefreshCw className="w-6 h-6 animate-spin text-blue-500" />
-                </div>
-              )}
-              
-              {/* Mensagem quando não há mais badges */}
-              {!hasMore && filteredBadges.length > 0 && (
-                <div className="col-span-full text-center py-4 text-sm text-gray-500 volter-font">
-                  Todos os emblemas foram carregados ({filteredBadges.length} total)
-                </div>
-              )}
+                )}
+
+                {/* Mensagem quando não há mais badges */}
+                {!hasMore && filteredBadges.length > 0 && (
+                  <div className="col-span-full text-center py-4 text-sm text-gray-500 volter-font">
+                    Todos os emblemas foram carregados ({filteredBadges.length} total)
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

@@ -105,8 +105,7 @@ export const UserLoginModal = () => {
           <div className="bg-blue-50 p-3 rounded-lg">
             <p className="text-sm text-blue-800">
               <strong>Contas de teste:</strong><br/>
-              • habbohub (senha: 151092)<br/>
-              • beebop (senha: 290684)
+              • habbohub (senha: 151092)
             </p>
           </div>
         </div>

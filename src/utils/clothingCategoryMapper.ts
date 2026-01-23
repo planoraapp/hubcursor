@@ -8,20 +8,17 @@ export interface SWFTypeMapping {
 }
 
 export const SWF_TO_HABBO_CATEGORY_MAP: SWFTypeMapping[] = [
-  // Chapéus e Acessórios de Cabeça
-  { swfPrefix: 'hat_', habboCategory: 'ha', description: 'Chapéus' },
-  { swfPrefix: 'acc_head_', habboCategory: 'ha', description: 'Acessórios de Cabeça' },
-  
-  // Cabelos
-  { swfPrefix: 'hair_', habboCategory: 'hr', description: 'Cabelos/Penteados' },
-  
-  // Roupas do Corpo
-  { swfPrefix: 'shirt_', habboCategory: 'ch', description: 'Camisetas/Camisas' },
-  { swfPrefix: 'jacket_', habboCategory: 'cc', description: 'Casacos/Vestidos' },
-  
-  // Calças/Saias - Expandido baseado na ViaJovem
-  { swfPrefix: 'trousers_', habboCategory: 'lg', description: 'Calças' },
-  { swfPrefix: 'pants_', habboCategory: 'lg', description: 'Calças' },
+  // CORPO E ROSTO
+  { swfPrefix: 'face_', habboCategory: 'hd', description: 'Cabeças/Rostos' },
+  { swfPrefix: 'head_', habboCategory: 'hd', description: 'Cabeças/Rostos' },
+
+  // Roupas do Corpo - Base
+  { swfPrefix: 'shirt_', habboCategory: 'ch', description: 'Camisetas/Shirts' },
+  { swfPrefix: 'jacket_', habboCategory: 'cc', description: 'Casacos/Coats' },
+
+  // Calças/Saias - Expandido
+  { swfPrefix: 'trousers_', habboCategory: 'lg', description: 'Calças/Legs' },
+  { swfPrefix: 'pants_', habboCategory: 'lg', description: 'Calças/Legs' },
   { swfPrefix: 'bottoms_', habboCategory: 'lg', description: 'Calças/Saias' },
   { swfPrefix: 'skirt_', habboCategory: 'lg', description: 'Saias' },
   { swfPrefix: 'shorts_', habboCategory: 'lg', description: 'Shorts' },
@@ -35,20 +32,32 @@ export const SWF_TO_HABBO_CATEGORY_MAP: SWFTypeMapping[] = [
   { swfPrefix: 'kimono_', habboCategory: 'lg', description: 'Kimono (pernas)' },
   { swfPrefix: 'bikini_', habboCategory: 'lg', description: 'Biquíni (parte inferior)' },
   { swfPrefix: 'swimsuit_', habboCategory: 'lg', description: 'Maiô (parte inferior)' },
-  
-  // Acessórios
-  { swfPrefix: 'acc_eye_', habboCategory: 'ea', description: 'Acessórios de Olhos' },
-  { swfPrefix: 'acc_chest_', habboCategory: 'ca', description: 'Acessórios do Peito' },
-  { swfPrefix: 'acc_waist_', habboCategory: 'wa', description: 'Acessórios de Cintura' },
-  { swfPrefix: 'acc_print_', habboCategory: 'cp', description: 'Estampas' },
-  
-  // Rosto e Corpo (integrado)
-  { swfPrefix: 'face_', habboCategory: 'hd', description: 'Rostos' },
-  { swfPrefix: 'head_', habboCategory: 'hd', description: 'Rostos' },
-  
-  // Sapato (se existir)
-  { swfPrefix: 'shoes_', habboCategory: 'sh', description: 'Sapatos' },
+
+  // Acessórios de Cabeça
+  { swfPrefix: 'hat_', habboCategory: 'ha', description: 'Chapéus/Hats' },
+  { swfPrefix: 'acc_head_', habboCategory: 'he', description: 'Acessórios de Cabeça' },
+  { swfPrefix: 'hair_', habboCategory: 'hr', description: 'Cabelos/Hair' },
+
+  // Acessórios Oculares e Faciais
+  { swfPrefix: 'acc_eye_', habboCategory: 'ea', description: 'Óculos/Eye Accessories' },
+  { swfPrefix: 'acc_face_', habboCategory: 'fa', description: 'Acessórios Faciais/Face Accessories' },
+
+  // Acessórios de Corpo
+  { swfPrefix: 'acc_chest_', habboCategory: 'ca', description: 'Acessórios de Peito/Chest Accessories' },
+  { swfPrefix: 'acc_waist_', habboCategory: 'wa', description: 'Cintos/Waist Accessories' },
+  { swfPrefix: 'acc_print_', habboCategory: 'cp', description: 'Estampas/Prints' },
+
+  // Sapatos
+  { swfPrefix: 'shoes_', habboCategory: 'sh', description: 'Sapatos/Shoes' },
   { swfPrefix: 'footwear_', habboCategory: 'sh', description: 'Calçados' },
+
+  // Efeitos Especiais (FX)
+  { swfPrefix: 'fx', habboCategory: 'fx', description: 'Efeitos/Effects' },
+
+  // Items Especiais
+  { swfPrefix: 'hh_human_item', habboCategory: 'ri', description: 'Item Direito/Right Item' },
+  { swfPrefix: 'hh_pets', habboCategory: 'psd', description: 'Pets/Pet Shadow' },
+  { swfPrefix: 'hh_people_pool', habboCategory: 'ss', description: 'Piscina/Pool Shadow' },
 ];
 
 /**
@@ -60,8 +69,8 @@ export function mapSWFToHabboCategory(swfCode: string): string {
   // Remove espaços e converte para minúsculo
   const cleanCode = swfCode.toLowerCase().trim();
   
-  // 1. Verificar se já é uma categoria válida do Habbo (conforme estrutura ViaJovem)
-  const validCategories = ['hd', 'hr', 'ch', 'cc', 'lg', 'sh', 'ha', 'ea', 'fa', 'he', 'ca', 'wa', 'cp'];
+  // 1. Verificar se já é uma categoria válida do Habbo (conforme análise completa do figuremap.xml)
+  const validCategories = ['hd', 'bd', 'fc', 'ey', 'lh', 'rh', 'ch', 'ls', 'rs', 'cc', 'lc', 'rc', 'lg', 'sh', 'hr', 'hrb', 'ha', 'he', 'ea', 'fa', 'ca', 'wa', 'cp', 'ri', 'li', 'fx', 'sd', 'psd', 'pbd', 'phd', 'ptl', 'ss', 'bds', 'rhs', 'lhs'];
   if (validCategories.includes(cleanCode)) {
     return cleanCode;
   }
@@ -93,7 +102,7 @@ export function mapSWFToHabboCategory(swfCode: string): string {
  * Valida se uma categoria é válida para o Habbo
  */
 export function isValidHabboCategory(category: string): boolean {
-  const validCategories = ['hd', 'hr', 'ch', 'cc', 'lg', 'sh', 'ha', 'ea', 'fa', 'he', 'ca', 'wa', 'cp'];
+  const validCategories = ['hd', 'bd', 'fc', 'ey', 'lh', 'rh', 'ch', 'ls', 'rs', 'cc', 'lc', 'rc', 'lg', 'sh', 'hr', 'hrb', 'ha', 'he', 'ea', 'fa', 'ca', 'wa', 'cp', 'ri', 'li', 'fx', 'sd', 'psd', 'pbd', 'phd', 'ptl', 'ss', 'bds', 'rhs', 'lhs'];
   return validCategories.includes(category.toLowerCase());
 }
 
@@ -102,20 +111,59 @@ export function isValidHabboCategory(category: string): boolean {
  */
 export function getCategoryDescription(category: string): string {
   const descriptions: { [key: string]: string } = {
-    'hd': 'Rostos',
-    'hr': 'Cabelos',
-    'ch': 'Camisetas',
-    'cc': 'Casacos',
-    'lg': 'Calças',
-    'sh': 'Sapatos',
-    'ha': 'Acess. Cabelo',
-    'ea': 'Acessórios',
-    'fa': 'Rosto',
-    'he': 'Acess. Cabelo',
-    'ca': 'Acessórios',
-    'wa': 'Cintura',
-    'cp': 'Estampas'
+    // CORPO E ROSTO
+    'hd': 'Cabeças/Rostos',
+    'bd': 'Corpo/Base',
+    'fc': 'Rosto/Bochechas',
+    'ey': 'Olhos',
+    'lh': 'Mão Esquerda',
+    'rh': 'Mão Direita',
+
+    // ROUPAS SUPERIORES
+    'ch': 'Camisetas/Shirts',
+    'ls': 'Manga Esquerda',
+    'rs': 'Manga Direita',
+    'cc': 'Casacos/Coats',
+    'lc': 'Manga Esquerda Casaco',
+    'rc': 'Manga Direita Casaco',
+
+    // ROUPAS INFERIORES
+    'lg': 'Calças/Legs',
+    'sh': 'Sapatos/Shoes',
+
+    // ACESSÓRIOS DE CABEÇA
+    'hr': 'Cabelos/Hair',
+    'hrb': 'Cabelo Traseiro',
+    'ha': 'Chapéus/Hats',
+    'he': 'Acessórios de Cabeça',
+
+    // ACESSÓRIOS FACIAIS E OCULARES
+    'ea': 'Óculos/Eye Accessories',
+    'fa': 'Acessórios Faciais',
+
+    // ACESSÓRIOS DE CORPO
+    'ca': 'Acessórios de Peito',
+    'wa': 'Cintos/Waist Accessories',
+    'cp': 'Estampas/Prints',
+
+    // ITENS E EFEITOS ESPECIAIS
+    'ri': 'Item Direito',
+    'li': 'Item Esquerdo',
+    'fx': 'Efeitos/Effects',
+    'sd': 'Sombra/Shadow',
+
+    // PETS (ANIMAIS DE ESTIMAÇÃO)
+    'psd': 'Sombra do Pet',
+    'pbd': 'Corpo do Pet',
+    'phd': 'Cabeça do Pet',
+    'ptl': 'Cauda do Pet',
+
+    // ITENS DE PISCINA
+    'ss': 'Sombra da Piscina',
+    'bds': 'Sombra do Corpo',
+    'rhs': 'Sombra Mão Direita',
+    'lhs': 'Sombra Mão Esquerda'
   };
-  
+
   return descriptions[category.toLowerCase()] || 'Desconhecido';
 }

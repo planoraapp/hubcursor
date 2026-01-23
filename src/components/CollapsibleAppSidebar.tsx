@@ -14,18 +14,23 @@ import {
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/contexts/I18nContext';
+import { useChatNotifications } from '@/contexts/ChatNotificationContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { HabboUserPanel } from '@/components/HabboUserPanel';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 
 function CollapsibleAppSidebarComponent() {
   const location = useLocation();
   const { habboAccount, isLoggedIn } = useAuth();
-  const { t } = useI18n();
+  const { t, language, setLanguage } = useI18n();
+  const { hasNotifications, unreadCount } = useChatNotifications();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
+  const { toast } = useToast();
+  
   const isMobileViewport = useIsMobile();
   const [isHeaderHidden, setIsHeaderHidden] = React.useState(false);
   const lastScrollY = React.useRef(0);
@@ -57,6 +62,42 @@ function CollapsibleAppSidebarComponent() {
 
   const isAdmin = habboAccount?.habbo_name?.toLowerCase() === 'habbohub' && habboAccount?.is_admin === true;
 
+  // Detectar se há modais abertos
+  const [hasModalOpen, setHasModalOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkForModals = () => {
+      // Verificar se há DialogOverlay ou DialogContent com data-state="open"
+      // Radix UI usa diferentes seletores
+      const dialogOverlays = document.querySelectorAll('[role="dialog"][data-state="open"], [data-radix-dialog-overlay][data-state="open"]');
+      const dialogContents = document.querySelectorAll('[data-radix-dialog-content][data-state="open"]');
+      // Também verificar por elementos com z-50 que são tipicamente modais
+      const modalElements = document.querySelectorAll('[data-state="open"][class*="z-50"]');
+      const hasOpen = dialogOverlays.length > 0 || dialogContents.length > 0 || modalElements.length > 0;
+      setHasModalOpen(hasOpen);
+    };
+
+    // Verificar inicialmente
+    checkForModals();
+
+    // Observar mudanças no DOM para detectar modais abertos/fechados
+    const observer = new MutationObserver(checkForModals);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['data-state', 'role']
+    });
+
+    // Também verificar periodicamente para garantir detecção
+    const interval = setInterval(checkForModals, 100);
+
+    return () => {
+      observer.disconnect();
+      clearInterval(interval);
+    };
+  }, []);
+
   const removeAccents = (text: string) => {
     return text
       .replace(/[áàâã]/g, 'a')
@@ -73,9 +114,77 @@ function CollapsibleAppSidebarComponent() {
       .replace(/[Ç]/g, 'C');
   };
 
+  const handleLanguageChange = (newLanguage: 'pt' | 'en' | 'es') => {
+    if (newLanguage !== language) {
+      setLanguage(newLanguage);
+      
+      // Nomes dos idiomas traduzidos em cada idioma
+      const languageNames: Record<string, Record<string, string>> = {
+        'pt': {
+          'pt': 'Português',
+          'en': 'Inglês',
+          'es': 'Espanhol'
+        },
+        'en': {
+          'pt': 'Portuguese',
+          'en': 'English',
+          'es': 'Spanish'
+        },
+        'es': {
+          'pt': 'Portugués',
+          'en': 'Inglés',
+          'es': 'Español'
+        }
+      };
+      
+      // Usar o novo idioma para a tradução
+      const tempT = (key: string, params?: Record<string, string | number>) => {
+        const translations: Record<string, Record<string, string>> = {
+          'pt': {
+            'toast.languageChanged': 'Idioma alterado',
+            'toast.languageChangedTo': 'O idioma foi alterado para {language}'
+          },
+          'en': {
+            'toast.languageChanged': 'Language changed',
+            'toast.languageChangedTo': 'Language has been changed to {language}'
+          },
+          'es': {
+            'toast.languageChanged': 'Idioma cambiado',
+            'toast.languageChangedTo': 'El idioma ha sido cambiado a {language}'
+          }
+        };
+        
+        let text = translations[newLanguage]?.[key] || key;
+        if (params) {
+          Object.entries(params).forEach(([paramKey, paramValue]) => {
+            text = text.replace(`{${paramKey}}`, String(paramValue));
+          });
+        }
+        return text;
+      };
+      
+      toast({
+        title: `✅ ${tempT('toast.languageChanged')}`,
+        description: tempT('toast.languageChangedTo', { language: languageNames[newLanguage][newLanguage] }),
+      });
+    }
+  };
+
+  // Calcular ícone do console baseado no estado de notificações
+  const consoleIcon = React.useMemo(() => {
+    const iconPath = hasNotifications 
+      ? '/assets/2367_HabboFriendBarCom_icon_friendlist_notify_1_png.png' 
+      : '/assets/console/consoleoff.gif';
+    return iconPath;
+  }, [hasNotifications, unreadCount]);
+
   const menuItems = [
     { nameKey: 'nav.home', path: '/', icon: '/assets/buttons/homebutton.png' },
-    { nameKey: 'nav.console', path: '/console', icon: '/assets/console/consoleoff.gif' },
+    { 
+      nameKey: 'nav.console', 
+      path: '/console', 
+      icon: consoleIcon
+    },
     { nameKey: 'nav.homes', path: '/homes', icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home.gif' },
     { nameKey: 'nav.journal', path: '/journal', icon: '/assets/journal/news.png' },
     { nameKey: 'nav.tools', path: '/ferramentas', icon: '/assets/ferramentas.png' },
@@ -360,36 +469,92 @@ function CollapsibleAppSidebarComponent() {
     <div className="relative">
       <Sidebar className="bg-[#f5f5dc] border-r-2 border-black" collapsible="icon">
         <SidebarHeader className="px-2 pt-6 pb-2">
-          <div className="flex w-full items-center justify-center">
-            {isCollapsed ? (
-              <img
-                src="/assets/hub.gif"
-                alt="Hub"
-                className="h-auto max-h-16 w-auto max-w-full"
-                style={{
-                  imageRendering: 'pixelated',
-                  objectFit: 'contain',
-                }}
-                onError={(event) => {
-                  const target = event.currentTarget as HTMLImageElement;
-                  target.src = '/assets/hub.gif';
-                }}
-              />
-            ) : (
-              <img
-                src="/assets/hubbeta.gif"
-                alt="Habbo Hub"
-                className="h-auto w-auto"
-                style={{
-                  imageRendering: 'pixelated',
-                  objectFit: 'contain',
-                  maxHeight: '3.6rem',
-                }}
-                onError={(event) => {
-                  const target = event.currentTarget as HTMLImageElement;
-                  target.src = '/assets/hubbeta.gif';
-                }}
-              />
+          <div className="flex flex-col gap-2">
+            <div className="flex w-full items-center justify-center">
+              {isCollapsed ? (
+                <img
+                  src="/assets/hub.gif"
+                  alt="Hub"
+                  className="h-auto max-h-16 w-auto max-w-full"
+                  style={{
+                    imageRendering: 'pixelated',
+                    objectFit: 'contain',
+                  }}
+                  onError={(event) => {
+                    const target = event.currentTarget as HTMLImageElement;
+                    target.src = '/assets/hub.gif';
+                  }}
+                />
+              ) : (
+                <img
+                  src="/assets/hubbeta.gif"
+                  alt="Habbo Hub"
+                  className="h-auto w-auto"
+                  style={{
+                    imageRendering: 'pixelated',
+                    objectFit: 'contain',
+                    maxHeight: '3.6rem',
+                  }}
+                  onError={(event) => {
+                    const target = event.currentTarget as HTMLImageElement;
+                    target.src = '/assets/hubbeta.gif';
+                  }}
+                />
+              )}
+            </div>
+            
+            {/* Seleção de Idioma */}
+            {!isCollapsed && (
+              <div className="flex gap-2 justify-center items-center">
+                <button
+                  onClick={() => handleLanguageChange('pt')}
+                  className={`rounded transition-all ${
+                    language === 'pt' 
+                      ? 'bg-yellow-300/70' 
+                      : 'opacity-60 hover:opacity-100'
+                  }`}
+                  title="Português"
+                >
+                  <img 
+                    src="/flags/flagbrazil.png" 
+                    alt="Português" 
+                    className="w-auto object-contain"
+                    style={{ imageRendering: 'pixelated', height: 'auto', maxHeight: 'none', background: 'transparent' }}
+                  />
+                </button>
+                <button
+                  onClick={() => handleLanguageChange('en')}
+                  className={`rounded transition-all ${
+                    language === 'en' 
+                      ? 'bg-yellow-300/70' 
+                      : 'opacity-60 hover:opacity-100'
+                  }`}
+                  title="English"
+                >
+                  <img 
+                    src="/flags/flagcom.png" 
+                    alt="English" 
+                    className="w-auto object-contain"
+                    style={{ imageRendering: 'pixelated', height: 'auto', maxHeight: 'none', background: 'transparent' }}
+                  />
+                </button>
+                <button
+                  onClick={() => handleLanguageChange('es')}
+                  className={`rounded transition-all ${
+                    language === 'es' 
+                      ? 'bg-yellow-300/70' 
+                      : 'opacity-60 hover:opacity-100'
+                  }`}
+                  title="Español"
+                >
+                  <img 
+                    src="/flags/flagspain.png" 
+                    alt="Español" 
+                    className="w-auto object-contain"
+                    style={{ imageRendering: 'pixelated', height: 'auto', maxHeight: 'none', background: 'transparent' }}
+                  />
+                </button>
+              </div>
             )}
           </div>
         </SidebarHeader>
@@ -464,7 +629,9 @@ function CollapsibleAppSidebarComponent() {
         className="hidden md:flex fixed top-24 z-[60] h-8 w-6 items-center justify-center rounded-r-md border-l-0 border-r-2 border-black bg-[#f5f5dc] transition-all duration-200 hover:bg-yellow-200/70"
         style={{ 
           boxShadow: '2px 0 4px rgba(0,0,0,0.1)',
-          left: isCollapsed ? 'calc(6rem - 12px)' : 'calc(16rem - 12px)'
+          left: isCollapsed ? 'calc(6rem - 12px)' : 'calc(16rem - 12px)',
+          opacity: hasModalOpen ? 0.3 : 1,
+          pointerEvents: hasModalOpen ? 'none' : 'auto'
         }}
       >
         {isCollapsed ? (
@@ -477,5 +644,6 @@ function CollapsibleAppSidebarComponent() {
   );
 }
 
-export const CollapsibleAppSidebar = React.memo(CollapsibleAppSidebarComponent);
+// Removido React.memo para garantir que atualizações do contexto sejam refletidas imediatamente
+export const CollapsibleAppSidebar = CollapsibleAppSidebarComponent;
 CollapsibleAppSidebar.displayName = 'CollapsibleAppSidebar';

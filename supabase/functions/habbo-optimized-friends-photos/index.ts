@@ -5,6 +5,39 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Função auxiliar para buscar nome do quarto via API
+async function getRoomName(roomId: string | number, hotelDomain: string): Promise<string | null> {
+  try {
+    const url = `https://www.habbo.${hotelDomain}/api/public/rooms/${roomId}`;
+    console.log(`[habbo-optimized-friends-photos] 🔍 Buscando nome do quarto ${roomId} no hotel ${hotelDomain}`);
+    
+    const response = await fetch(url, {
+      headers: { 
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) HabboHubBot/1.0'
+      }
+    });
+    
+    if (response.ok) {
+      const roomData = await response.json();
+      if (roomData && roomData.name) {
+        console.log(`[habbo-optimized-friends-photos] ✅ Nome do quarto ${roomId} encontrado: "${roomData.name}"`);
+        return roomData.name;
+      } else {
+        console.log(`[habbo-optimized-friends-photos] ⚠️ Quarto ${roomId} retornou sem nome`);
+      }
+    } else if (response.status === 404) {
+      // Quarto não existe mais - retornar null para usar fallback
+      console.log(`[habbo-optimized-friends-photos] ⚠️ Quarto ${roomId} não encontrado (404)`);
+    } else {
+      console.log(`[habbo-optimized-friends-photos] ❌ Erro ${response.status} ao buscar quarto ${roomId}: ${response.statusText}`);
+    }
+  } catch (error) {
+    console.error(`[habbo-optimized-friends-photos] ❌ Erro de rede ao buscar quarto ${roomId}:`, error);
+  }
+  return null;
+}
+
 if (import.meta.main) {
   serve(async (req) => {
     if (req.method === "OPTIONS") {
@@ -80,7 +113,34 @@ if (import.meta.main) {
         // Processar batch em paralelo
         await Promise.all(batch.map(async (friend) => {
           try {
-            const friendPhotosUrl = `https://www.habbo.${normalizedHotel === "br" ? "com.br" : normalizedHotel}/extradata/public/users/${friend.uniqueId}/photos`;
+            // Garantir que friend.uniqueId esteja presente
+            // Se não estiver, tentar buscar o usuário por nome para obter o uniqueId
+            let friendUniqueId = friend.uniqueId;
+            
+            if (!friendUniqueId && friend.name) {
+              console.log(`[habbo-optimized-friends-photos] ⚠️ uniqueId ausente para ${friend.name}, tentando buscar...`);
+              try {
+                const userApiUrl = `https://www.habbo.${normalizedHotel === "br" ? "com.br" : normalizedHotel}/api/public/users?name=${encodeURIComponent(friend.name)}`;
+                const userResponse = await fetch(userApiUrl);
+                if (userResponse.ok) {
+                  const userData = await userResponse.json();
+                  friendUniqueId = userData.uniqueId;
+                  // Atualizar o objeto friend com o uniqueId encontrado
+                  friend.uniqueId = friendUniqueId;
+                  console.log(`[habbo-optimized-friends-photos] ✅ uniqueId encontrado para ${friend.name}: ${friendUniqueId}`);
+                }
+              } catch (fetchError) {
+                console.log(`[habbo-optimized-friends-photos] Não foi possível buscar uniqueId para ${friend.name}`);
+              }
+            }
+            
+            // Se ainda não tiver uniqueId, pular este amigo
+            if (!friendUniqueId) {
+              console.warn(`[habbo-optimized-friends-photos] ⚠️ Não foi possível obter uniqueId para ${friend.name}, pulando...`);
+              return;
+            }
+            
+            const friendPhotosUrl = `https://www.habbo.${normalizedHotel === "br" ? "com.br" : normalizedHotel}/extradata/public/users/${friendUniqueId}/photos`;
             const photosResponse = await fetch(friendPhotosUrl);
             
             if (photosResponse.ok) {
@@ -123,7 +183,7 @@ if (import.meta.main) {
                   
                   return {
                     photo,
-                    friend,
+                    friend: { ...friend, uniqueId: friendUniqueId }, // Garantir que uniqueId esteja presente
                     realTimestamp: timestamp
                   };
                 });
@@ -173,9 +233,54 @@ if (import.meta.main) {
       
       console.log(`[habbo-optimized-friends-photos] Pagination: showing photos ${startIndex} to ${endIndex} of ${photosToShow.length}`);
       
-      // 8. Converter para formato final
-      const finalPhotos = paginatedPhotos.map((item) => {
+      // 8. Converter para formato final (primeiro mapear sem buscar nomes de quartos)
+      const photosWithRoomIds = paginatedPhotos.map((item, index) => {
         const { photo, friend, realTimestamp } = item;
+        
+        // DEBUG: Log primeiro objeto photo para ver estrutura
+        if (index === 0) {
+          console.log(`[habbo-optimized-friends-photos] Sample photo object keys:`, Object.keys(photo));
+          console.log(`[habbo-optimized-friends-photos] Sample photo.room_id:`, photo.room_id);
+          console.log(`[habbo-optimized-friends-photos] Sample photo.roomId:`, photo.roomId);
+          console.log(`[habbo-optimized-friends-photos] Sample photo.room:`, photo.room);
+          console.log(`[habbo-optimized-friends-photos] Sample photo.roomName:`, photo.roomName);
+        }
+        
+        // DEBUG: Verificar se friend.uniqueId está presente (especialmente para Beebop)
+        if (!friend.uniqueId && friend.name) {
+          console.warn(`[habbo-optimized-friends-photos] ⚠️ friend.uniqueId ausente para ${friend.name}. Objeto friend:`, {
+            name: friend.name,
+            uniqueId: friend.uniqueId,
+            hasUniqueId: 'uniqueId' in friend,
+            allKeys: Object.keys(friend)
+          });
+        }
+        
+        // Tentar obter room_id de diferentes fontes (priorizar room_id com underscore como na API global)
+        let roomId: string | number | null = photo.room_id || photo.roomId || photo.room?.id || photo.room?.room_id || null;
+        
+        // Converter para string se existir
+        if (roomId !== null && roomId !== undefined) {
+          roomId = String(roomId);
+        }
+        
+        // Formatar roomName: se houver room_id, usar "Room {room_id}", senão usar roomName original ou fallback
+        const roomName = roomId ? `Room ${roomId}` : (photo.roomName || "Quarto do jogo");
+        
+        // Garantir que userUniqueId sempre esteja presente
+        // Se friend.uniqueId não estiver disponível, tentar extrair da URL da foto ou usar undefined
+        let userUniqueId = friend.uniqueId;
+        
+        // Se uniqueId não estiver presente, tentar extrair da URL da foto (formato: /hhbr/ ou /hhXX-)
+        if (!userUniqueId && photo.url) {
+          const urlMatch = photo.url.match(/\/(hh[a-z]{2}(?:-[a-f0-9]+)?)\//);
+          if (urlMatch && urlMatch[1]) {
+            userUniqueId = urlMatch[1];
+            console.log(`[habbo-optimized-friends-photos] ✅ Extraído uniqueId da URL para ${friend.name}: ${userUniqueId}`);
+          }
+        }
+        
+        const hotelDomain = normalizedHotel === "br" ? "com.br" : normalizedHotel;
         
         return {
           id: photo.id,
@@ -184,12 +289,50 @@ if (import.meta.main) {
           date: new Date(realTimestamp).toLocaleDateString("pt-BR"),
           likes: photo.likesCount || 0,
           userName: friend.name,
-          userAvatar: `https://www.habbo.${normalizedHotel === "br" ? "com.br" : normalizedHotel}/habbo-imaging/avatarimage?figure=${friend.figureString}&size=s&direction=2&head_direction=3&action=std`,
+          userUniqueId: userUniqueId, // Incluir uniqueId do usuário para navegação (com fallback)
+          userAvatar: `https://www.habbo.${hotelDomain}/habbo-imaging/avatarimage?figure=${friend.figureString}&size=s&direction=2&head_direction=3&action=std`,
           timestamp: realTimestamp,
-          roomName: photo.roomName || "Quarto do jogo",
-          caption: photo.caption || ""
+          roomName: roomName,
+          roomId: roomId, // Incluir roomId como string se disponível
+          caption: photo.caption || "",
+          _roomIdToFetch: roomId || undefined, // Para busca posterior
+          _hotelDomain: hotelDomain // Para busca posterior
         };
       });
+
+      // 9. Buscar nomes dos quartos em paralelo (limitando concorrência)
+      console.log(`[habbo-optimized-friends-photos] Buscando nomes de quartos para ${photosWithRoomIds.length} fotos...`);
+      const CONCURRENT_ROOM_FETCHES = 5;
+      const roomFetchPromises: Promise<void>[] = [];
+      let roomsFound = 0;
+      let roomsNotFound = 0;
+      let roomsError = 0;
+      
+      for (let i = 0; i < photosWithRoomIds.length; i += CONCURRENT_ROOM_FETCHES) {
+        const batch = photosWithRoomIds.slice(i, i + CONCURRENT_ROOM_FETCHES);
+        const batchPromises = batch.map(async (photo: any) => {
+          if (photo._roomIdToFetch && photo._hotelDomain) {
+            const roomName = await getRoomName(photo._roomIdToFetch, photo._hotelDomain);
+            if (roomName) {
+              photo.roomName = roomName;
+              roomsFound++;
+            } else {
+              roomsNotFound++;
+            }
+          } else {
+            roomsError++;
+          }
+        });
+        roomFetchPromises.push(...batchPromises);
+      }
+      
+      // Aguardar todas as buscas de nomes de quartos
+      await Promise.allSettled(roomFetchPromises);
+      
+      console.log(`[habbo-optimized-friends-photos] Resultado da busca de nomes: ${roomsFound} encontrados, ${roomsNotFound} não encontrados, ${roomsError} sem roomId`);
+      
+      // Remover campos auxiliares antes de retornar
+      const finalPhotos = photosWithRoomIds.map(({ _roomIdToFetch, _hotelDomain, ...photo }) => photo);
 
       const hasMore = endIndex < photosToShow.length;
       const nextOffset = hasMore ? endIndex : 0;

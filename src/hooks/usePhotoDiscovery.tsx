@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useUnifiedPhotos } from './useUnifiedAPI';
 
 export const usePhotoDiscovery = () => {
-  const [username, setUsername] = useState<string>('Beebop');
+  const [username, setUsername] = useState<string>('');
   const [hotel, setHotel] = useState<string>('br');
   
   const { 
@@ -17,7 +17,7 @@ export const usePhotoDiscovery = () => {
     enabled: false // Don't auto-fetch
   });
 
-  const discoverPhotosForUser = async (newUsername: string = 'Beebop', newHotel: string = 'br') => {
+  const discoverPhotosForUser = async (newUsername: string = '', newHotel: string = 'br') => {
     setUsername(newUsername);
     setHotel(newHotel);
     
