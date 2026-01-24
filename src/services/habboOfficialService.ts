@@ -14,6 +14,9 @@ export interface HabboPalette {
   }>;
 }
 
+/** Tier do sapato no editor oficial: nonhc, hc, sell, nft, ltd */
+export type ShoeTier = 'nonhc' | 'hc' | 'sell' | 'nft' | 'ltd';
+
 export interface HabboClothingItem {
   id: string;
   figureId: string;
@@ -25,6 +28,8 @@ export interface HabboClothingItem {
   imageUrl: string;
   isSelectable: boolean;
   isColorable: boolean;
+  /** Apenas para sh: agrupamento no grid (nonhc, hc, sell, nft, ltd) */
+  tier?: ShoeTier;
 }
 
 export interface HabboCategory {
@@ -91,12 +96,19 @@ export class HabboOfficialService {
 
       const data = {
         palettes,
-        categories: mockData.categories.map((cat: any) => ({
-          ...cat,
-          // Preencher cores disponíveis para cada categoria (incluir todas as cores - abordagem HabboNews)
-          colors: palettes.find(p => p.id === cat.paletteId)?.colors
-            .map((c: any) => c.id) || []
-        }))
+        categories: mockData.categories.map((cat: any) => {
+          const paletteId = HabboOfficialService.CANONICAL_PALETTE_ID[cat.id] ?? cat.paletteId ?? '3';
+          let items = cat.items;
+          if (cat.id === 'sh') {
+            items = this.buildOfficialShoesItems();
+          }
+          return {
+            ...cat,
+            paletteId,
+            colors: (palettes.find((p: any) => p.id === paletteId)?.colors ?? []).map((c: any) => c.id),
+            items
+          };
+        })
       };
 
       this.cache.set(cacheKey, {
@@ -110,8 +122,9 @@ export class HabboOfficialService {
 
     } catch (error) {
       console.warn('❌ Erro ao carregar dados do arquivo, usando fallback:', error);
-      // Fallback para dados hardcoded se o arquivo não existir
       const data = this.getFallbackMockData();
+      const shCat = data.categories.find((c: any) => c.id === 'sh');
+      if (shCat) shCat.items = this.buildOfficialShoesItems();
       this.cache.set(cacheKey, {
         data,
         timestamp: Date.now()
@@ -3992,11 +4005,11 @@ export class HabboOfficialService {
         id: 'hr',
         name: 'hr',
         displayName: 'Cabelo',
-        paletteId: '3',
+        paletteId: '2',
         items: [
-          { id: 'hr-100', figureId: '100', category: 'hr', gender: 'M', club: '0', colorable: '1', selectable: '1', imageUrl: this.generateThumbnailUrl('hr', '100', '1408'), isSelectable: true, isColorable: true }
+          { id: 'hr-100', figureId: '100', category: 'hr', gender: 'M', club: '0', colorable: '1', selectable: '1', imageUrl: this.generateThumbnailUrl('hr', '100', '40'), isSelectable: true, isColorable: true }
         ],
-        colors: ['1408', '90', '91', '66', '68']
+        colors: ['40', '34', '35', '36', '31', '32', '37', '38', '43', '46', '47', '48', '44', '39', '45', '42']
       },
       {
         id: 'ch',
@@ -4049,15 +4062,45 @@ export class HabboOfficialService {
   }
 
   /**
+   * Mapeamento canônico paleta por categoria (figuredata: hd→1, hr→2, ch/cc/cp/etc→3).
+   * Garante que camisetas (ch) e demais categorias usem sempre a paleta correta.
+   */
+  private static readonly CANONICAL_PALETTE_ID: Record<string, string> = {
+    hd: '1', hr: '2',
+    ch: '3', cc: '3', cp: '3', ca: '3', ea: '3', fa: '3', ha: '3', he: '3',
+    lg: '3', sh: '3', wa: '3', ls: '3', rs: '3', lc: '3', rc: '3',
+  };
+
+  /** Lista canônica de sapatos do editor oficial (habbo.com), por gênero e tier. */
+  private static readonly OFFICIAL_SHOES_CANONICAL: Record<'M' | 'F', Record<ShoeTier, string[]>> = {
+    M: {
+      nonhc: ['290', '295', '300', '305', '905', '906', '908', '3068', '3115'],
+      hc: ['3016', '3027', '3035', '3089', '3154', '3206', '3252', '3275'],
+      sell: ['3338', '3348', '3354', '3375', '3383', '3419', '3435', '3467', '3524', '3587', '3595', '3611', '3619', '3621', '3687', '3693', '3719', '3720', '3783', '4016', '4030', '4064', '4065', '4112', '4159'],
+      nft: [],
+      ltd: [],
+    },
+    F: {
+      nonhc: ['725', '730', '735', '740', '905', '906', '907', '908', '3068', '3115'],
+      hc: ['3016', '3027', '3035', '3064', '3089', '3154', '3180', '3184', '3206', '3252', '3275', '3277'],
+      sell: ['3338', '3348', '3354', '3375', '3383', '3419', '3435', '3467', '3524', '3587', '3595', '3611', '3619', '3621', '3687', '3693', '3719', '3720', '3783', '4016', '4030', '4064', '4065', '4112', '4159'],
+      nft: [],
+      ltd: [],
+    },
+  };
+
+  /**
    * Obtém paleta de cores para uma categoria
    */
   getPaletteForCategory(categoryId: string): HabboPalette | null {
     if (!this.habboData) return null;
 
     const category = this.habboData.categories.find(cat => cat.id === categoryId);
-    if (!category) return null;
+    const paletteId = HabboOfficialService.CANONICAL_PALETTE_ID[categoryId]
+      ?? (category?.paletteId as string)
+      ?? '3';
 
-    return this.habboData.palettes.find(palette => palette.id === category.paletteId) || null;
+    return this.habboData.palettes.find(palette => palette.id === paletteId) || null;
   }
 
   /**
@@ -4074,8 +4117,10 @@ export class HabboOfficialService {
       return ['7']; // Cor padrão do Habbo
     }
 
-    // Obtém a paleta da categoria
-    const palette = this.habboData.palettes.find(p => p.id === category.paletteId);
+    const paletteId = HabboOfficialService.CANONICAL_PALETTE_ID[item.category]
+      ?? (category.paletteId as string)
+      ?? '3';
+    const palette = this.habboData.palettes.find(p => p.id === paletteId);
     if (!palette) return [];
 
     // Incluir todas as cores disponíveis (abordagem HabboNews)
@@ -4091,6 +4136,38 @@ export class HabboOfficialService {
   isColorValidForItem(item: HabboClothingItem, colorId: string): boolean {
     const validColors = this.getColorsForItem(item);
     return validColors.includes(colorId);
+  }
+
+  /**
+   * Constrói itens de sapatos a partir da lista canônica do editor oficial (figuremap/figuredata).
+   * Ordem: nonhc, hc, sell, nft; dentro de cada tier, ordem oficial; M e F com figureIds específicos.
+   */
+  private buildOfficialShoesItems(): HabboClothingItem[] {
+    const out: HabboClothingItem[] = [];
+    const tiers: ShoeTier[] = ['nonhc', 'hc', 'sell', 'nft', 'ltd'];
+    for (const gender of ['M', 'F'] as const) {
+      const color = gender === 'M' ? '80' : '68';
+      for (const tier of tiers) {
+        const figureIds = HabboOfficialService.OFFICIAL_SHOES_CANONICAL[gender][tier];
+        for (const figureId of figureIds) {
+          const id = `sh-${figureId}`;
+          out.push({
+            id,
+            figureId,
+            category: 'sh',
+            gender,
+            club: tier === 'hc' ? '2' : '0',
+            colorable: '1',
+            selectable: '1',
+            imageUrl: this.generateItemThumbnailUrl('sh', figureId, color, gender),
+            isSelectable: true,
+            isColorable: true,
+            tier,
+          });
+        }
+      }
+    }
+    return out;
   }
 
   /**

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Slider } from '@/components/ui/slider';
 import {
   Download,
   RotateCcw,
@@ -47,11 +48,40 @@ import {
   Heart,
   Radio,
   Cherry,
-  Apple
+  Apple,
+  Save,
+  MoveVertical
 } from 'lucide-react';
 import { habboOfficialService, type HabboCategory, type HabboClothingItem, type AvatarState } from '@/services/habboOfficialService';
 import { useHabboPublicAPI } from '@/hooks/useHabboPublicAPI';
 import { toast } from 'sonner';
+import { HABBO_ITEM_NAMES } from '../../../habbo_item_names';
+
+/** Resolve o lib do item. Tenta "category-figureId" direto; se não houver, busca por figureId (ex.: hd-4268 → ha-4268). */
+function getLibForItem(itemId: string): string | undefined {
+  const direct = HABBO_ITEM_NAMES[itemId];
+  if (direct) return direct;
+  const dash = itemId.indexOf('-');
+  if (dash === -1) return undefined;
+  const figureId = itemId.slice(dash + 1);
+  if (!figureId) return undefined;
+  const suffix = `-${figureId}`;
+  for (const [key, lib] of Object.entries(HABBO_ITEM_NAMES)) {
+    if (key.endsWith(suffix)) return lib;
+  }
+  return undefined;
+}
+
+function isNftByLib(itemId: string): boolean {
+  const lib = getLibForItem(itemId);
+  return !!lib && (lib.includes('_nft') || lib.toLowerCase().includes('nft'));
+}
+
+/** Mesmo lookup que NFT (getLibForItem + fallback por figureId): badge LTD para itens com _ltd ou ltd no lib. */
+function isLtdByLib(itemId: string): boolean {
+  const lib = getLibForItem(itemId);
+  return !!lib && (lib.includes('_ltd') || lib.toLowerCase().includes('ltd'));
+}
 
 // Componente para imagem com fallback
 const ClothingImageWithFallback = ({ itemId, category, gender, color, alt, verticalPosition = 50, direction = 2, headDirection = 2 }: {
@@ -166,6 +196,9 @@ const CATEGORIES = [
   { id: 'fx', name: 'Efeitos', icon: Zap, image: '/assets/Acessorios1.png' },
   { id: 'sd', name: 'Sombra', icon: Circle, image: '/assets/Acessorios1.png' }
 ];
+
+// Categorias que exibem paleta mesmo sem itens coloráveis; o grid usa primaryColor para o preview
+const SHOW_PALETTE_WITHOUT_COLORABLE = ['hd', 'cc', 'ca', 'cp', 'wa'] as const;
 
 // Helper para verificar se itemData é HabboClothingItem
 const isHabboClothingItem = (item: any): item is HabboClothingItem => {
@@ -320,7 +353,6 @@ const AvatarEditorClean = () => {
         if (config.directions) {
           setItemDirections(config.directions);
         } else if (config.rotations) {
-          // Compatibilidade com versão antiga que usava rotações
           setItemDirections({});
         }
       } catch (error) {
@@ -328,6 +360,41 @@ const AvatarEditorClean = () => {
       }
     }
   }, []);
+
+  const getVerticalPositionForCategoryDefault = (category: string): number => {
+    switch (category) {
+      case 'hr': return 30;
+      case 'ha': return 20;
+      case 'he': return -50;
+      case 'ea': return 40;
+      case 'fa': return 45;
+      case 'sh': return 70;
+      case 'lg': return 60;
+      case 'hd': return 50;
+      case 'cc': return 50;
+      case 'cp': return 50;
+      case 'ca': return 50;
+      case 'wa': return 60;
+      default: return 50;
+    }
+  };
+
+  const saveGridConfigPorCategoria = (categoryId: string) => {
+    try {
+      const raw = localStorage.getItem('avatarEditorGridConfig');
+      const prev: { positions?: Record<string, number>; itemPositions?: Record<string, Record<string, number>>; directions?: Record<string, Record<string, { direction: number; headDirection: number }>> } = raw ? JSON.parse(raw) : {};
+      const next = {
+        positions: { ...prev.positions, [categoryId]: imageVerticalPosition[categoryId] ?? getVerticalPositionForCategoryDefault(categoryId) },
+        itemPositions: { ...prev.itemPositions, [categoryId]: itemVerticalPositions[categoryId] ?? {} },
+        directions: { ...prev.directions, [categoryId]: itemDirections[categoryId] ?? {} },
+      };
+      localStorage.setItem('avatarEditorGridConfig', JSON.stringify(next));
+      toast.success(`Disposição da categoria "${categoryId}" salva.`);
+    } catch (e) {
+      console.error('Erro ao salvar disposição:', e);
+      toast.error('Erro ao salvar disposição.');
+    }
+  };
 
   // Hook da API do Habbo
   const { userData, isLoading: isLoadingUser, error: userError, refreshData } = useHabboPublicAPI(searchedUser, selectedCountry);
@@ -345,11 +412,11 @@ const AvatarEditorClean = () => {
           setHabboData({ categories: data.categories });
 
 
-          // Converter paletas para o formato esperado
+          // Converter paletas para o formato esperado (hex, club, selectable)
           const palettes: Record<string, any> = {};
           data.palettes.forEach(palette => {
             palettes[palette.id] = palette.colors.reduce((acc: any, color) => {
-              acc[color.id] = { hex: color.hex, club: color.club };
+              acc[color.id] = { hex: color.hex, club: color.club, selectable: color.selectable };
               return acc;
             }, {});
           });
@@ -545,7 +612,7 @@ const AvatarEditorClean = () => {
   };
 
   // Obter itens filtrados
-  const getFilteredItems = () => {
+  const getFilteredItems = (): [string, HabboClothingItem][] => {
     if (!habboData || !habboData.categories) return [];
 
     try {
@@ -577,40 +644,43 @@ const AvatarEditorClean = () => {
         return true;
       });
 
-      return filtered.map(item => [`${selectedCategory}-${item.figureId}`, item]);
+      return filtered.map((item): [string, HabboClothingItem] => [`${selectedCategory}-${item.figureId}`, item]);
     } catch (error) {
       console.error('Erro ao filtrar itens:', error);
       return [];
     }
   };
 
-  // Função específica para agrupar sapatos por categoria (nonhc, hc, sell, nft)
+  // Função específica para agrupar sapatos por categoria (nonhc, hc, sell, nft) – lista canônica oficial
   const getGroupedShoes = () => {
     if (selectedCategory !== 'sh') return null;
 
     const allShoes = getFilteredItems();
     const grouped = {
-      nonhc: [] as any[], // Itens normais (não HC)
-      hc: [] as any[],    // Itens do Habbo Club
-      sell: [] as any[],  // Itens vendáveis (por enquanto vazio)
-      nft: [] as any[]    // NFTs (por enquanto vazio)
+      nonhc: [] as [string, any][],
+      hc: [] as [string, any][],
+      sell: [] as [string, any][],
+      nft: [] as [string, any][],
+      ltd: [] as [string, any][],
     };
 
-    // Agrupar dinamicamente baseado nas propriedades dos itens do JSON
-    allShoes.forEach(([itemId, itemData]) => {
-      // Verificar se itemData é um objeto HabboClothingItem
-      if (!isHabboClothingItem(itemData)) return; // Pular se não for HabboClothingItem
-      
+    allShoes.forEach((entry) => {
+      const itemId = entry[0] as string;
+      const itemData = entry[1];
+      if (!isHabboClothingItem(itemData)) return;
+      const tier = (itemData as HabboClothingItem & { tier?: 'nonhc' | 'hc' | 'sell' | 'nft' | 'ltd' }).tier;
       const club = itemData.club || '0';
-
-      // Agrupar por club: '2' = HC, outros = nonhc
-      if (club === '2') {
-        grouped.hc.push([itemId, itemData]);
-      } else {
-        grouped.nonhc.push([itemId, itemData]);
-      }
+      const t = tier ?? (club === '2' ? 'hc' : 'nonhc');
+      const pair: [string, any] = [itemId, itemData];
+      if (t === 'hc') grouped.hc.push(pair);
+      else if (t === 'sell') grouped.sell.push(pair);
+      else if (t === 'nft') grouped.nft.push(pair);
+      else if (t === 'ltd') grouped.ltd.push(pair);
+      else grouped.nonhc.push(pair);
     });
 
+    // Tile "remover sapato" no início de nonhc (como no editor oficial)
+    grouped.nonhc.unshift(['__remove__', { __removable: true } as any]);
     return grouped;
   };
 
@@ -651,7 +721,7 @@ const AvatarEditorClean = () => {
       } else if (category === 'lg') {
         newFigure.lg = selectedGender === 'M' ? '270-82' : '870-82';
       } else if (category === 'sh') {
-        newFigure.sh = '290-80';
+        newFigure.sh = selectedGender === 'M' ? '290-80' : '735-68';
       } else {
         // Para outras categorias (acessórios), remover completamente
         delete (newFigure as any)[category];
@@ -1106,7 +1176,7 @@ const AvatarEditorClean = () => {
                         try {
                           if (catId === 'sh') {
                             const grouped = getGroupedShoes();
-                            return grouped ? (grouped.nonhc.length + grouped.hc.length + grouped.sell.length + grouped.nft.length) : 0;
+                            return grouped ? (grouped.nonhc.length + grouped.hc.length + grouped.sell.length + grouped.nft.length + grouped.ltd.length) : 0;
                           }
                           
                           let items: any[] = [];
@@ -1228,31 +1298,40 @@ const AvatarEditorClean = () => {
                         const groupedShoes = getGroupedShoes();
                         if (!groupedShoes) return null;
 
-                        const renderShoeSection = (sectionId: string, title: string, items: any[], isSelectedItem?: string) => {
+                        const renderShoeSection = (sectionId: string, _title: string, items: [string, any][], _isSelectedItem?: string) => {
                           if (items.length === 0) return null;
 
                           return (
-                            <div key={sectionId} className="space-y-2">
-                              <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                {title}
-                                <span className="text-xs text-gray-500">({items.length})</span>
-                              </h4>
-                              <div className="grid grid-cols-6 gap-2">
+                            <div key={sectionId} className="grid grid-cols-6 gap-2">
                                 {items.map(([itemId, itemData], index) => {
-                                  // Verificar se itemData é um objeto HabboClothingItem
+                                  if (itemId === '__remove__' && (itemData as any)?.__removable) {
+                                    return (
+                                      <div
+                                        key="sh-remove"
+                                        className="relative group cursor-pointer transition-all duration-200 hover:ring-1 hover:ring-gray-300"
+                                      >
+                                        <div
+                                          className="w-full h-20 cursor-pointer hover:opacity-80 transition-opacity border border-dashed border-gray-300 rounded bg-gray-50 flex items-center justify-center text-gray-400"
+                                          onClick={() => removeItem('sh')}
+                                          title="Remover sapatos"
+                                        >
+                                          <span className="text-2xl font-bold">×</span>
+                                        </div>
+                                      </div>
+                                    );
+                                  }
                                   if (!isHabboClothingItem(itemData)) return null;
-                                  
-                                  // itemId é sempre string
+
                                   const itemIdStr = String(itemId);
                                   const isSelected = selectedItemId === itemIdStr;
                                   const isInUse = isItemInUse(itemIdStr, selectedCategory);
-                                  // Usar primaryColor se o item for colorável, senão usar cor padrão
-                                  const itemColor = (itemData.colorable === '1') ? primaryColor : (selectedCategory === 'sh' ? '80' : '1314');
-                                  // Usar posição individual do item, ou da categoria, ou padrão
+                                  const defaultShColor = selectedGender === 'M' ? '80' : '68';
+                                  const itemColor = (itemData.colorable === '1') ? primaryColor : (selectedCategory === 'sh' ? defaultShColor : '1314');
                                   const itemVerticalPos = getItemVerticalPosition(selectedCategory, itemIdStr);
                                   const categoryVerticalPos = imageVerticalPosition[selectedCategory] ?? 70;
                                   const verticalPosition = itemVerticalPos ?? categoryVerticalPos;
                                   const itemDirection = getItemDirection(selectedCategory, itemIdStr);
+                                  const tier = (itemData as HabboClothingItem & { tier?: string }).tier;
 
                                   return (
                                     <div
@@ -1261,7 +1340,7 @@ const AvatarEditorClean = () => {
                                         isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : 'hover:ring-1 hover:ring-gray-300'
                                       }`}
                                     >
-                                      <div 
+                                      <div
                                         className="w-full h-20 cursor-pointer hover:opacity-80 transition-opacity border border-gray-200 rounded bg-white overflow-hidden"
                                         onClick={() => applyItem(itemIdStr, primaryColor)}
                                       >
@@ -1277,9 +1356,6 @@ const AvatarEditorClean = () => {
                                         />
                                       </div>
 
-
-
-                                      {/* Botão de remoção */}
                                       {(isInUse || isSelected) && (
                                         <button
                                           onClick={(e) => {
@@ -1293,8 +1369,7 @@ const AvatarEditorClean = () => {
                                         </button>
                                       )}
 
-                                      {/* Badges */}
-                                      <div className="absolute top-1 right-1 z-10">
+                                      <div className="absolute top-1 right-1 z-10 flex gap-0.5">
                                         {itemData.club === '2' && (
                                           <img
                                             src="/assets/icon_HC_wardrobe.png"
@@ -1303,20 +1378,27 @@ const AvatarEditorClean = () => {
                                             title="Item Habbo Club"
                                           />
                                         )}
+                                        {tier === 'sell' && (
+                                          <img src="/assets/icon_sellable_wardrobe.png" alt="Vendável" className="w-4 h-4 object-contain" title="Vendável" />
+                                        )}
+                                        {isNftByLib(itemIdStr) && (
+                                          <img src="/assets/icon_wardrobe_nft_on.png" alt="NFT" className="w-4 h-4 object-contain" title="NFT" />
+                                        )}
+                                        {isLtdByLib(itemIdStr) && (
+                                          <img src="/assets/icon_LTD_habbo.png" alt="Limitado" className="w-4 h-4 object-contain" title="Limitado (LTD)" />
+                                        )}
                                       </div>
                                     </div>
                                   );
                                 })}
-                              </div>
                             </div>
                           );
                         };
 
-                        // Se não há sapatos agrupados, mostrar todos disponíveis
-                        const totalGrouped = groupedShoes.nonhc.length + groupedShoes.hc.length + groupedShoes.sell.length;
-                        if (totalGrouped === 0) {
-                          // Fallback: mostrar todos os sapatos disponíveis sem agrupamento
+                        const totalReal = groupedShoes.nonhc.filter(([id]) => id !== '__remove__').length + groupedShoes.hc.length + groupedShoes.sell.length;
+                        if (totalReal === 0) {
                           const allShoes = getFilteredItems();
+                          const defaultShColor = selectedGender === 'M' ? '80' : '68';
                           return (
                             <div className="space-y-2">
                               <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -1325,70 +1407,32 @@ const AvatarEditorClean = () => {
                               </h4>
                               <div className="grid grid-cols-6 gap-2">
                                 {allShoes.map(([itemId, itemData], index) => {
-                                  // Verificar se itemData é um objeto HabboClothingItem
                                   if (!isHabboClothingItem(itemData)) return null;
-                                  
-                                  // itemId é sempre string
                                   const itemIdStr = String(itemId);
                                   const isSelected = selectedItemId === itemIdStr;
                                   const isInUse = isItemInUse(itemIdStr, selectedCategory);
-                                  // Usar primaryColor se o item for colorável, senão usar cor padrão
-                                  const itemColor = (itemData.colorable === '1') ? primaryColor : (selectedCategory === 'sh' ? '80' : '1314');
-                                  // Usar posição individual do item, ou da categoria, ou padrão
+                                  const itemColor = (itemData.colorable === '1') ? primaryColor : (selectedCategory === 'sh' ? defaultShColor : '1314');
                                   const itemVerticalPos = getItemVerticalPosition(selectedCategory, itemIdStr);
                                   const categoryVerticalPos = imageVerticalPosition[selectedCategory] ?? 70;
                                   const verticalPosition = itemVerticalPos ?? categoryVerticalPos;
                                   const itemDirection = getItemDirection(selectedCategory, itemIdStr);
-
                                   return (
                                     <div
                                       key={`${selectedCategory}-${itemId}-${index}`}
-                                      className={`relative group cursor-pointer transition-all duration-200 ${
-                                        isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : 'hover:ring-1 hover:ring-gray-300'
-                                      }`}
+                                      className={`relative group cursor-pointer transition-all duration-200 ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : 'hover:ring-1 hover:ring-gray-300'}`}
                                     >
-                                      <div 
-                                        className="w-full h-20 cursor-pointer hover:opacity-80 transition-opacity border border-gray-200 rounded bg-white overflow-hidden"
-                                        onClick={() => applyItem(itemIdStr, primaryColor)}
-                                      >
-                                        <ClothingImageWithFallback
-                                          itemId={itemData.figureId}
-                                          category={selectedCategory}
-                                          gender={selectedGender}
-                                          color={itemColor}
-                                          alt={`${selectedCategory} ${itemData.figureId}`}
-                                          verticalPosition={verticalPosition}
-                                          direction={itemDirection.direction}
-                                          headDirection={itemDirection.headDirection}
-                                        />
+                                      <div className="w-full h-20 cursor-pointer hover:opacity-80 transition-opacity border border-gray-200 rounded bg-white overflow-hidden" onClick={() => applyItem(itemIdStr, primaryColor)}>
+                                        <ClothingImageWithFallback itemId={itemData.figureId} category={selectedCategory} gender={selectedGender} color={itemColor} alt={`${selectedCategory} ${itemData.figureId}`} verticalPosition={verticalPosition} direction={itemDirection.direction} headDirection={itemDirection.headDirection} />
                                       </div>
-
-
-
-                                      {/* Botão de remoção */}
                                       {(isInUse || isSelected) && (
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            removeItem(selectedCategory);
-                                          }}
-                                          className="absolute inset-0 z-20 bg-gray-500 bg-opacity-80 hover:bg-opacity-90 rounded flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100"
-                                          title={isInUse ? "Remover peça do avatar" : "Remover peça selecionada"}
-                                        >
+                                        <button onClick={(e) => { e.stopPropagation(); removeItem(selectedCategory); }} className="absolute inset-0 z-20 bg-gray-500 bg-opacity-80 hover:bg-opacity-90 rounded flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100" title={isInUse ? "Remover peça do avatar" : "Remover peça selecionada"}>
                                           <span className="text-2xl text-white font-bold">×</span>
                                         </button>
                                       )}
-
-                                      {/* Badges */}
-                                      <div className="absolute top-1 right-1 z-10">
-                                        {itemData.club === '2' && (
-                                          <img
-                                            src="/assets/icon_HC_wardrobe.png"
-                                            alt="HC"
-                                            className="w-4 h-4 object-contain"
-                                            title="Item Habbo Club"
-                                          />
-                                        )}
+                                      <div className="absolute top-1 right-1 z-10 flex gap-0.5">
+                                        {itemData.club === '2' && <img src="/assets/icon_HC_wardrobe.png" alt="HC" className="w-4 h-4 object-contain" title="Item Habbo Club" />}
+                                        {isNftByLib(itemIdStr) && <img src="/assets/icon_wardrobe_nft_on.png" alt="NFT" className="w-4 h-4 object-contain" title="NFT" />}
+                                        {isLtdByLib(itemIdStr) && <img src="/assets/icon_LTD_habbo.png" alt="Limitado" className="w-4 h-4 object-contain" title="Limitado (LTD)" />}
                                       </div>
                                     </div>
                                   );
@@ -1404,6 +1448,7 @@ const AvatarEditorClean = () => {
                             {renderShoeSection('hc', '⭐ Habbo Club', groupedShoes.hc)}
                             {renderShoeSection('sell', '🛒 Vendáveis', groupedShoes.sell)}
                             {groupedShoes.nft.length > 0 && renderShoeSection('nft', '💎 NFTs', groupedShoes.nft)}
+                            {groupedShoes.ltd.length > 0 && renderShoeSection('ltd', 'LTD', groupedShoes.ltd)}
                           </>
                         );
                       })()
@@ -1429,20 +1474,24 @@ const AvatarEditorClean = () => {
                           const isInUse = isItemInUse(itemIdStr, selectedCategory);
 
                           // Cor para preview do item no grid
-                          // Se o item for colorável, usa a cor selecionada (primaryColor)
-                          // Caso contrário, usa cor padrão baseada na categoria
+                          // Head (hd): padrão #FFCB98 (id 1); usa cor da figure quando houver
                           const getDefaultColorForCategory = (category: string): string => {
                             switch (category) {
                               case 'hr': return '92';   // Cabelos - branco (#FFFFFF) da paleta 2
-                              case 'hd': return '1';    // Rostos - cor de pele do habbohub (paleta 1)
+                              case 'hd': return '1';    // Rostos - #FFCB98 (paleta 1)
                               case 'sh': return '80';   // Sapatos - cor padrão para duotone
                               case 'cp': return '1314';  // Estampas - branco (#FFFFFF) da paleta 3
                               default: return '1314';   // Branco (#FFFFFF) da paleta 3 para todas as roupas
                             }
                           };
-
-                          // Usar primaryColor se o item for colorável, senão usar cor padrão
-                          const itemColor = (itemData.colorable === '1') ? primaryColor : getDefaultColorForCategory(selectedCategory);
+                          const usePaletteColorForGrid = SHOW_PALETTE_WITHOUT_COLORABLE.includes(selectedCategory as any);
+                          const hdGridColor = (currentFigure.hd && typeof currentFigure.hd === 'string' && currentFigure.hd.includes('-'))
+                            ? currentFigure.hd.split('-')[1]!
+                            : '1';
+                          const effectiveGridColor = selectedCategory === 'hd' ? hdGridColor : primaryColor;
+                          const itemColor = (itemData.colorable === '1' || usePaletteColorForGrid)
+                            ? effectiveGridColor
+                            : getDefaultColorForCategory(selectedCategory);
 
                           // Posição vertical otimizada por categoria para melhor visualização
                           const getVerticalPositionForCategory = (category: string): number => {
@@ -1473,7 +1522,7 @@ const AvatarEditorClean = () => {
                             >
                               <div 
                                 className="w-full h-20 cursor-pointer hover:opacity-80 transition-opacity border border-gray-200 rounded bg-white overflow-hidden"
-                                onClick={() => applyItem(itemIdStr, primaryColor)}
+                                onClick={() => applyItem(itemIdStr, effectiveGridColor)}
                               >
                                 <ClothingImageWithFallback
                                   itemId={itemData.figureId}
@@ -1504,15 +1553,15 @@ const AvatarEditorClean = () => {
                               )}
 
                               {/* Badges de raridade */}
-                              <div className="absolute top-1 right-1 z-10">
-                                {/* HC Badge */}
+                              <div className="absolute top-1 right-1 z-10 flex gap-0.5">
                                 {itemData.club === '2' && (
-                                  <img
-                                    src="/assets/icon_HC_wardrobe.png"
-                                    alt="HC"
-                                    className="w-4 h-4 object-contain"
-                                    title="Item Habbo Club"
-                                  />
+                                  <img src="/assets/icon_HC_wardrobe.png" alt="HC" className="w-4 h-4 object-contain" title="Item Habbo Club" />
+                                )}
+                                {isNftByLib(itemIdStr) && (
+                                  <img src="/assets/icon_wardrobe_nft_on.png" alt="NFT" className="w-4 h-4 object-contain" title="NFT" />
+                                )}
+                                {isLtdByLib(itemIdStr) && (
+                                  <img src="/assets/icon_LTD_habbo.png" alt="Limitado" className="w-4 h-4 object-contain" title="Limitado (LTD)" />
                                 )}
                               </div>
                             </div>
@@ -1525,6 +1574,101 @@ const AvatarEditorClean = () => {
                 </CardContent>
               </Card>
 
+              {/* Ferramenta: disposição vertical e rotação por item/categoria */}
+              <Card className="mt-4">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <MoveVertical className="w-4 h-4" />
+                    Disposição no grid
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Vertical padrão da categoria */}
+                  <div className="space-y-2">
+                    <Label className="text-sm">Posição vertical padrão da categoria</Label>
+                    <div className="flex items-center gap-3">
+                      <Slider
+                        value={[imageVerticalPosition[selectedCategory] ?? getVerticalPositionForCategoryDefault(selectedCategory)]}
+                        onValueChange={([v]) => setImageVerticalPosition(prev => ({ ...prev, [selectedCategory]: v }))}
+                        min={0}
+                        max={100}
+                        step={1}
+                        className="flex-1"
+                      />
+                      <span className="text-xs text-muted-foreground w-8 tabular-nums">
+                        {imageVerticalPosition[selectedCategory] ?? getVerticalPositionForCategoryDefault(selectedCategory)}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Controles do item selecionado */}
+                  {selectedItemId && (() => {
+                    const itemIdStr = String(selectedItemId);
+                    const nid = normalizeItemId(itemIdStr);
+                    const dir = getItemDirection(selectedCategory, itemIdStr);
+                    const vert = getItemVerticalPosition(selectedCategory, itemIdStr);
+                    const catDefault = imageVerticalPosition[selectedCategory] ?? getVerticalPositionForCategoryDefault(selectedCategory);
+                    const vertVal = vert ?? catDefault;
+                    return (
+                      <>
+                        <Separator />
+                        <div className="space-y-3">
+                          <Label className="text-sm">Item selecionado: {nid}</Label>
+                          <div className="space-y-2">
+                            <Label className="text-xs text-muted-foreground">Posição vertical (este item)</Label>
+                            <div className="flex items-center gap-3">
+                              <Slider
+                                value={[vertVal]}
+                                onValueChange={([v]) => setItemVerticalPosition(selectedCategory, itemIdStr, v)}
+                                min={0}
+                                max={100}
+                                step={1}
+                                className="flex-1"
+                              />
+                              <span className="text-xs text-muted-foreground w-8 tabular-nums">{vertVal}%</span>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs text-muted-foreground">Rotação (exibição) 0–7</Label>
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {[0, 1, 2, 3, 4, 5, 6, 7].map((d) => (
+                                <Button
+                                  key={d}
+                                  type="button"
+                                  variant={dir.direction === d ? 'default' : 'outline'}
+                                  size="sm"
+                                  className="w-8 h-8 p-0"
+                                  onClick={() => setItemDirection(selectedCategory, itemIdStr, d, dir.headDirection)}
+                                  title={`Direção ${d}`}
+                                >
+                                  {d}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+
+                  {!selectedItemId && (
+                    <p className="text-xs text-muted-foreground">Selecione um item no grid para ajustar disposição e rotação individuais.</p>
+                  )}
+
+                  <Separator />
+
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => saveGridConfigPorCategoria(selectedCategory)}
+                    className="w-full"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Salvar disposição desta categoria
+                  </Button>
+                </CardContent>
+              </Card>
 
             </div>
 
@@ -1590,9 +1734,11 @@ const AvatarEditorClean = () => {
                         .filter(([itemId, itemData]) => 
                           isHabboClothingItem(itemData) && itemData.colorable === '1'
                         ) as [string, HabboClothingItem][];
-                      
-                      // Se não houver itens coloráveis, não mostrar cores
-                      if (colorableItems.length === 0) {
+
+                      const showFullPalette = colorableItems.length === 0 && SHOW_PALETTE_WITHOUT_COLORABLE.includes(selectedCategory as any);
+
+                      // Se não houver itens coloráveis e não for uma dessas categorias, não mostrar cores
+                      if (colorableItems.length === 0 && !showFullPalette) {
                         return (
                           <div className="text-center text-gray-500 text-sm py-4">
                             Esta categoria não possui itens coloráveis.
@@ -1601,26 +1747,27 @@ const AvatarEditorClean = () => {
                           </div>
                         );
                       }
-                      
-                      // Coletar todas as cores válidas dos itens coloráveis
+
+                      // Coletar cores válidas dos itens coloráveis (ignorar quando mostra paleta completa)
                       const validColorIds = new Set<string>();
-                      colorableItems.forEach(([, itemData]) => {
-                        const colors = habboOfficialService.getColorsForItem(itemData);
-                        colors.forEach(colorId => validColorIds.add(colorId));
-                      });
-                      
+                      if (!showFullPalette) {
+                        colorableItems.forEach(([, itemData]) => {
+                          const colors = habboOfficialService.getColorsForItem(itemData);
+                          colors.forEach(colorId => validColorIds.add(colorId));
+                        });
+                      }
+
                       // Buscar o paletteId correto dos dados da categoria usando o serviço
-                      // Isso garante que cada categoria use sua paleta correta:
-                      // - hd (rosto) → paleta 1 (pele)
-                      // - hr (cabelo) → paleta 2 (cabelo)
-                      // - ch, lg, sh, ha, he, ea, fa, ca, wa, cc, cp → paleta 3 (roupas)
+                      // hd → paleta 1 (pele), hr → paleta 2 (cabelo), cc/ch/lg/sh/ha/etc → paleta 3 (roupas)
                       const palette = habboOfficialService.getPaletteForCategory(selectedCategory);
-                      const paletteId = palette?.id || '3'; // Fallback para paleta 3 se não encontrar
+                      const paletteId = palette?.id || '3';
                       const paletteColors = colorPalettes[paletteId];
 
-                      // Filtrar apenas cores válidas para os itens da categoria
-                      const allColorsRaw = paletteColors 
-                        ? Object.entries(paletteColors).filter(([colorId]) => validColorIds.has(colorId))
+                      // Paleta completa para hd/cc; senão, apenas cores válidas dos itens
+                      const allColorsRaw = paletteColors
+                        ? showFullPalette
+                          ? Object.entries(paletteColors)
+                          : Object.entries(paletteColors).filter(([colorId]) => validColorIds.has(colorId))
                         : [];
 
                       // Função para converter hex para HSL e obter hue
@@ -1650,9 +1797,9 @@ const AvatarEditorClean = () => {
                         return h;
                       };
                       
-                      // Separar por tipo (não-HC e HC) apenas cores válidas
+                      // Cores gratuitas (nonHC): apenas club '0' e selectable '1' (documentadas)
                       const nonHCColors = allColorsRaw
-                        .filter(([, colorData]: [string, any]) => colorData.club === '0')
+                        .filter(([, colorData]: [string, any]) => colorData.club === '0' && colorData.selectable === '1')
                         .sort(([, colorDataA]: [string, any], [, colorDataB]: [string, any]) => {
                           const hueA = hexToHue(colorDataA.hex);
                           const hueB = hexToHue(colorDataB.hex);
@@ -1667,8 +1814,27 @@ const AvatarEditorClean = () => {
                           return hueA - hueB;
                         });
 
+                      // Para hd/cc/ca/cp/wa sem itens coloráveis: cor efetiva da figure e handler que atualiza figure
+                      const paletteOnlyCategories = ['hd', 'cc', 'ca', 'cp', 'wa'] as const;
+                      const figVal = paletteOnlyCategories.includes(selectedCategory as any)
+                        ? (currentFigure[selectedCategory as keyof typeof currentFigure] as string | undefined)
+                        : null;
+                      const effectivePrimaryColor = showFullPalette && figVal && typeof figVal === 'string'
+                        ? (figVal.includes('-') ? figVal.split('-')[1] : primaryColor)
+                        : primaryColor;
+                      const handleFullPaletteColorSelect = (colorId: string) => {
+                        setPrimaryColor(colorId);
+                        const key = selectedCategory as keyof typeof currentFigure;
+                        const current = currentFigure[key];
+                        if (SHOW_PALETTE_WITHOUT_COLORABLE.includes(selectedCategory as any) && current && typeof current === 'string' && current.includes('-')) {
+                          const [figId] = current.split('-');
+                          setCurrentFigure(prev => ({ ...prev, [selectedCategory]: `${figId}-${colorId}` }));
+                        }
+                      };
+                      const onColorSelect = showFullPalette ? handleFullPaletteColorSelect : setPrimaryColor;
+
                       // Componente para renderizar grid de cores separado por tipo
-                      const renderColorGrid = (title: string, colors: [string, any][], selectedColor: string, onColorSelect: (colorId: string) => void, colorType: 'primary' | 'secondary', isHC: boolean) => {
+                      const renderColorGrid = (title: string, colors: [string, any][], selectedColor: string, onColorSelectCb: (colorId: string) => void, colorType: 'primary' | 'secondary', isHC: boolean) => {
                         if (colors.length === 0) return null;
                         
                         return (
@@ -1693,13 +1859,13 @@ const AvatarEditorClean = () => {
                                           : 'border-gray-300 hover:border-gray-400'
                                     }`}
                                     style={{ backgroundColor: `#${colorData.hex}` }}
-                                    onClick={() => onColorSelect(colorId)}
+                                    onClick={() => onColorSelectCb(colorId)}
                                     title={isHC ? `Roupa HC ${colorId} - #${colorData.hex}` : `Roupa Gratuita ${colorId} - #${colorData.hex}`}
                                   >
-                                    {/* Badge HC - menor para quadrados menores */}
+                                    {/* Badge HC - ícone centralizado na base do quadrado */}
                                     {isHC && (
-                                      <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                                        <span className="text-[8px] text-white font-bold">HC</span>
+                                      <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-3 h-3 flex items-center justify-center pointer-events-none">
+                                        <img src="/assets/icon_HC_wardrobe.png" alt="HC" className="w-full h-full object-contain" title="Item Habbo Club" />
                                       </div>
                                     )}
                                   </div>
@@ -1714,8 +1880,8 @@ const AvatarEditorClean = () => {
                         <>
                           {/* Grid de Cores - Separado em não-HC e HC */}
                           <div className="space-y-4">
-                            {renderColorGrid('Cores Gratuitas', nonHCColors, primaryColor, setPrimaryColor, 'primary', false)}
-                            {renderColorGrid('Cores Club', hcColors, primaryColor, setPrimaryColor, 'primary', true)}
+                            {renderColorGrid('Cores Gratuitas', nonHCColors, effectivePrimaryColor, onColorSelect, 'primary', false)}
+                            {renderColorGrid('Cores Club', hcColors, effectivePrimaryColor, onColorSelect, 'primary', true)}
                           </div>
 
                           {/* Info sobre a paleta */}
