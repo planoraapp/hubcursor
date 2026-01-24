@@ -266,3 +266,7 @@ function generateThumbnailUrl(type: string, id: string, color: string): string {
   return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${type}-${id}-${color}&size=m&headonly=${headOnly}`;
 }
 ```
+
+## 7. Documentação do catálogo (implementação atual)
+
+Para detalhes de **como o catálogo do editor é construído** na base de código atual — fontes (figuredata, figuremap), sync com `complete_mock_data.json`, sapatos canônicos e badges — ver **`docs/AVATAR_EDITOR_CATALOG.md`**.
