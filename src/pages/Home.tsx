@@ -199,25 +199,34 @@ export const Home: React.FC = () => {
                 </Card>
 
                 <Card className="hover:shadow-lg transition-shadow bg-white/95 backdrop-blur-sm border-2 border-black overflow-hidden flex flex-col">
-                  <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-b-2 border-black">
-                    <CardTitle className="flex items-center gap-2 sidebar-font-option-4 text-white"
-                      style={{
-                        fontSize: '18px',
-                        fontWeight: 'bold',
-                        letterSpacing: '0.3px',
-                        textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-                      }}>
-                      <MessageSquare className="w-5 h-5 text-white" />
-                      {t('pages.home.homes.title')}
-                    </CardTitle>
-                  </CardHeader>
+                  {/* Cabeçalho no estilo dos modais (DialogHeader) */}
+                  <div
+                    className="flex flex-col space-y-1.5 text-center sm:text-left p-4 relative z-10 border-b-2 border-black rounded-t-lg"
+                    style={{
+                      background: 'linear-gradient(135deg, #22c55e 0%, #10b981 50%, #059669 100%)',
+                      backgroundImage: 'url(/assets/site/bghabbohub.png)',
+                      backgroundSize: 'cover'
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h2
+                        className="tracking-tight flex items-center gap-2 text-white font-bold text-sm sidebar-font-option-4"
+                        style={{
+                          textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+                        }}
+                      >
+                        <MessageSquare className="w-5 h-5 text-white" />
+                        {t('pages.home.homes.title')}
+                      </h2>
+                    </div>
+                  </div>
                   <CardContent className="p-6 flex flex-col flex-1">
                     <p className="text-gray-600 mb-4 volter-body-text">
                       <AccentFixedText>{t('pages.home.homes.description')}</AccentFixedText>
                     </p>
                     
-                    {/* Figurestring e Carrossel de Mockups */}
-                    <div className="relative flex items-center justify-center mb-4" style={{ height: '200px', minHeight: '200px' }}>
+                    {/* Figurestring e Carrossel de Mockups (ficam atrás do botão) */}
+                    <div className="relative z-0 flex items-center justify-center mb-4" style={{ height: '200px', minHeight: '200px' }}>
                       {/* Figurestring centralizada */}
                       <div className="absolute z-0 flex items-center justify-center" style={{ 
                         left: '50%', 
@@ -306,7 +315,7 @@ export const Home: React.FC = () => {
                       )}
                     </div>
                     
-                    <div className="mt-auto flex justify-center">
+                    <div className="relative z-10 mt-auto flex justify-center">
                       <Link to="/homes">
                         <Button className="habbo-button-green sidebar-font-option-4"
                           style={{

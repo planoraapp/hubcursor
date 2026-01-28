@@ -102,66 +102,87 @@ const Console: React.FC = () => {
                   
                   {/* Painel lateral com informações e ações */}
                   <div className="w-full max-w-[375px] lg:max-w-md space-y-6">
-                    {/* Card de informações */}
+                    {/* Card de informações - mesma cor dos cabeçalhos dos modais */}
                     <div className="bg-white border-2 border-black rounded-lg shadow-lg">
-                      <div 
-                        className="p-3 border-b-2 border-black rounded-t-lg flex items-center gap-2"
+                      <div
+                        className="bg-yellow-400 border-b-2 border-black rounded-t-lg relative overflow-hidden flex flex-col space-y-1.5 text-center sm:text-left p-4 relative z-10"
                         style={{
-                          background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%)',
-                          backgroundImage: 'url(/assets/site/bghabbohub.png)',
-                          backgroundSize: 'cover'
+                          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px)',
+                          backgroundSize: '8px 8px'
                         }}
                       >
-                        <span className="text-xl">📱</span>
-                        <h3 className="font-bold text-white volter-font text-sm" style={{
-                          textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-                        }}>
-                          Console Mobile
-                        </h3>
+                        <div className="pixel-pattern absolute inset-0 opacity-20" />
+                        <div className="flex items-center justify-between relative z-10">
+                          <h2
+                            className="tracking-tight flex items-center gap-2 text-white font-bold text-sm volter-font"
+                            style={{
+                              textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+                            }}
+                          >
+                            <span className="text-xl">📱</span>
+                            Console Mobile
+                          </h2>
+                        </div>
                       </div>
                       <div className="p-6">
-                        <p className="text-gray-800 text-sm mb-4 leading-relaxed">
+                        <p className="volter-font text-xs md:text-sm text-gray-800 mb-4 leading-relaxed drop-shadow-md max-w-2xl">
                           Abra o console em uma janela popup para uma experiência mais imersiva, 
                           ideal para uso em dispositivos móveis ou quando você quer focar apenas no console.
                         </p>
                         
-                        {/* Botão abre popup melhorado */}
+                        {/* Botão abre popup - ícone em tamanho natural, console_active sobreposto com opacidade */}
                         <button
                           onClick={openPopupConsole}
-                          className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold volter-font px-6 py-4 rounded-lg border-2 border-black shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
+                          className="group w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold volter-font px-6 py-4 rounded-lg border-2 border-black shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
                           style={{
                             textShadow: '1px 1px 0px rgba(255,255,255,0.5)',
                             boxShadow: '4px 4px 0px rgba(0,0,0,0.3)',
                             fontSize: '16px'
                           }}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"></path>
-                          </svg>
+                          <span className="relative inline-block shrink-0">
+                            <img
+                              src="/assets/consoleoff.gif"
+                              alt=""
+                              className="block object-contain opacity-100 transition-opacity group-hover:opacity-0"
+                              style={{ imageRendering: 'pixelated' }}
+                            />
+                            <img
+                              src="/assets/console_active.gif"
+                              alt=""
+                              className="absolute inset-0 size-full object-contain opacity-0 transition-opacity group-hover:opacity-100"
+                              style={{ imageRendering: 'pixelated' }}
+                            />
+                          </span>
                           {t('buttons.openConsolePopup')}
                         </button>
                       </div>
                     </div>
 
-                    {/* Card de funcionalidades */}
+                    {/* Card de funcionalidades - mesma cor dos cabeçalhos dos modais */}
                     <div className="bg-white border-2 border-black rounded-lg shadow-lg">
-                      <div 
-                        className="p-3 border-b-2 border-black rounded-t-lg flex items-center gap-2"
+                      <div
+                        className="bg-yellow-400 border-b-2 border-black rounded-t-lg relative overflow-hidden flex flex-col space-y-1.5 text-center sm:text-left p-4 relative z-10"
                         style={{
-                          background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%)',
-                          backgroundImage: 'url(/assets/site/bghabbohub.png)',
-                          backgroundSize: 'cover'
+                          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px)',
+                          backgroundSize: '8px 8px'
                         }}
                       >
-                        <span className="text-xl">✨</span>
-                        <h3 className="font-bold text-white volter-font text-sm" style={{
-                          textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-                        }}>
-                          Funcionalidades
-                        </h3>
+                        <div className="pixel-pattern absolute inset-0 opacity-20" />
+                        <div className="flex items-center justify-between relative z-10">
+                          <h2
+                            className="tracking-tight flex items-center gap-2 text-white font-bold text-sm volter-font"
+                            style={{
+                              textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+                            }}
+                          >
+                            <span className="text-xl">✨</span>
+                            Funcionalidades
+                          </h2>
+                        </div>
                       </div>
                       <div className="p-6">
-                        <ul className="space-y-3 text-gray-800 text-sm">
+                        <ul className="volter-font space-y-3 text-gray-800 text-xs md:text-sm drop-shadow-md">
                           <li className="flex items-start gap-3">
                             <span className="text-yellow-600 mt-0.5 font-bold">•</span>
                             <span>Visualize e gerencie seu perfil do Habbo</span>
@@ -186,26 +207,31 @@ const Console: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Card de dicas */}
+                    {/* Card de dicas - mesma cor dos cabeçalhos dos modais */}
                     {isLoggedIn && habboAccount && (
                       <div className="bg-white border-2 border-black rounded-lg shadow-lg">
-                        <div 
-                          className="p-3 border-b-2 border-black rounded-t-lg flex items-center gap-2"
+                        <div
+                          className="bg-yellow-400 border-b-2 border-black rounded-t-lg relative overflow-hidden flex flex-col space-y-1.5 text-center sm:text-left p-4 relative z-10"
                           style={{
-                            background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%)',
-                            backgroundImage: 'url(/assets/site/bghabbohub.png)',
-                            backgroundSize: 'cover'
+                            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px)',
+                            backgroundSize: '8px 8px'
                           }}
                         >
-                          <span className="text-xl">💡</span>
-                          <h3 className="font-bold text-white volter-font text-sm" style={{
-                            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-                          }}>
-                            Dica Rápida
-                          </h3>
+                          <div className="pixel-pattern absolute inset-0 opacity-20" />
+                          <div className="flex items-center justify-between relative z-10">
+                            <h2
+                              className="tracking-tight flex items-center gap-2 text-white font-bold text-sm volter-font"
+                              style={{
+                                textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+                              }}
+                            >
+                              <span className="text-xl">💡</span>
+                              Dica Rápida
+                            </h2>
+                          </div>
                         </div>
                         <div className="p-6">
-                          <p className="text-gray-800 text-sm leading-relaxed">
+                          <p className="volter-font text-xs md:text-sm text-gray-800 leading-relaxed drop-shadow-md max-w-2xl">
                             Você está logado como <strong className="text-yellow-600">{habboAccount.habbo_name}</strong>. 
                             Use o console para explorar perfis de outros usuários, descobrir novas fotos e manter contato com seus amigos!
                           </p>

@@ -6,6 +6,8 @@ interface PhotoLikesCounterProps {
   photoId: string;
   className?: string;
   showIcon?: boolean;
+  iconClassName?: string;
+  textClassName?: string;
 }
 
 /**
@@ -21,23 +23,25 @@ interface PhotoLikesCounterProps {
 export const PhotoLikesCounter: React.FC<PhotoLikesCounterProps> = ({
   photoId,
   className = '',
-  showIcon = true
+  showIcon = true,
+  iconClassName = 'w-3 h-3',
+  textClassName = 'text-xs'
 }) => {
   const { likesCount, likesLoading } = usePhotoLikes(photoId);
 
   if (likesLoading) {
     return (
       <div className={`flex items-center gap-1 ${className}`}>
-        {showIcon && <Heart className="w-3 h-3" />}
-        <span className="text-xs">...</span>
+        {showIcon && <Heart className={iconClassName} />}
+        <span className={textClassName}>...</span>
       </div>
     );
   }
 
   return (
     <div className={`flex items-center gap-1 ${className}`}>
-      {showIcon && <Heart className="w-3 h-3" />}
-      <span className="text-xs">{likesCount}</span>
+      {showIcon && <Heart className={iconClassName} />}
+      <span className={textClassName}>{likesCount}</span>
     </div>
   );
 };

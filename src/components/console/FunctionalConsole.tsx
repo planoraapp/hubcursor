@@ -34,6 +34,8 @@ const GlobalPhotoFeedColumn = lazy(() => import('@/components/console/GlobalPhot
 
 // Importar CommentsModal diretamente (não lazy, pois é usado condicionalmente)
 import { CommentsModal } from './FriendsPhotoFeed';
+import { FriendsPostsFeed, type FeedPost } from './FriendsPostsFeed';
+import { NewPostComposer } from './NewPostComposer';
 
 
 // Componentes de ícones pixelizados no estilo Habbo
@@ -649,10 +651,7 @@ export const FunctionalConsole: React.FC = () => {
         <div className="p-0 border-t border-white/20">
           <div className="px-4 pt-4">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-camera w-5 h-5">
-              <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
-              <circle cx="12" cy="13" r="3"></circle>
-            </svg>
+            <img src="/assets/console/photos_icon.png" alt="" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
             {t('pages.console.photosWithCount', { count: isProfilePrivate ? '0' : ((photos || []).filter((photo, index) => !(hiddenPhotos || []).includes(photo.id || `photo-${index}`)).length) })}
           </h3>
           </div>
@@ -738,19 +737,15 @@ export const FunctionalConsole: React.FC = () => {
                         </button>
                       )}
                       {!isEditMode && (
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors" style={{ zIndex: 1 }}>
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-2 left-2 right-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-1 bg-black/60 px-2 py-1 rounded">
-                                  <Heart className="w-3 h-3 text-white" />
-                                  <span className="text-xs text-white">{interactions.likes}</span>
-                                </div>
-                                <div className="flex items-center gap-1 bg-black/60 px-2 py-1 rounded">
-                                  <MessageCircle className="w-3 h-3 text-white" />
-                                  <span className="text-xs text-white">{interactions.comments.length}</span>
-                                </div>
-                              </div>
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center" style={{ zIndex: 1 }}>
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center gap-2">
+                            <div className="flex items-center gap-1.5 bg-black/60 px-2.5 py-1 rounded">
+                              <Heart className="w-4 h-4 text-white" />
+                              <span className="text-sm text-white">{interactions.likes}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 bg-black/60 px-2.5 py-1 rounded">
+                              <MessageCircle className="w-4 h-4 text-white" />
+                              <span className="text-sm text-white">{interactions.comments.length}</span>
                             </div>
                           </div>
                         </div>
@@ -1275,6 +1270,7 @@ export const FunctionalConsole: React.FC = () => {
           handleShowCommentsModal={handleShowCommentsModal}
           viewingUser={undefined} // Sempre undefined na aba Friends
           friendsRefreshTrigger={friendsRefreshTrigger}
+          onRefreshFriendsFeed={() => setFriendsRefreshTrigger((prev) => prev + 1)}
         />;
       case 'chat':
         return <ChatInterface 
@@ -1714,11 +1710,15 @@ const FeedTab: React.FC<any> = ({
   hiddenPhotos, togglePhotoVisibility, viewingUser,
   onBackToPhotosFeed,
   onNavigateBack,
-  friendsRefreshTrigger = 0
+  friendsRefreshTrigger = 0,
+  onRefreshFriendsFeed
 }) => {
   const { t } = useI18n();
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [friendsFeedSubTab, setFriendsFeedSubTab] = useState<'posts' | 'fotos'>('posts');
+  const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [newPostComposerOpen, setNewPostComposerOpen] = useState(false);
   
   // Hook para controlar sticky header (FeedTab tem scroll em elemento filho)
   const { isHeaderVisible, isHeaderFixed } = useStickyHeader(scrollContainerRef, 50, '[class*="overflow-y-auto"]');
@@ -2008,10 +2008,7 @@ const FeedTab: React.FC<any> = ({
         <div className="p-0 border-t border-white/20">
           <div className="px-4 pt-4">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-camera w-5 h-5">
-                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
-                <circle cx="12" cy="13" r="3"></circle>
-              </svg>
+              <img src="/assets/console/photos_icon.png" alt="" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
               {t('pages.console.photosWithCount', { count: isProfilePrivate ? '0' : (photos?.length || 0) })}
             </h3>
           </div>
@@ -2067,17 +2064,13 @@ const FeedTab: React.FC<any> = ({
                           {isHidden ? '+' : <img src="/assets/console/minimize.png" alt="X" className="rounded-full border border-black" style={{ imageRendering: 'pixelated' }} />}
                         </button>
                       )}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors" style={{ pointerEvents: isEditMode ? 'none' : 'auto', zIndex: 1 }}>
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-2 left-2 right-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-1 bg-black/60 px-2 py-1 rounded">
-                                <PhotoLikesCounter photoId={photoId} className="text-white" />
-                              </div>
-                              <div className="flex items-center gap-1 bg-black/60 px-2 py-1 rounded">
-                                <PhotoCommentsCounter photoId={photoId} className="text-white" />
-                              </div>
-                            </div>
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center" style={{ pointerEvents: isEditMode ? 'none' : 'auto', zIndex: 1 }}>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center gap-2">
+                          <div className="flex items-center gap-1.5 bg-black/60 px-2.5 py-1 rounded">
+                            <PhotoLikesCounter photoId={photoId} className="text-white" iconClassName="w-4 h-4 text-white" textClassName="text-sm text-white" />
+                          </div>
+                          <div className="flex items-center gap-1.5 bg-black/60 px-2.5 py-1 rounded">
+                            <PhotoCommentsCounter photoId={photoId} className="text-white" iconClassName="w-4 h-4 text-white" textClassName="text-sm text-white" />
                           </div>
                         </div>
                       </div>
@@ -2107,58 +2100,163 @@ const FeedTab: React.FC<any> = ({
     );
   }
 
-  // Feed normal quando estiver no próprio perfil
+  // Feed normal quando estiver no próprio perfil: header único, sub-abas Posts | Fotos, botão flutuante
   return (
     <div 
       ref={scrollContainerRef}
-      className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent"
+      className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent relative"
     >
-      
-      {/* Campo de Busca */}
+      {/* Cabeçalho sticky - Feed dos Amigos + botão atualizar */}
       <div 
-        className={cn(
-          "p-4 flex-shrink-0 transition-all duration-300 ease-in-out",
-          isHeaderVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none h-0 p-0 overflow-hidden"
-        )}
-        style={getSearchHeaderStyles(isHeaderFixed)}
+        className="flex items-center justify-between px-2 py-2 flex-shrink-0"
+        style={{ position: 'sticky', top: 0, zIndex: 99 }}
       >
-        <div className="flex items-center gap-2 rounded" style={{ backgroundColor: '#3a3a3a' }}>
-          {/* Dropdown de países */}
-          <CountryDropdown
-            selectedCountry={selectedCountry}
-            onCountrySelect={setSelectedCountry}
-            className="h-8"
-          />
-          
-          {/* Componente de busca compartilhado */}
-          <UserSearch
-            onUserSelect={handleUserSelect}
-            placeholder={t('pages.console.searchUser')}
-            className="flex-1"
-          />
-        </div>
+        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+          📸 Feed dos Amigos
+        </h3>
+        <button
+          type="button"
+          onClick={onRefreshFriendsFeed}
+          className="text-white/60 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title={t('pages.console.refreshFeed')}
+        >
+          <RefreshCw className="w-5 h-5" />
+        </button>
       </div>
-      
-      {/* Feed de Fotos dos Amigos */}
-      <div className="py-4 relative">
-        <Suspense fallback={
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <LoadingSpinner className="mx-auto mb-4" />
-              <p className="text-white/60">{t('pages.console.loadingFeed')}</p>
+
+      {/* Sub-abas: Posts | Fotos */}
+      <div className="flex border-b border-white/20 flex-shrink-0">
+        <button
+          type="button"
+          onClick={() => setFriendsFeedSubTab('posts')}
+          className={cn(
+            'flex-1 px-4 py-2 text-sm font-medium transition-colors',
+            friendsFeedSubTab === 'posts'
+              ? 'text-white border-b-2 border-yellow-400 bg-white/5'
+              : 'text-white/60 hover:text-white'
+          )}
+        >
+          {t('pages.console.feedTabPosts')}
+        </button>
+        <button
+          type="button"
+          onClick={() => setFriendsFeedSubTab('fotos')}
+          className={cn(
+            'flex-1 px-4 py-2 text-sm font-medium transition-colors',
+            friendsFeedSubTab === 'fotos'
+              ? 'text-white border-b-2 border-yellow-400 bg-white/5'
+              : 'text-white/60 hover:text-white'
+          )}
+        >
+          {t('pages.console.feedTabPhotos')}
+        </button>
+      </div>
+
+      {/* Conteúdo da sub-aba */}
+      {friendsFeedSubTab === 'fotos' ? (
+        <>
+          {/* Campo de Busca - só na aba Fotos */}
+          <div 
+            className={cn(
+              "p-4 flex-shrink-0 transition-all duration-300 ease-in-out",
+              isHeaderVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none h-0 p-0 overflow-hidden"
+            )}
+            style={getSearchHeaderStyles(isHeaderFixed)}
+          >
+            <div className="flex items-center gap-2 rounded" style={{ backgroundColor: '#3a3a3a' }}>
+              <CountryDropdown
+                selectedCountry={selectedCountry}
+                onCountrySelect={setSelectedCountry}
+                className="h-8"
+              />
+              <UserSearch
+                onUserSelect={handleUserSelect}
+                placeholder={t('pages.console.searchUser')}
+                className="flex-1"
+              />
             </div>
           </div>
-        }>
-          <FriendsPhotoFeed
-            currentUserName={habboAccount?.habbo_name || currentUser || ''}
-            hotel={habboAccount?.hotel || 'br'}
+          <div className="py-4 relative flex-1 min-h-0">
+            <Suspense fallback={
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <LoadingSpinner className="mx-auto mb-4" />
+                  <p className="text-white/60">{t('pages.console.loadingFeed')}</p>
+                </div>
+              </div>
+            }>
+              <FriendsPhotoFeed
+                currentUserName={habboAccount?.habbo_name || currentUser || ''}
+                hotel={habboAccount?.hotel || 'br'}
+                onNavigateToProfile={onNavigateToProfile}
+                refreshTrigger={friendsRefreshTrigger}
+                isHeaderVisible={isHeaderVisible}
+                showHeader={false}
+              />
+            </Suspense>
+          </div>
+        </>
+      ) : (
+        <div className="py-4 px-2 flex-1 min-h-0 overflow-y-auto">
+          <FriendsPostsFeed
+            posts={posts}
             onNavigateToProfile={onNavigateToProfile}
-            refreshTrigger={friendsRefreshTrigger}
-            isHeaderVisible={isHeaderVisible}
           />
-        </Suspense>
-      </div>
-      
+        </div>
+      )}
+
+      {/* Botão flutuante - Nova publicação */}
+      {habboAccount && (
+        <button
+          type="button"
+          onClick={() => setNewPostComposerOpen(true)}
+          className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 shadow-lg border-2 border-black flex items-center justify-center transition-colors"
+          style={{ imageRendering: 'pixelated' }}
+          title={t('pages.console.newPost')}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+            <path d="M12 5v14" />
+            <path d="M5 12h14" />
+          </svg>
+        </button>
+      )}
+
+      {/* Modal - Nova publicação (mesmo estilo do CommentsModal) */}
+      {newPostComposerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ pointerEvents: 'auto' }}>
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setNewPostComposerOpen(false)}
+            aria-hidden
+          />
+          <div
+            className="relative p-0 bg-transparent border-0 overflow-hidden rounded-lg animate-slide-up-fade z-50 w-full max-w-md mx-4 flex flex-col"
+            style={{
+              backgroundImage: 'repeating-linear-gradient(0deg, #333333, #333333 1px, #222222 1px, #222222 2px)',
+              backgroundSize: '100% 2px',
+              pointerEvents: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <NewPostComposer
+              open={newPostComposerOpen}
+              onClose={() => setNewPostComposerOpen(false)}
+              onSubmit={(text) => {
+                const newPost: FeedPost = {
+                  id: crypto.randomUUID(),
+                  userName: habboAccount?.habbo_name || currentUser || '',
+                  text,
+                  createdAt: new Date().toISOString(),
+                  hotel: habboAccount?.hotel || 'br',
+                  figureString: habboAccount?.figure_string,
+                };
+                setPosts((prev) => [newPost, ...prev]);
+                setNewPostComposerOpen(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

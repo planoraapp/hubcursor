@@ -6,6 +6,8 @@ interface PhotoCommentsCounterProps {
   photoId: string;
   className?: string;
   showIcon?: boolean;
+  iconClassName?: string;
+  textClassName?: string;
 }
 
 /**
@@ -21,23 +23,25 @@ interface PhotoCommentsCounterProps {
 export const PhotoCommentsCounter: React.FC<PhotoCommentsCounterProps> = ({
   photoId,
   className = '',
-  showIcon = true
+  showIcon = true,
+  iconClassName = 'w-3 h-3',
+  textClassName = 'text-xs'
 }) => {
   const { comments, commentsLoading } = usePhotoComments(photoId);
 
   if (commentsLoading) {
     return (
       <div className={`flex items-center gap-1 ${className}`}>
-        {showIcon && <MessageCircle className="w-3 h-3" />}
-        <span className="text-xs">...</span>
+        {showIcon && <MessageCircle className={iconClassName} />}
+        <span className={textClassName}>...</span>
       </div>
     );
   }
 
   return (
     <div className={`flex items-center gap-1 ${className}`}>
-      {showIcon && <MessageCircle className="w-3 h-3" />}
-      <span className="text-xs">{comments.length}</span>
+      {showIcon && <MessageCircle className={iconClassName} />}
+      <span className={textClassName}>{comments.length}</span>
     </div>
   );
 };
