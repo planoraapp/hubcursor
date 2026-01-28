@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Heart, MessageCircle, MoreHorizontal, Send, MapPin } from 'lucide-react';
 import { EnhancedPhoto } from '@/types/habbo';
@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { RoomDetailsModal } from './modals/RoomDetailsModal';
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
+import { supabase } from '@/integrations/supabase/client';
 
 interface IndividualPhotoViewProps {
   photo: {
@@ -55,6 +56,11 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
   const [selectedRoomHotel, setSelectedRoomHotel] = useState<string>('');
   const [roomDisplayName, setRoomDisplayName] = useState<string | null>(null);
   const [extractedRoomId, setExtractedRoomId] = useState<string | null>(null);
+  const [showMenuDropdown, setShowMenuDropdown] = useState(false);
+  const [isEditingCaption, setIsEditingCaption] = useState(false);
+  const [captionText, setCaptionText] = useState('');
+  const [isSavingCaption, setIsSavingCaption] = useState(false);
+  const menuDropdownRef = useRef<HTMLDivElement>(null);
   
   // Hook de likes com armazenamento no banco
   const { likesCount, userLiked, toggleLike, isToggling, likes } = usePhotoLikes(photo.id);
@@ -158,6 +164,183 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
   const { data: userProfile } = useCompleteProfile(effectiveUserName, hotelDomainForProfile);
   const userFigureString = userProfile?.figureString;
   const userRooms = useMemo(() => userProfile?.data?.rooms || [], [userProfile?.data?.rooms]);
+
+  // Verificar se é o dono da foto
+  const isPhotoOwner = habboAccount && habboAccount.habbo_name && 
+    habboAccount.habbo_name.toLowerCase() === effectiveUserName.toLowerCase();
+
+  // Buscar legenda da foto
+  useEffect(() => {
+    const fetchCaption = async () => {
+      const photoId = photo.id || (photo as any).photo_id;
+      if (!photoId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('habbo_photos')
+          .select('caption')
+          .eq('photo_id', photoId)
+          .maybeSingle(); // Usar maybeSingle ao invés de single para não dar erro quando não há registro
+        
+        if (error) {
+          console.error('Erro ao buscar legenda:', error);
+          return;
+        }
+        
+        if (data?.caption) {
+          setCaptionText(data.caption);
+        } else {
+          setCaptionText('');
+        }
+      } catch (error) {
+        console.error('Erro ao buscar legenda:', error);
+      }
+    };
+
+    fetchCaption();
+  }, [photo.id, (photo as any).photo_id]);
+
+  // Fechar menu dropdown ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuDropdownRef.current && !menuDropdownRef.current.contains(event.target as Node)) {
+        setShowMenuDropdown(false);
+      }
+    };
+
+    if (showMenuDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenuDropdown]);
+
+  // Salvar legenda
+  const handleSaveCaption = async () => {
+    const photoId = photo.id || (photo as any).photo_id;
+    if (!photoId || !habboAccount) {
+      toast.error('Você precisa estar logado para adicionar legenda');
+      return;
+    }
+
+    if (!isPhotoOwner) {
+      toast.error('Apenas o dono da foto pode adicionar legenda');
+      return;
+    }
+
+    setIsSavingCaption(true);
+    
+    try {
+      console.log('Salvando legenda para photo_id:', photoId);
+      console.log('Texto da legenda:', captionText);
+      console.log('Foto completa:', photo);
+      
+      // Tentar buscar o registro da foto pelo photo_id
+      let photoData = null;
+      let fetchError = null;
+      
+      // Primeira tentativa: buscar por photo_id
+      const { data: data1, error: error1 } = await supabase
+        .from('habbo_photos')
+        .select('id, photo_id, habbo_name, hotel')
+        .eq('photo_id', photoId)
+        .maybeSingle();
+      
+      if (error1) {
+        console.error('Erro ao buscar foto por photo_id:', error1);
+        fetchError = error1;
+      } else if (data1) {
+        photoData = data1;
+      } else {
+        // Segunda tentativa: buscar por s3_url se disponível
+        if (photo.s3_url) {
+          const { data: data2, error: error2 } = await supabase
+            .from('habbo_photos')
+            .select('id, photo_id, habbo_name, hotel')
+            .eq('s3_url', photo.s3_url)
+            .maybeSingle();
+          
+          if (error2) {
+            console.error('Erro ao buscar foto por s3_url:', error2);
+          } else if (data2) {
+            photoData = data2;
+          }
+        }
+      }
+
+      console.log('Resultado da busca:', { photoData, fetchError });
+
+      if (fetchError && !photoData) {
+        throw fetchError;
+      }
+
+      if (photoData) {
+        console.log('Atualizando legenda para registro:', photoData.id);
+        // Atualizar legenda existente
+        const { data: updatedData, error: updateError } = await supabase
+          .from('habbo_photos')
+          .update({ caption: captionText.trim() || null })
+          .eq('id', photoData.id)
+          .select()
+          .single();
+
+        console.log('Resultado da atualização:', { updatedData, updateError });
+
+        if (updateError) {
+          console.error('Erro ao atualizar legenda:', updateError);
+          throw updateError;
+        }
+
+        // Atualizar estado local com a legenda salva
+        setCaptionText(updatedData.caption || '');
+        toast.success('Legenda salva com sucesso!');
+        setIsEditingCaption(false);
+        setShowMenuDropdown(false);
+      } else {
+        // Foto não encontrada no banco - tentar criar registro se possível
+        console.warn('Foto não encontrada no banco para photo_id:', photoId);
+        
+        // Se temos informações suficientes, criar o registro
+        if (photo.s3_url && habboAccount.habbo_name) {
+          console.log('Tentando criar registro para a foto...');
+          const { data: newPhotoData, error: insertError } = await supabase
+            .from('habbo_photos')
+            .insert({
+              photo_id: photoId,
+              habbo_id: habboAccount.habbo_id || habboAccount.habbo_name,
+              habbo_name: habboAccount.habbo_name,
+              hotel: habboAccount.hotel || 'br',
+              s3_url: photo.s3_url,
+              caption: captionText.trim() || null,
+              preview_url: photo.preview_url || null,
+              room_name: photo.roomName || null,
+            })
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error('Erro ao criar registro da foto:', insertError);
+            toast.error('Erro ao criar registro da foto. Tente novamente.');
+          } else {
+            console.log('Registro criado com sucesso:', newPhotoData);
+            setCaptionText(newPhotoData.caption || '');
+            toast.success('Legenda salva com sucesso!');
+            setIsEditingCaption(false);
+            setShowMenuDropdown(false);
+          }
+        } else {
+          toast.error('Foto não encontrada no banco de dados. Não foi possível salvar a legenda.');
+        }
+      }
+    } catch (error: any) {
+      console.error('Erro ao salvar legenda:', error);
+      toast.error(error?.message || 'Erro ao salvar legenda');
+    } finally {
+      setIsSavingCaption(false);
+    }
+  };
 
   // Usar diretamente o roomName fornecido pelas Edge Functions (já vem correto)
   useEffect(() => {
@@ -329,9 +512,29 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
                   </button>
                   <div className="text-xs text-white/60">{photo.date}</div>
                 </div>
-                <button className="text-white/60 hover:text-white transition-colors">
-                  <MoreHorizontal className="w-5 h-5" />
-                </button>
+                {isPhotoOwner && (
+                  <div className="relative" ref={menuDropdownRef}>
+                    <button 
+                      className="text-white/60 hover:text-white transition-colors"
+                      onClick={() => setShowMenuDropdown(!showMenuDropdown)}
+                    >
+                      <MoreHorizontal className="w-5 h-5" />
+                    </button>
+                    {showMenuDropdown && (
+                      <div className="absolute right-0 top-full mt-2 w-48 bg-gray-800 border border-white/20 rounded-lg shadow-lg z-50">
+                        <button
+                          onClick={() => {
+                            setIsEditingCaption(true);
+                            setShowMenuDropdown(false);
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-white hover:bg-white/10 transition-colors rounded-t-lg"
+                        >
+                          Adicionar Legenda
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -552,70 +755,144 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
             </div>
               
             {/* Caption and Room */}
-            {photo.roomName && (
-              <div className="space-y-1 pt-2 pb-3">
-                {(() => {
-                  // Usar roomId extraído do useEffect (que já considera fallback de userRooms)
-                  // Se não houver, tentar extrair diretamente do photo (mesma lógica do EnhancedPhotoCard)
-                  let roomId: string | null = extractedRoomId;
-                  
-                  if (!roomId && photo.roomId) {
-                    // Usar roomId direto se disponível
-                    roomId = String(photo.roomId);
-                  } else if (!roomId) {
-                    // Tentar extrair do formato "Room XXXXX" como fallback
-                    const roomIdMatch = photo.roomName.match(/Room\s+(\d+)/i);
-                    if (roomIdMatch) {
-                      roomId = roomIdMatch[1];
-                    } else {
-                      // Tentar extrair qualquer número do roomName (última tentativa)
-                      const numberMatch = photo.roomName.match(/(\d+)/);
-                      if (numberMatch) {
-                        roomId = numberMatch[1];
+            <div className="space-y-1 pt-2 pb-3">
+              {/* Localização do quarto */}
+              {photo.roomName && (
+                <div>
+                  {(() => {
+                    // Usar roomId extraído do useEffect (que já considera fallback de userRooms)
+                    // Se não houver, tentar extrair diretamente do photo (mesma lógica do EnhancedPhotoCard)
+                    let roomId: string | null = extractedRoomId;
+                    
+                    if (!roomId && photo.roomId) {
+                      // Usar roomId direto se disponível
+                      roomId = String(photo.roomId);
+                    } else if (!roomId) {
+                      // Tentar extrair do formato "Room XXXXX" como fallback
+                      const roomIdMatch = photo.roomName.match(/Room\s+(\d+)/i);
+                      if (roomIdMatch) {
+                        roomId = roomIdMatch[1];
+                      } else {
+                        // Tentar extrair qualquer número do roomName (última tentativa)
+                        const numberMatch = photo.roomName.match(/(\d+)/);
+                        if (numberMatch) {
+                          roomId = numberMatch[1];
+                        }
                       }
                     }
-                  }
-                  
-                  // Se ainda não temos roomId e temos quartos do usuário, tentar encontrar o quarto correspondente
-                  if (!roomId && userRooms.length === 1) {
-                    roomId = String(userRooms[0].id);
-                  }
-                  
-                  const hotelDomain = getPhotoHotelDomain();
-                  
-                  // Usar nome do quarto se disponível, senão usar roomName original
-                  const displayText = roomDisplayName || photo.roomName;
-                  
-                  if (!roomId) {
-                    // Sem roomId, não é clicável (ex: "Quarto do jogo")
+                    
+                    // Se ainda não temos roomId e temos quartos do usuário, tentar encontrar o quarto correspondente
+                    if (!roomId && userRooms.length === 1) {
+                      roomId = String(userRooms[0].id);
+                    }
+                    
+                    const hotelDomain = getPhotoHotelDomain();
+                    
+                    // Usar nome do quarto se disponível, senão usar roomName original
+                    const displayText = roomDisplayName || photo.roomName;
+                    
+                    if (!roomId) {
+                      // Sem roomId, não é clicável (ex: "Quarto do jogo")
+                      return (
+                        <div className="flex items-center gap-1 text-xs text-white/60">
+                          <MapPin className="w-3 h-3" />
+                          <span>{displayText}</span>
+                        </div>
+                      );
+                    }
+
                     return (
-                      <div className="flex items-center gap-1 text-xs text-white/60">
+                      <div 
+                        className={cn(
+                          "flex items-center gap-1 text-xs text-white/60 cursor-pointer hover:text-white/80 transition-colors"
+                        )}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedRoomId(roomId!);
+                          setSelectedRoomHotel(hotelDomain);
+                          setShowRoomDetails(true);
+                        }}
+                      >
                         <MapPin className="w-3 h-3" />
                         <span>{displayText}</span>
                       </div>
                     );
-                  }
-
-                  return (
-                    <div 
-                      className={cn(
-                        "flex items-center gap-1 text-xs text-white/60 cursor-pointer hover:text-white/80 transition-colors"
-                      )}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setSelectedRoomId(roomId!);
-                        setSelectedRoomHotel(hotelDomain);
-                        setShowRoomDetails(true);
+                  })()}
+                </div>
+              )}
+              
+              {/* Legenda */}
+              {isEditingCaption ? (
+                <div className="mt-2">
+                  <textarea
+                    value={captionText}
+                    onChange={(e) => setCaptionText(e.target.value)}
+                    placeholder="Adicione uma legenda para esta foto..."
+                    maxLength={300}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:border-yellow-400 text-sm resize-none"
+                    rows={3}
+                    autoFocus
+                  />
+                  <div className="flex items-center justify-end gap-2 mt-2">
+                    <button
+                      onClick={() => {
+                        setIsEditingCaption(false);
+                        // Restaurar legenda original se cancelar
+                        const photoId = photo.id || (photo as any).photo_id;
+                        const fetchCaption = async () => {
+                          if (!photoId) {
+                            setCaptionText('');
+                            return;
+                          }
+                          try {
+                            const { data } = await supabase
+                              .from('habbo_photos')
+                              .select('caption')
+                              .eq('photo_id', photoId)
+                              .maybeSingle();
+                            if (data?.caption) {
+                              setCaptionText(data.caption);
+                            } else {
+                              setCaptionText('');
+                            }
+                          } catch (error) {
+                            setCaptionText('');
+                          }
+                        };
+                        fetchCaption();
                       }}
+                      className="px-3 py-1 text-xs text-white/60 hover:text-white transition-colors"
                     >
-                      <MapPin className="w-3 h-3" />
-                      <span>{displayText}</span>
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleSaveCaption}
+                      disabled={isSavingCaption}
+                      className="px-3 py-1 text-xs bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded transition-colors disabled:opacity-50"
+                    >
+                      {isSavingCaption ? 'Salvando...' : 'Salvar'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                captionText && (
+                  <div className="mt-2">
+                    <p className="text-xs text-white/80 break-words whitespace-pre-wrap">
+                      {captionText}
+                    </p>
+                    {isPhotoOwner && (
+                      <button
+                        onClick={() => setIsEditingCaption(true)}
+                        className="mt-1 text-xs text-white/60 hover:text-white transition-colors"
+                      >
+                        Editar legenda
+                      </button>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
 
             {/* Ações da foto (like e comentários) */}
             <div className="px-1 py-2 bg-transparent">

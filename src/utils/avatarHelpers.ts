@@ -103,7 +103,7 @@ export function getAvatarHeadUrl(
     size,
     headOnly: true,
     direction: 2,
-    headDirection: 3
+    headDirection: 2
   });
 }
 
@@ -112,6 +112,6 @@ export function getAvatarHeadUrl(
  */
 export function getAvatarFallbackUrl(userName: string, size: 's' | 'm' | 'l' = 'm'): string {
   // Tentar usar AWS S3 como fallback
-  return `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${encodeURIComponent(userName)}&size=${size}&direction=2&head_direction=3&headonly=1`;
+  return `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${encodeURIComponent(userName)}&size=${size}&direction=2&head_direction=2&headonly=1`;
 }
 

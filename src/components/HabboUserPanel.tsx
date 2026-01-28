@@ -303,11 +303,11 @@ export const HabboUserPanel = ({ sidebarCollapsed = false, onExpandSidebar }: Ha
                   {getHotelDisplayName(userProfile.hotel)}
                 </div>
                 <div 
-                  className="text-gray-600 text-sm mb-2 truncate"
+                  className="text-gray-600 text-sm mb-2 line-clamp-2"
                   style={{
                     fontFamily: 'Volter',
                     fontSize: '11px',
-                    fontWeight: 'bold',
+                    fontWeight: 'normal',
                     letterSpacing: '0.3px'
                   }}
                 >

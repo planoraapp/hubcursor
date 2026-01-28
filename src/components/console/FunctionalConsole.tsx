@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useRef, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,14 +28,19 @@ import { getHotelFlag, hotelCodeToDomain } from '@/utils/hotelHelpers';
 import { UserSearch } from './shared/UserSearch';
 import { CountryDropdown } from './shared/CountryDropdown';
 import { useProfileNavigation } from '@/hooks/useProfileNavigation';
+import { getAvatarHeadUrl, getAvatarFallbackUrl, getAvatarUrl } from '@/utils/avatarHelpers';
 
 const FriendsPhotoFeed = lazy(() => import('./FriendsPhotoFeed').then(module => ({ default: module.FriendsPhotoFeed })));
 const GlobalPhotoFeedColumn = lazy(() => import('@/components/console/GlobalPhotoFeedColumn'));
+const GlobalPostsFeedColumn = lazy(() => import('@/components/console/GlobalPostsFeedColumn').then(module => ({ default: module.default })));
 
 // Importar CommentsModal diretamente (não lazy, pois é usado condicionalmente)
 import { CommentsModal } from './FriendsPhotoFeed';
-import { FriendsPostsFeed, type FeedPost } from './FriendsPostsFeed';
+import { FriendsPostsFeed, type FeedPost, type PostComment } from './FriendsPostsFeed';
 import { NewPostComposer } from './NewPostComposer';
+import { PostDetailView } from './PostDetailView';
+import { validatePost, sanitizePost, POST_CONFIG } from '@/utils/postValidation';
+import { ProfilePostsSection } from './ProfilePostsSection';
 
 
 // Componentes de ícones pixelizados no estilo Habbo
@@ -53,7 +58,7 @@ const PixelSearchIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-type TabType = 'account' | 'friends' | 'chat' | 'photos' | 'photo';
+type TabType = 'account' | 'friends' | 'chat' | 'photos' | 'photo' | 'post' | 'user-posts';
 
 interface TabButton {
   id: TabType;
@@ -100,20 +105,35 @@ const getTabs = (t: (key: string) => string): TabButton[] => [
 ];
 
 // Função helper centralizada para determinar se é o próprio perfil
-// Retorna true apenas quando: não está visualizando outro usuário E está logado E username é o mesmo do usuário logado E não é habbohub
+// Retorna true quando: está logado E (viewingUser é null E username é igual ao currentUser) OU (viewingUser é igual ao currentUser)
 const calculateIsOwnProfile = (
   viewingUser: string | null | undefined,
   habboAccount: any,
   currentUser: string | null | undefined,
   username: string | null | undefined
 ): boolean => {
-  return !viewingUser && !!habboAccount && !!currentUser && !!username && username === currentUser && username !== 'habbohub';
+  if (!habboAccount || !currentUser) return false;
+  
+  // Se viewingUser está definido, verificar se é igual ao currentUser
+  if (viewingUser) {
+    return viewingUser.toLowerCase() === currentUser.toLowerCase();
+  }
+  
+  // Se viewingUser não está definido, verificar se username é igual ao currentUser
+  if (username) {
+    return username.toLowerCase() === currentUser.toLowerCase();
+  }
+  
+  return false;
 };
 
 export const FunctionalConsole: React.FC = () => {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<TabType>('account');
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null); // Foto selecionada para o modal
+  const [selectedPost, setSelectedPost] = useState<any>(null); // Post selecionado para visualização individual
+  const [userPostsViewUsername, setUserPostsViewUsername] = useState<string | null>(null); // Usuário cujos posts estão sendo visualizados
+  const [userPostsViewHotel, setUserPostsViewHotel] = useState<string>('br'); // Hotel do usuário
   const [activeModal, setActiveModal] = useState<string | null>(null); // Estado global para modais
   
   // Hook para gerenciar navegação de perfis
@@ -144,6 +164,12 @@ export const FunctionalConsole: React.FC = () => {
       setIsFeedModalVisible(false);
     }
   }, [feedLikesModalPhoto, feedCommentsModalPhoto]);
+  
+  // Modal state tracking
+  // PhotoModal temporariamente removido
+  const { habboAccount, isLoggedIn, loading: authLoading } = useAuth();
+  const { getPhotoInteractions, toggleLike, addComment } = usePhotoInteractions();
+  
   const [isEditMode, setIsEditMode] = useState(false);
   const [bodyDirection, setBodyDirection] = useState(2);
   const [headDirection, setHeadDirection] = useState(3);
@@ -225,10 +251,6 @@ export const FunctionalConsole: React.FC = () => {
 
   // Handlers para navegação de fotos individuais
   const handlePhotoClick = (photo: any, index: number) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FunctionalConsole.tsx:handlePhotoClick:entry',message:'Photo clicked - entrada',data:{photo_id:photo.photo_id,id:photo.id,roomName:photo.roomName,roomId:photo.roomId,hotelDomain:photo.hotelDomain,hotel:photo.hotel,allKeys:Object.keys(photo),photoStringified:JSON.stringify(photo).substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    
     // Usar photo_id (ID real da API do Habbo) como fonte de verdade
     const photoId = photo.photo_id || photo.id || `temp-photo-${Date.now()}-${index}`;
     
@@ -296,10 +318,6 @@ export const FunctionalConsole: React.FC = () => {
       userName: photoUserName // Adicionar userName para o IndividualPhotoView usar no fallback de userRooms
     };
     
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FunctionalConsole.tsx:handlePhotoClick:photoData-created',message:'PhotoData criado para IndividualPhotoView',data:{photoId:photoData.id,roomId:photoData.roomId || 'undefined',roomName:photoData.roomName,hotelDomain:photoData.hotelDomain,hasRoomId:!!photoData.roomId,photoDataKeys:Object.keys(photoData)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    
     setSelectedIndividualPhoto(photoData);
     setActiveTab('photo'); // Ativa a aba 'photo'
   };
@@ -309,6 +327,21 @@ export const FunctionalConsole: React.FC = () => {
     setSelectedIndividualPhoto(null);
   };
 
+  const handleBackFromPost = () => {
+    // Se estava visualizando lista de posts do usuário, voltar para ela
+    if (userPostsViewUsername) {
+      setActiveTab('user-posts');
+    } else {
+      setActiveTab('account'); // Caso contrário, voltar para account
+    }
+    setSelectedPost(null);
+  };
+
+  const handleBackFromUserPosts = () => {
+    setActiveTab('account'); // Volta para a aba account
+    setUserPostsViewUsername(null);
+  };
+
   // Componente AccountTab definido dentro do escopo principal
   const AccountTab: React.FC<any> = ({ 
     user, badges, rooms, groups, friends, photos, isLoading, 
@@ -316,7 +349,8 @@ export const FunctionalConsole: React.FC = () => {
     getPhotoInteractions, setSelectedPhoto, toggleLike, addComment, habboAccount, username, setActiveTab,
     activeModal, setActiveModal, handlePhotoClick,
     isEditMode, toggleEditMode, bodyDirection, headDirection, rotateBody, rotateHead,
-    hiddenPhotos, togglePhotoVisibility: togglePhotoVisibilityWithSave, viewingUser
+    hiddenPhotos, togglePhotoVisibility: togglePhotoVisibilityWithSave, viewingUser,
+    setUserPostsViewUsername, setUserPostsViewHotel, setSelectedPost
   }) => {
     // Ref para o container scrollável
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -415,7 +449,7 @@ export const FunctionalConsole: React.FC = () => {
     }
 
     return (
-      <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
+      <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent relative">
         {/* Mensagem quando logado mas visualizando habbohub */}
         {isViewingHabbohubWhileLoggedIn && (
           <div className="p-3 bg-yellow-500/20 border-b border-yellow-500/30">
@@ -647,6 +681,46 @@ export const FunctionalConsole: React.FC = () => {
           </div>
         </div>
 
+        {/* Posts do usuário */}
+        {(() => {
+          // Determinar qual username usar: se está visualizando outro usuário, usar viewingUser; senão, usar o username atual
+          const targetUsername = viewingUser || username;
+          
+          // Normalizar hotel: converter 'com.br' -> 'br', 'com.tr' -> 'tr', etc.
+          const normalizeHotel = (hotel: string | undefined | null): string => {
+            if (!hotel) return 'br';
+            if (hotel === 'com.br' || hotel === 'br') return 'br';
+            if (hotel === 'com.tr' || hotel === 'tr') return 'tr';
+            if (hotel === 'com' || hotel === 'us') return 'com';
+            return hotel;
+          };
+          
+          const hotelValue = normalizeHotel(user?.hotel);
+          
+          // Renderizar se temos um username válido
+          if (!targetUsername || !targetUsername.trim()) {
+            return null;
+          }
+          
+          return (
+            <ProfilePostsSection
+              viewingUsername={targetUsername}
+              currentUserName={habboAccount?.habbo_name}
+              onNavigateToProfile={onNavigateToProfile}
+              hotel={hotelValue}
+              setActiveTab={(tab) => {
+                if (tab === 'user-posts') {
+                  // Quando abrir a aba de posts do usuário, definir o usuário e hotel
+                  setUserPostsViewUsername(targetUsername);
+                  setUserPostsViewHotel(hotelValue);
+                }
+                setActiveTab(tab as TabType);
+              }}
+              setSelectedPost={setSelectedPost}
+            />
+          );
+        })()}
+
         {/* Fotos com borda superior */}
         <div className="p-0 border-t border-white/20">
           <div className="px-4 pt-4">
@@ -766,12 +840,6 @@ export const FunctionalConsole: React.FC = () => {
     );
   };
 
-  
-  // Modal state tracking
-  // PhotoModal temporariamente removido
-  const { habboAccount, isLoggedIn, loading: authLoading } = useAuth();
-  const { getPhotoInteractions, toggleLike, addComment } = usePhotoInteractions();
-
   // Carregar preferências de fotos ocultas do banco de dados
   useEffect(() => {
     const loadHiddenPhotos = async () => {
@@ -792,7 +860,6 @@ export const FunctionalConsole: React.FC = () => {
         });
 
         if (error || !data?.success) {
-          console.error('Erro ao carregar preferências de fotos:', error || data?.error);
           return;
         }
 
@@ -801,7 +868,7 @@ export const FunctionalConsole: React.FC = () => {
           setHiddenPhotos(hiddenPhotoIds);
         }
       } catch (error) {
-        console.error('Erro ao carregar preferências de fotos:', error);
+        // Erro silencioso ao carregar preferências
       }
     };
 
@@ -814,13 +881,6 @@ export const FunctionalConsole: React.FC = () => {
     const isOwnProfileCheck = calculateIsOwnProfile(viewingUser, habboAccount, currentUser, username);
     
     if (!isOwnProfileCheck) {
-      console.warn('Tentativa de editar perfil que não é o próprio', {
-        viewingUser,
-        hasHabboAccount: !!habboAccount,
-        currentUser,
-        username,
-        isOwnProfile: isOwnProfileCheck
-      });
       return;
     }
 
@@ -857,7 +917,6 @@ export const FunctionalConsole: React.FC = () => {
         });
 
         if (error || !data?.success) {
-          console.error('Erro ao salvar preferência de foto oculta:', error || data?.error);
           // Reverter estado local em caso de erro
           setHiddenPhotos((prev) =>
             isCurrentlyHidden ? [...prev, photoId] : prev.filter((id) => id !== photoId)
@@ -876,7 +935,6 @@ export const FunctionalConsole: React.FC = () => {
         });
 
         if (error || !data?.success) {
-          console.error('Erro ao remover preferência de foto oculta:', error || data?.error);
           // Reverter estado local em caso de erro
           setHiddenPhotos((prev) =>
             isCurrentlyHidden ? [...prev, photoId] : prev.filter((id) => id !== photoId)
@@ -884,7 +942,6 @@ export const FunctionalConsole: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('Erro ao salvar preferência de foto:', error);
       // Reverter estado local em caso de erro
       setHiddenPhotos((prev) =>
         isCurrentlyHidden ? [...prev, photoId] : prev.filter((id) => id !== photoId)
@@ -932,11 +989,6 @@ export const FunctionalConsole: React.FC = () => {
   const usernameForQuery = username && username.trim() !== '' ? username.trim() : undefined;
   const uniqueIdForQuery = viewingUserUniqueId || (!viewingUser && habboUniqueId ? habboUniqueId : undefined);
   
-  // #region agent log
-  React.useEffect(() => {
-    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FunctionalConsole.tsx:useCompleteProfile:params',message:'Parâmetros para useCompleteProfile',data:{username:username || 'undefined',usernameType:typeof username,usernameForQuery:usernameForQuery || 'undefined',effectiveHotelForProfile:effectiveHotelForProfile,uniqueIdForQuery:uniqueIdForQuery || 'undefined',viewingUser:viewingUser || 'undefined',viewingUserUniqueId:viewingUserUniqueId || 'undefined',habboUniqueId:habboUniqueId || 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-  }, [username, usernameForQuery, effectiveHotelForProfile, uniqueIdForQuery, viewingUser, viewingUserUniqueId, habboUniqueId]);
-  // #endregion
   
   const { data: completeProfile, isLoading, error: profileError } = useCompleteProfile(
     usernameForQuery || '', // Passar string vazia se não houver username - o hook habilita query se houver uniqueId
@@ -944,11 +996,6 @@ export const FunctionalConsole: React.FC = () => {
     uniqueIdForQuery
   );
   
-  // #region agent log
-  React.useEffect(() => {
-    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FunctionalConsole.tsx:useCompleteProfile:result',message:'Resultado de useCompleteProfile',data:{isLoading:isLoading,hasError:!!profileError,errorMessage:profileError?.message || 'undefined',hasData:!!completeProfile,profileName:completeProfile?.name || 'undefined',profileUniqueId:completeProfile?.uniqueId || 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-  }, [isLoading, profileError, completeProfile]);
-  // #endregion
   const photosHotel =
     completeProfile?.hotelCode || baseHotelForPhotos;
 
@@ -998,7 +1045,6 @@ export const FunctionalConsole: React.FC = () => {
       
       return date.toLocaleDateString('pt-BR', options);
     } catch (error) {
-      console.warn('Erro ao formatar data:', dateString, error);
       return 'Data inválida';
     }
   };
@@ -1047,9 +1093,6 @@ export const FunctionalConsole: React.FC = () => {
   // Função para navegar para perfil de outro usuário (vai para aba Account)
   // Wrapper para navigateToProfile que integra com o hook e gerencia tabs
   const handleNavigateToProfile = (targetUsername: string, hotelDomain?: string, uniqueId?: string) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FunctionalConsole.tsx:handleNavigateToProfile:entry',message:'handleNavigateToProfile chamado',data:{targetUsername:targetUsername || 'undefined',targetUsernameType:typeof targetUsername,hotelDomain:hotelDomain || 'undefined',uniqueId:uniqueId || 'undefined',uniqueIdType:typeof uniqueId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     const cleanedUsername = (targetUsername || '').trim();
     
     // Se estiver na aba Photos, usar navigateToProfileFromPhotos para manter histórico
@@ -1231,6 +1274,9 @@ export const FunctionalConsole: React.FC = () => {
           hiddenPhotos={hiddenPhotos}
           togglePhotoVisibility={togglePhotoVisibilityWithSave}
           viewingUser={viewingUser}
+          setUserPostsViewUsername={setUserPostsViewUsername}
+          setUserPostsViewHotel={setUserPostsViewHotel}
+          setSelectedPost={setSelectedPost}
         />;
       case 'friends':
         // Usar FeedTab para mostrar feed de fotos dos amigos com campo de pesquisa no topo
@@ -1343,6 +1389,187 @@ export const FunctionalConsole: React.FC = () => {
               <p className="text-white/60 text-sm mb-4">{t('buttons.back')}</p>
               <Button 
                 onClick={handleBackFromPhoto}
+                className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
+              >
+                Voltar ao Perfil
+              </Button>
+            </div>
+          </Card>
+        );
+      case 'post':
+        return selectedPost ? (
+          <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent relative">
+            <div className="flex flex-col h-full">
+              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
+                <div className="h-full flex flex-col">
+                  <PostDetailView
+                    post={selectedPost}
+                    onBack={handleBackFromPost}
+                    onLikePost={async (postId: string) => {
+                      if (!habboAccount?.supabase_user_id) return;
+                      const userId = habboAccount.supabase_user_id;
+                      
+                      // Verificar se já curtiu
+                      const { data: existingLike } = await (supabase as any)
+                        .from('feed_post_likes')
+                        .select('*')
+                        .eq('post_id', postId)
+                        .eq('user_id', userId)
+                        .single();
+                      
+                      if (existingLike) {
+                        // Remover like
+                        await (supabase as any)
+                          .from('feed_post_likes')
+                          .delete()
+                          .eq('post_id', postId)
+                          .eq('user_id', userId);
+                      } else {
+                        // Adicionar like
+                        await (supabase as any)
+                          .from('feed_post_likes')
+                          .insert({ post_id: postId, user_id: userId });
+                      }
+                      
+                      // Buscar likes e comentários atualizados
+                      const { data: likes } = await (supabase as any)
+                        .from('feed_post_likes')
+                        .select('user_id')
+                        .eq('post_id', postId);
+                      const { data: comments } = await (supabase as any)
+                        .from('feed_post_comments')
+                        .select('*')
+                        .eq('post_id', postId)
+                        .order('created_at', { ascending: true });
+                      
+                      setSelectedPost({
+                        ...selectedPost,
+                        likesCount: likes?.length || 0,
+                        userLiked: !existingLike,
+                        comments: comments || [],
+                        commentsCount: comments?.length || 0
+                      });
+                    }}
+                    onAddComment={async (postId: string, text: string) => {
+                      if (!habboAccount?.supabase_user_id) return;
+                      const { error } = await (supabase as any)
+                        .from('feed_post_comments')
+                        .insert({
+                          post_id: postId,
+                          user_id: habboAccount.supabase_user_id,
+                          user_name: habboAccount.habbo_name,
+                          hotel: habboAccount.hotel || 'br',
+                          text: text.trim(),
+                          figure_string: habboAccount.figure_string || ''
+                        });
+                      if (!error) {
+                        // Buscar comentários atualizados
+                        const { data: comments } = await (supabase as any)
+                          .from('feed_post_comments')
+                          .select('*')
+                          .eq('post_id', postId)
+                          .order('created_at', { ascending: true });
+                        setSelectedPost({
+                          ...selectedPost,
+                          comments: comments || [],
+                          commentsCount: comments?.length || 0
+                        });
+                      }
+                    }}
+                    onDeletePost={async (postId: string) => {
+                      const { error } = await (supabase as any)
+                        .from('feed_posts')
+                        .delete()
+                        .eq('id', postId);
+                      if (!error) {
+                        handleBackFromPost();
+                      }
+                    }}
+                    onDeleteComment={async (postId: string, commentId: string) => {
+                      const { error } = await (supabase as any)
+                        .from('feed_post_comments')
+                        .delete()
+                        .eq('id', commentId);
+                      if (!error) {
+                        // Buscar comentários atualizados
+                        const { data: comments } = await (supabase as any)
+                          .from('feed_post_comments')
+                          .select('*')
+                          .eq('post_id', postId)
+                          .order('created_at', { ascending: true });
+                        setSelectedPost({
+                          ...selectedPost,
+                          comments: comments || [],
+                          commentsCount: comments?.length || 0
+                        });
+                      }
+                    }}
+                    onNavigateToProfile={handleNavigateToProfile}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Card className="bg-transparent text-white border-0 shadow-none h-full flex items-center justify-center">
+            <div className="text-center">
+              <h3 className="text-lg font-bold text-white mb-2">Nenhum post selecionado</h3>
+              <p className="text-white/60 text-sm mb-4">Volte ao perfil para visualizar um post</p>
+              <Button 
+                onClick={handleBackFromPost}
+                className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
+              >
+                Voltar ao Perfil
+              </Button>
+            </div>
+            </Card>
+        );
+      case 'user-posts':
+        return userPostsViewUsername ? (
+          <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent relative">
+            <div className="flex flex-col h-full">
+              {/* Header com botão voltar */}
+              <div className="flex items-center justify-between px-4 py-2 flex-shrink-0 border-b border-white/20">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  Posts de {userPostsViewUsername}
+                </h3>
+                <button
+                  type="button"
+                  onClick={handleBackFromUserPosts}
+                  className="py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center px-3"
+                >
+                  Voltar
+                </button>
+              </div>
+              {/* Lista de posts */}
+              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent px-2 py-4">
+                <ProfilePostsSection
+                  viewingUsername={userPostsViewUsername}
+                  currentUserName={habboAccount?.habbo_name}
+                  onNavigateToProfile={handleNavigateToProfile}
+                  hotel={userPostsViewHotel}
+                  setActiveTab={(tab) => {
+                    if (tab === 'post') {
+                      // Quando abrir post individual, manter contexto de user-posts
+                      setActiveTab(tab as TabType);
+                    } else {
+                      setActiveTab(tab as TabType);
+                    }
+                  }}
+                  setSelectedPost={setSelectedPost}
+                  showHeader={false}
+                  showAllPosts={true}
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Card className="bg-transparent text-white border-0 shadow-none h-full flex items-center justify-center">
+            <div className="text-center">
+              <h3 className="text-lg font-bold text-white mb-2">Nenhum usuário selecionado</h3>
+              <p className="text-white/60 text-sm mb-4">Volte ao perfil para visualizar posts</p>
+              <Button 
+                onClick={handleBackFromUserPosts}
                 className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
               >
                 Voltar ao Perfil
@@ -1719,6 +1946,19 @@ const FeedTab: React.FC<any> = ({
   const [friendsFeedSubTab, setFriendsFeedSubTab] = useState<'posts' | 'fotos'>('posts');
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [newPostComposerOpen, setNewPostComposerOpen] = useState(false);
+  const [newPostText, setNewPostText] = useState('');
+  const [viewingPost, setViewingPost] = useState<FeedPost | null>(null);
+  
+  // Callback memoizado para sincronizar visualização de post
+  const handlePostViewChange = useCallback((isViewing: boolean) => {
+    // Sincronizar estado de visualização de post para ocultar cabeçalho
+    // Criar um post dummy apenas para controlar a visibilidade do cabeçalho
+    if (isViewing) {
+      setViewingPost({ id: 'temp', userName: '', text: '', createdAt: '' } as FeedPost);
+    } else {
+      setViewingPost(null);
+    }
+  }, []);
   
   // Hook para controlar sticky header (FeedTab tem scroll em elemento filho)
   const { isHeaderVisible, isHeaderFixed } = useStickyHeader(scrollContainerRef, 50, '[class*="overflow-y-auto"]');
@@ -2004,6 +2244,46 @@ const FeedTab: React.FC<any> = ({
           </div>
         </div>
 
+        {/* Posts do usuário */}
+        {(() => {
+          // Determinar qual username usar: se está visualizando outro usuário, usar viewingUser; senão, usar o username atual
+          const targetUsername = viewingUser || username;
+          
+          // Normalizar hotel: converter 'com.br' -> 'br', 'com.tr' -> 'tr', etc.
+          const normalizeHotel = (hotel: string | undefined | null): string => {
+            if (!hotel) return 'br';
+            if (hotel === 'com.br' || hotel === 'br') return 'br';
+            if (hotel === 'com.tr' || hotel === 'tr') return 'tr';
+            if (hotel === 'com' || hotel === 'us') return 'com';
+            return hotel;
+          };
+          
+          const hotelValue = normalizeHotel(user?.hotel);
+          
+          // Renderizar se temos um username válido
+          if (!targetUsername || !targetUsername.trim()) {
+            return null;
+          }
+          
+          return (
+            <ProfilePostsSection
+              viewingUsername={targetUsername}
+              currentUserName={habboAccount?.habbo_name}
+              onNavigateToProfile={onNavigateToProfile}
+              hotel={hotelValue}
+              setActiveTab={(tab) => {
+                if (tab === 'user-posts') {
+                  // Quando abrir a aba de posts do usuário, definir o usuário e hotel
+                  setUserPostsViewUsername(targetUsername);
+                  setUserPostsViewHotel(hotelValue);
+                }
+                setActiveTab(tab as TabType);
+              }}
+              setSelectedPost={setSelectedPost}
+            />
+          );
+        })()}
+
         {/* Fotos com borda superior */}
         <div className="p-0 border-t border-white/20">
           <div className="px-4 pt-4">
@@ -2106,51 +2386,55 @@ const FeedTab: React.FC<any> = ({
       ref={scrollContainerRef}
       className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent relative"
     >
-      {/* Cabeçalho sticky - Feed dos Amigos + botão atualizar */}
-      <div 
-        className="flex items-center justify-between px-2 py-2 flex-shrink-0"
-        style={{ position: 'sticky', top: 0, zIndex: 99 }}
-      >
-        <h3 className="text-lg font-bold text-white flex items-center gap-2">
-          📸 Feed dos Amigos
-        </h3>
-        <button
-          type="button"
-          onClick={onRefreshFriendsFeed}
-          className="text-white/60 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title={t('pages.console.refreshFeed')}
-        >
-          <RefreshCw className="w-5 h-5" />
-        </button>
-      </div>
+      {/* Cabeçalho sticky - Feed dos Amigos + botão atualizar (oculto quando visualizando post) */}
+      {!viewingPost && (
+        <>
+          <div 
+            className="flex items-center justify-between px-2 py-2 flex-shrink-0"
+            style={{ position: 'sticky', top: 0, zIndex: 99 }}
+          >
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              📸 Feed dos Amigos
+            </h3>
+            <button
+              type="button"
+              onClick={onRefreshFriendsFeed}
+              className="text-white/60 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title={t('pages.console.refreshFeed')}
+            >
+              <RefreshCw className="w-5 h-5" />
+            </button>
+          </div>
 
-      {/* Sub-abas: Posts | Fotos */}
-      <div className="flex border-b border-white/20 flex-shrink-0">
-        <button
-          type="button"
-          onClick={() => setFriendsFeedSubTab('posts')}
-          className={cn(
-            'flex-1 px-4 py-2 text-sm font-medium transition-colors',
-            friendsFeedSubTab === 'posts'
-              ? 'text-white border-b-2 border-yellow-400 bg-white/5'
-              : 'text-white/60 hover:text-white'
-          )}
-        >
-          {t('pages.console.feedTabPosts')}
-        </button>
-        <button
-          type="button"
-          onClick={() => setFriendsFeedSubTab('fotos')}
-          className={cn(
-            'flex-1 px-4 py-2 text-sm font-medium transition-colors',
-            friendsFeedSubTab === 'fotos'
-              ? 'text-white border-b-2 border-yellow-400 bg-white/5'
-              : 'text-white/60 hover:text-white'
-          )}
-        >
-          {t('pages.console.feedTabPhotos')}
-        </button>
-      </div>
+          {/* Sub-abas: Posts | Fotos */}
+          <div className="flex border-b border-white/20 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setFriendsFeedSubTab('posts')}
+              className={cn(
+                'flex-1 px-4 py-2 text-sm font-medium transition-colors',
+                friendsFeedSubTab === 'posts'
+                  ? 'text-white border-b-2 border-yellow-400 bg-white/5'
+                  : 'text-white/60 hover:text-white'
+              )}
+            >
+              {t('pages.console.feedTabPosts')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setFriendsFeedSubTab('fotos')}
+              className={cn(
+                'flex-1 px-4 py-2 text-sm font-medium transition-colors',
+                friendsFeedSubTab === 'fotos'
+                  ? 'text-white border-b-2 border-yellow-400 bg-white/5'
+                  : 'text-white/60 hover:text-white'
+              )}
+            >
+              {t('pages.console.feedTabPhotos')}
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Conteúdo da sub-aba */}
       {friendsFeedSubTab === 'fotos' ? (
@@ -2197,20 +2481,31 @@ const FeedTab: React.FC<any> = ({
           </div>
         </>
       ) : (
-        <div className="py-4 px-2 flex-1 min-h-0 overflow-y-auto">
-          <FriendsPostsFeed
-            posts={posts}
+        <Suspense fallback={
+          <div className="flex items-center justify-center py-12">
+            <LoadingSpinner />
+          </div>
+        }>
+          <GlobalPostsFeedColumn
+            hotel={typeof selectedCountry === 'string' ? selectedCountry : 'all'}
             onNavigateToProfile={onNavigateToProfile}
+            refreshTrigger={typeof friendsRefreshTrigger === 'number' ? friendsRefreshTrigger : 0}
+            onPostViewChange={handlePostViewChange}
           />
-        </div>
+        </Suspense>
       )}
 
-      {/* Botão flutuante - Nova publicação */}
-      {habboAccount && (
+      {/* Botão flutuante - Nova publicação (oculto quando visualizando post) */}
+      {habboAccount && !viewingPost && (
         <button
           type="button"
-          onClick={() => setNewPostComposerOpen(true)}
-          className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 shadow-lg border-2 border-black flex items-center justify-center transition-colors"
+          onClick={() => {
+            // Scroll para o topo do container onde está o campo de criação de post
+            if (scrollContainerRef.current) {
+              scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          }}
+          className="absolute bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 shadow-lg border-2 border-black flex items-center justify-center transition-colors"
           style={{ imageRendering: 'pixelated' }}
           title={t('pages.console.newPost')}
         >
