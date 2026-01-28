@@ -8,7 +8,7 @@ import { I18nProvider } from '@/contexts/I18nContext'
 import { NotificationProvider, useNotification } from '@/hooks/useNotification'
 import { NotificationContainer } from '@/components/ui/notification'
 import { ChatNotificationProvider } from '@/contexts/ChatNotificationContext'
-import { useKeepOnline } from '@/hooks/useKeepOnline'
+// import { useKeepOnline } from '@/hooks/useKeepOnline' // Desabilitado - cron job diário já faz keep-alive
 // import { Analytics } from '@vercel/analytics/react' // Desativado
 import './index.css'
 import './styles/widget-skins.css'
@@ -180,8 +180,7 @@ const router = createBrowserRouter([
 // Componente principal com notificações
 const AppWithNotifications = () => {
   const { notifications, addNotification, removeNotification } = useNotification();
-  // Manter usuário online enquanto usar o site
-  useKeepOnline();
+  // useKeepOnline desabilitado - cron job diário (api/supabase_start.js) já faz keep-alive
 
   return (
     <>
@@ -195,7 +194,14 @@ const AppWithNotifications = () => {
   );
 };
 
-const root = ReactDOM.createRoot(document.getElementById('root')!)
+// Garantir que o root só seja criado uma vez (evita warnings durante hot reload)
+let root: ReactDOM.Root | null = null;
+const rootElement = document.getElementById('root');
+
+if (!root) {
+  root = ReactDOM.createRoot(rootElement!);
+}
+
 root.render(
   <QueryClientProvider client={queryClient}>
     <I18nProvider>

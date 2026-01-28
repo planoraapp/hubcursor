@@ -48,23 +48,11 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br', u
   // Query é válida se temos username OU uniqueId (conforme documentação)
   const isValidUsername = normalizedUsername !== '' || !!uniqueId;
   
-  // #region agent log
-  React.useEffect(() => {
-    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useCompleteProfile.tsx:hook-entry',message:'useCompleteProfile chamado',data:{username:username || 'undefined',usernameType:typeof username,hotel:hotel,uniqueId:uniqueId || 'undefined',normalizedUsername:normalizedUsername || 'undefined',isValidUsername:isValidUsername},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-  }, [username, hotel, uniqueId, normalizedUsername, isValidUsername]);
-  // #endregion
   
   return useQuery({
     queryKey: ['complete-profile', normalizedUsername, hotel, uniqueId],
     queryFn: async (): Promise<CompleteProfile> => {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useCompleteProfile.tsx:queryFn-entry',message:'queryFn iniciado',data:{normalizedUsername:normalizedUsername || 'undefined',uniqueId:uniqueId || 'undefined',hotel:hotel},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-      // #endregion
-      
       if (!normalizedUsername && !uniqueId) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useCompleteProfile.tsx:queryFn-error',message:'Erro: sem username ou uniqueId',data:{normalizedUsername:normalizedUsername || 'undefined',uniqueId:uniqueId || 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
         throw new Error('Username or uniqueId is required');
       }
       
@@ -95,10 +83,6 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br', u
         // A Edge Function já faz a busca por username internamente (no servidor, sem problemas de CORS)
         // Não precisamos fazer busca no navegador primeiro - isso estava falhando
         
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useCompleteProfile.tsx:queryFn:using-edge-function',message:'Chamando Edge Function diretamente com username',data:{normalizedUsername:normalizedUsername,hotel:hotelCode,uniqueIdParam:uniqueId || 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
-        
         // Se não temos username mas temos uniqueId, ainda podemos tentar buscar
         // A Edge Function agora aceita uniqueId como parâmetro alternativo
         if ((!normalizedUsername || normalizedUsername.trim() === '') && !uniqueId) {
@@ -117,10 +101,6 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br', u
             hotel: hotelCode // Passar código do hotel (br, com, es, etc.)
           }
         });
-        
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useCompleteProfile.tsx:queryFn:edge-function-response',message:'Resposta da Edge Function recebida',data:{hasData:!!edgeFunctionData,hasError:!!edgeFunctionError,error:edgeFunctionError?.message || 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
         
         if (edgeFunctionError || !edgeFunctionData) {
           throw new Error(edgeFunctionError?.message || 'Failed to fetch complete profile from Edge Function');

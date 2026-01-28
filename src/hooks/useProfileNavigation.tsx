@@ -27,10 +27,6 @@ export const useProfileNavigation = (): UseProfileNavigationReturn => {
   const [photosProfileHistory, setPhotosProfileHistory] = useState<Array<{ username: string; hotel: string }>>([]);
 
   const navigateToProfile = useCallback((username: string, hotelDomain?: string, uniqueId?: string) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useProfileNavigation.tsx:navigateToProfile:entry',message:'navigateToProfile chamado',data:{username:username || 'undefined',usernameType:typeof username,hotelDomain:hotelDomain || 'undefined',uniqueId:uniqueId || 'undefined',uniqueIdType:typeof uniqueId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    
     const cleanedUsername = (username || '').trim();
     setViewingUser(cleanedUsername);
     setViewingUserUniqueId(uniqueId);
@@ -38,10 +34,6 @@ export const useProfileNavigation = (): UseProfileNavigationReturn => {
     if (hotelDomain) {
       setPhotosProfileHotel(hotelDomain);
     }
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/68d043f3-6a7b-4b6a-b189-d5232987ab3e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useProfileNavigation.tsx:navigateToProfile:exit',message:'navigateToProfile concluído',data:{cleanedUsername:cleanedUsername || 'undefined',setViewingUser:cleanedUsername || 'undefined',setViewingUserUniqueId:uniqueId || 'undefined',setPhotosProfileHotel:hotelDomain || 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
   }, []);
 
   const navigateToProfileFromPhotos = useCallback((username: string, hotelDomain: string) => {
